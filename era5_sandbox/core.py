@@ -28,19 +28,28 @@ def _expand_path(
     return path
 
 # %% ../notes/00_core.ipynb 5
-def describe():
-    print("This package fetches ERA5 data.")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
+def describe(
+    cfg: DictConfig=None,  # Configuration file
+    )-> None:
+    "Describe the configuration file used by Hydra for the pipeline"
+    
+    if cfg is None:
+        cfg = OmegaConf.create()
+        
+    print("This package fetches ERA5 data. The following is the config file used by Hydra for the pipeline:\n")
+    print(OmegaConf.to_yaml(cfg))
 
 # %% ../notes/00_core.ipynb 6
-#@hydra.main(version_base=None, config_path=here() / "conf", config_name="config")
+@hydra.main(version_base=None, config_path="../conf", config_name="config")
 def testAPI(
+    cfg: DictConfig=None,
     output_path:str=None,
     dataset:str="reanalysis-era5-pressure-levels",
-    remove:bool=False,
-    cfg: DictConfig = None
+    remove:bool=True
     )-> bool:    
     
-    #print(OmegaConf.to_yaml(cfg))
+    print(OmegaConf.to_yaml(cfg))
 
     try:
         client = cdsapi.Client()
@@ -80,6 +89,6 @@ def testAPI(
 
     except Exception as e:
         print("API connection test failed.")
-        print("Did you set up your API key with CDS? If not, please visit https://cds.climate.copernicus.eu/api-how-to")
+        print("Did you set up your API key with CDS? If not, please visit https://cds.climate.copernicus.eu/how-to-api#install-the-cds-api-client")
         print("Error: {}".format(e))
         return False

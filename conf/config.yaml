@@ -1,0 +1,8 @@
+db: 
+  driver: mysql
+  user: omry
+  password: secret
+
+hydra:
+  run:
+    dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
