@@ -5,4 +5,6 @@ d = { 'settings': { 'branch': 'main',
                 'doc_host': 'https://TinasheMTapera.github.io',
                 'git_url': 'https://github.com/TinasheMTapera/era5_sandbox',
                 'lib_path': 'era5_sandbox'},
-  'syms': {'era5_sandbox.core': {'era5_sandbox.core.describe': ('core.html#describe', 'era5_sandbox/core.py')}}}
+  'syms': { 'era5_sandbox.core': { 'era5_sandbox.core._expand_path': ('core.html#_expand_path', 'era5_sandbox/core.py'),
+                                   'era5_sandbox.core.describe': ('core.html#describe', 'era5_sandbox/core.py'),
+                                   'era5_sandbox.core.testAPI': ('core.html#testapi', 'era5_sandbox/core.py')}}}
