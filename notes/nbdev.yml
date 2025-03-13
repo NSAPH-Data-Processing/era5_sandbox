@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "era5_sandbox"
+  site-url: "https://TinasheMTapera.github.io/era5_sandbox"
+  description: "Sandbox environment for era5 development"
+  repo-branch: main
+  repo-url: "https://github.com/TinasheMTapera/era5_sandbox"

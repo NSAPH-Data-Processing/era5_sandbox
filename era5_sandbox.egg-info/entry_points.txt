@@ -1,0 +1,2 @@
+[nbdev]
+era5_sandbox = era5_sandbox._modidx:d

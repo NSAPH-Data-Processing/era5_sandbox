@@ -1,0 +1,16 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+settings.ini
+setup.py
+era5_sandbox/__init__.py
+era5_sandbox/_modidx.py
+era5_sandbox/core.py
+era5_sandbox.egg-info/PKG-INFO
+era5_sandbox.egg-info/SOURCES.txt
+era5_sandbox.egg-info/dependency_links.txt
+era5_sandbox.egg-info/entry_points.txt
+era5_sandbox.egg-info/not-zip-safe
+era5_sandbox.egg-info/requires.txt
+era5_sandbox.egg-info/top_level.txt
