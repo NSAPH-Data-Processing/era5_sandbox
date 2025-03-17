@@ -7,6 +7,7 @@ setup.py
 era5_sandbox/__init__.py
 era5_sandbox/_modidx.py
 era5_sandbox/core.py
+era5_sandbox/download.py
 era5_sandbox.egg-info/PKG-INFO
 era5_sandbox.egg-info/SOURCES.txt
 era5_sandbox.egg-info/dependency_links.txt

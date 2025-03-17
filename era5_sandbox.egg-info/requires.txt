@@ -1,2 +1,4 @@
+fastcore
+pyprojroot
 
 [dev]

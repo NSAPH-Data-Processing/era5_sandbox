@@ -9,8 +9,7 @@ __all__ = ['fetch_MDG_GADM', 'download', 'main']
 import os
 import hydra
 import cdsapi
-from fastcore.script import call_parse # for the console script
-
+from core import _expand_path
 from omegaconf import DictConfig, OmegaConf
 
 # %% ../notes/01_download_raw_data.ipynb 5
@@ -39,7 +38,7 @@ def fetch_MDG_GADM(
     https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg
     '''
 
-    output_file_path = os.path.join(os.getcwd(), output_file)
+    output_file_path = _expand_path(output_file)
     if os.path.exists(output_file_path):
         print("GADM data already exists")
         return output_file_path
@@ -67,7 +66,7 @@ def download(
     
     # Send the query to the client
     if not testing:
-        client.retrieve(dataset, query).download(os.path.join(output_dir, "{}_{}.nc".format(query.year, query.month)))
+        client.retrieve(dataset, query).download(os.path.join(_expand_path(output_dir), "{}_{}.nc".format(query.year, query.month)))
     else:
         print(f"Testing mode. Not downloading data. Query is {query}")
 
