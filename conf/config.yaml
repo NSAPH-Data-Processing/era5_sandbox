@@ -1,3 +1,7 @@
+defaults:
+  - _self_
+  - datapaths: datapaths
+
 query: 
   product_type: reanalysis
   variable: ["2m_dewpoint_temperature", "2m_temperature", "skin_temperature"]
@@ -9,6 +13,7 @@ query:
   data_format: netcdf
   download_format: unarchived
 
+# logging config
 hydra:
   run:
     dir: logs/${now:%Y-%m-%d}/${now:%H-%M-%S}
