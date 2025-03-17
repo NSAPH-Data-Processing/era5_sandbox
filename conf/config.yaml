@@ -1,7 +1,13 @@
-db: 
-  driver: mysql
-  user: omry
-  password: secret
+query: 
+  product_type: reanalysis
+  variable: ["2m_dewpoint_temperature", "2m_temperature", "skin_temperature"]
+  year: [2010, 2011]
+  month: [1, 2, 3]
+  day: [1, 2, 3, 4, 5]
+  time: [0, 6, 12, 18]
+  area: [0, 360, -90, 90]
+  data_format: netcdf
+  download_format: unarchived
 
 hydra:
   run:
