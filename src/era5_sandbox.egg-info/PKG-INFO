@@ -22,6 +22,11 @@ Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: fastcore
 Requires-Dist: pyprojroot
+Requires-Dist: ipykernel
+Requires-Dist: nbdev
+Requires-Dist: cdsapi
+Requires-Dist: hydra-core
+Requires-Dist: ipykernel
 Provides-Extra: dev
 Dynamic: author
 Dynamic: author-email

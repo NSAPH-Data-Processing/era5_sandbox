@@ -1,0 +1,9 @@
+fastcore
+pyprojroot
+ipykernel
+nbdev
+cdsapi
+hydra-core
+ipykernel
+
+[dev]
