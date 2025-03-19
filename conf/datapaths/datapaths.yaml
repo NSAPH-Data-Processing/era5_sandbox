@@ -1,3 +1,7 @@
-# if the files are stored in local, then paths are null
 input: null
+
+intermediate: null
+
 output: null
+
+testing: null
