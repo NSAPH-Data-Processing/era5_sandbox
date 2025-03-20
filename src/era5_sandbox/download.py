@@ -10,9 +10,11 @@ import os
 import hydra
 import cdsapi
 import geopandas as gpd
-from core import _expand_path
 from pyprojroot import here
 from omegaconf import DictConfig, ListConfig, OmegaConf
+
+try: from era5_sandbox.core import _expand_path
+except: from core import _expand_path
 
 # %% ../../notes/01_download_raw_data.ipynb 5
 def _validate_query(
@@ -85,7 +87,8 @@ def create_bounding_box(
     bbox[2] = round(bbox[2], round_to) + buffer
     bbox[3] = round(bbox[3], round_to) + buffer
     
-    bbox = [bbox[0], bbox[2], bbox[1], bbox[3]]
+    # The bounding box from total_bounds ([min_x, min_y, max_x, max_y]) differs from the CDS API area format ([North, West, South, East]). The CDS API area format is used to specify the area of interest for the data download. The bounding box from total_bounds is in the format ([min_x, min_y, max_x, max_y]). To convert the bounding box to the CDS API area format, we need to rearrange the values as follows:
+    bbox = [bbox[3], bbox[0], bbox[1], bbox[2]]
 
     return bbox
 
@@ -103,16 +106,17 @@ def download_raw_era5(
     testing = cfg.development_mode  # for testing
     output_dir = here("data/input") # output directory
     
+    target =os.path.join(_expand_path(output_dir), "{}_{}.nc".format(cfg.query['year'], cfg.query['month']))
+    
     client = cdsapi.Client()
     
     query = _validate_query(cfg.query)
     
     # Send the query to the client
     if not testing:
-        bounds = create_bounding_box(cfg.query['gadm_file'])
+        bounds = create_bounding_box(cfg['gadm_file'])
         query['area'] = bounds
-        del query['gadm_file']
-        client.retrieve(dataset, query).download(os.path.join(_expand_path(output_dir), "{}_{}.nc".format(query['year'], query['month'])))
+        client.retrieve(dataset, query).download(target)
     else:
         print(f"Testing mode. Not downloading data. Query is {query}")
 
@@ -129,5 +133,5 @@ except: IN_NOTEBOOK=False
 
 if __name__ == "__main__" and not IN_NOTEBOOK:
     print('Running from __main__ ...')
-
+    
     main()

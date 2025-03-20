@@ -5,5 +5,10 @@ nbdev
 cdsapi
 hydra-core
 ipykernel
+snakemake
+geopandas
+xarray
+matplotlib
+cartopy
 
 [dev]
