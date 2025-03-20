@@ -46,7 +46,8 @@ setuptools.setup(
         'Natural Language :: ' + cfg['language'].title(),
     ] + ['Programming Language :: Python :: '+o for o in py_versions[py_versions.index(min_python):]] + (['License :: ' + lic[1] ] if lic[1] else []),
     url = cfg['git_url'],
-    packages = setuptools.find_packages(),
+    packages = setuptools.find_packages(where='src'),
+    package_dir={'': 'src'},
     include_package_data = True,
     install_requires = requirements,
     extras_require={ 'dev': dev_requirements },
@@ -57,8 +58,6 @@ setuptools.setup(
     zip_safe = False,
     entry_points = {
         'console_scripts': cfg.get('console_scripts','').split(),
-        'nbdev': [f'{cfg.get("lib_path")}={cfg.get("lib_path")}._modidx:d']
+        'nbdev': [f'{cfg.get("lib_name")}={cfg.get("lib_name")}._modidx:d']
     },
     **setup_cfg)
-
-

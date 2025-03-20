@@ -3,3 +3,4 @@ logs/*
 .snakemake/*
 .DS_Store
 sandbox
+slurm*

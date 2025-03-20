@@ -1,4 +1,0 @@
-fastcore
-pyprojroot
-
-[dev]
