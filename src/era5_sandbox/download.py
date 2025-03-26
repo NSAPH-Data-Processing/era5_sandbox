@@ -11,6 +11,7 @@ import hydra
 import cdsapi
 import geopandas as gpd
 from pyprojroot import here
+from shapely.geometry import box
 from omegaconf import DictConfig, ListConfig, OmegaConf
 
 try: from era5_sandbox.core import _expand_path
@@ -70,40 +71,60 @@ def fetch_GADM(
 # %% ../../notes/01_download_raw_data.ipynb 7
 def create_bounding_box(
         gadm_file: str, 
-        round_to: int = 1, 
-        buffer: float = 0.1)->list:
+        buffer_km: float = 50, 
+        round_to: int = 1
+    ) -> list:
     '''
-    Create a bounding box from the GADM data.
+    Create a bounding box from the GADM data with a buffer.
 
-    This function reads the GADM data from URL and extracts the bounding box of the region.
+    This function reads the GADM data from a file or URL, applies a buffer around the region,
+    and extracts the bounding box in the CDS API area format.
+
+    Parameters:
+        gadm_file (str): Path or URL to the GADM file.
+        buffer_km (float): Buffer distance in kilometers to expand the bounding box.
+        round_to (int): Number of decimal places to round the bounding box coordinates.
+
+    Returns:
+        list: Bounding box in the CDS API area format [North, West, South, East].
     '''
 
-    ground_shape = gpd.read_file(gadm_file, layer = "ADM_ADM_0")
+    # Read the GADM data
+    ground_shape = gpd.read_file(gadm_file, layer="ADM_ADM_0")
 
-    bbox = ground_shape.total_bounds
+    # Reproject to a projected CRS (e.g., UTM Zone 38S for Madagascar)
+    projected_shape = ground_shape.to_crs(epsg=32738)  # UTM Zone 38S
 
-    bbox[0] = round(bbox[0], round_to) - buffer
-    bbox[1] = round(bbox[1], round_to) - buffer
-    bbox[2] = round(bbox[2], round_to) + buffer
-    bbox[3] = round(bbox[3], round_to) + buffer
-    
-    # The bounding box from total_bounds ([min_x, min_y, max_x, max_y]) differs from the CDS API area format ([North, West, South, East]). The CDS API area format is used to specify the area of interest for the data download. The bounding box from total_bounds is in the format ([min_x, min_y, max_x, max_y]). To convert the bounding box to the CDS API area format, we need to rearrange the values as follows:
-    bbox = [bbox[3], bbox[0], bbox[1], bbox[2]]
+    # Apply the buffer in meters (1 km = 1000 meters)
+    buffered_shape = projected_shape.geometry.buffer(buffer_km * 1000)
+
+    # Convert back to the original geographic CRS (WGS84)
+    buffered_shape = gpd.GeoSeries(buffered_shape, crs=projected_shape.crs).to_crs(epsg=4326)
+
+    # Calculate the bounding box
+    bbox = buffered_shape.total_bounds  # [min_x, min_y, max_x, max_y]
+
+    # Rearrange to CDS API format: [North, West, South, East]
+    bbox = [
+        round(bbox[3], round_to),  # max_y (North)
+        round(bbox[0], round_to),  # min_x (West)
+        round(bbox[1], round_to),  # min_y (South)
+        round(bbox[2], round_to)   # max_x (East)
+    ]
 
     return bbox
 
 
 # %% ../../notes/01_download_raw_data.ipynb 8
 def download_raw_era5(
-        cfg: DictConfig,  # hydra configuration file
-        dataset: str = "reanalysis-era5-land", # dataset to download
+        cfg: DictConfig  # hydra configuration file
     )->None:
     '''
     Send the query to the API and download the data
     '''
 
     # parse the cfg
-    testing = cfg.development_mode  # for testing
+    testing = cfg.development_mode # for testing
     output_dir = here("data/input") # output directory
     
     target =os.path.join(_expand_path(output_dir), "{}_{}.nc".format(cfg.query['year'], cfg.query['month']))
@@ -111,6 +132,8 @@ def download_raw_era5(
     client = cdsapi.Client()
     
     query = _validate_query(cfg.query)
+
+    dataset = cfg.dataset
     
     # Send the query to the client
     if not testing:
@@ -125,9 +148,10 @@ def download_raw_era5(
 # %% ../../notes/01_download_raw_data.ipynb 11
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
-    download_raw_era5(cfg=cfg)
+    download_raw_era5(cfg=cfg, testing=False)
 
 # %% ../../notes/01_download_raw_data.ipynb 12
+#| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
 
