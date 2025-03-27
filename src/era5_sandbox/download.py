@@ -9,7 +9,11 @@ __all__ = ['fetch_GADM', 'create_bounding_box', 'download_raw_era5', 'main']
 import os
 import hydra
 import cdsapi
+import tempfile
+import zipfile
+import requests
 import geopandas as gpd
+from pathlib import Path
 from pyprojroot import here
 from shapely.geometry import box
 from omegaconf import DictConfig, ListConfig, OmegaConf
@@ -70,49 +74,63 @@ def fetch_GADM(
 
 # %% ../../notes/01_download_raw_data.ipynb 7
 def create_bounding_box(
-        gadm_file: str, 
-        buffer_km: float = 50, 
-        round_to: int = 1
-    ) -> list:
+    zip_url_or_path: str,
+    buffer_km: float = 50,
+    round_to: int = 1
+) -> list:
     '''
-    Create a bounding box from the GADM data with a buffer.
-
-    This function reads the GADM data from a file or URL, applies a buffer around the region,
-    and extracts the bounding box in the CDS API area format.
+    Create a bounding box from OCHA/HDX shapefile data with a buffer.
 
     Parameters:
-        gadm_file (str): Path or URL to the GADM file.
+        zip_url_or_path (str): URL or local path to the zipped shapefile.
         buffer_km (float): Buffer distance in kilometers to expand the bounding box.
         round_to (int): Number of decimal places to round the bounding box coordinates.
 
     Returns:
         list: Bounding box in the CDS API area format [North, West, South, East].
     '''
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Download if it's a URL
+        if zip_url_or_path.startswith("http"):
+            response = requests.get(zip_url_or_path)
+            zip_path = os.path.join(tmpdir, "ocha_data.zip")
+            with open(zip_path, "wb") as f:
+                f.write(response.content)
+        else:
+            zip_path = zip_url_or_path
 
-    # Read the GADM data
-    ground_shape = gpd.read_file(gadm_file, layer="ADM_ADM_0")
+        # Unzip
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmpdir)
 
-    # Reproject to a projected CRS (e.g., UTM Zone 38S for Madagascar)
-    projected_shape = ground_shape.to_crs(epsg=32738)  # UTM Zone 38S
+        # Find the .shp file
+        shp_files = list(Path(tmpdir).rglob("*.shp"))
+        if not shp_files:
+            raise FileNotFoundError("No shapefile (.shp) found in the extracted archive.")
+        shp_path = str(shp_files[0])  # Use first found .shp
 
-    # Apply the buffer in meters (1 km = 1000 meters)
-    buffered_shape = projected_shape.geometry.buffer(buffer_km * 1000)
+        # Read shapefile
+        shape = gpd.read_file(shp_path)
 
-    # Convert back to the original geographic CRS (WGS84)
-    buffered_shape = gpd.GeoSeries(buffered_shape, crs=projected_shape.crs).to_crs(epsg=4326)
+        # Reproject to projected CRS (you may want to detect the correct UTM zone)
+        shape_proj = shape.to_crs(epsg=32738)
 
-    # Calculate the bounding box
-    bbox = buffered_shape.total_bounds  # [min_x, min_y, max_x, max_y]
+        # Apply buffer
+        buffered = shape_proj.geometry.buffer(buffer_km * 1000)
 
-    # Rearrange to CDS API format: [North, West, South, East]
-    bbox = [
-        round(bbox[3], round_to),  # max_y (North)
-        round(bbox[0], round_to),  # min_x (West)
-        round(bbox[1], round_to),  # min_y (South)
-        round(bbox[2], round_to)   # max_x (East)
-    ]
+        # Convert back to geographic coordinates
+        buffered_geo = gpd.GeoSeries(buffered, crs=shape_proj.crs).to_crs(epsg=4326)
 
-    return bbox
+        # Get bounding box
+        bounds = buffered_geo.total_bounds  # [min_x, min_y, max_x, max_y]
+        bbox = [
+            round(bounds[3], round_to),  # North
+            round(bounds[0], round_to),  # West
+            round(bounds[1], round_to),  # South
+            round(bounds[2], round_to)   # East
+        ]
+
+        return bbox
 
 
 # %% ../../notes/01_download_raw_data.ipynb 8
@@ -137,7 +155,7 @@ def download_raw_era5(
     
     # Send the query to the client
     if not testing:
-        bounds = create_bounding_box(cfg['gadm_file'])
+        bounds = create_bounding_box(cfg['mdg_shapefile'])
         query['area'] = bounds
         client.retrieve(dataset, query).download(target)
     else:
@@ -148,7 +166,7 @@ def download_raw_era5(
 # %% ../../notes/01_download_raw_data.ipynb 11
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
-    download_raw_era5(cfg=cfg, testing=False)
+    download_raw_era5(cfg=cfg)
 
 # %% ../../notes/01_download_raw_data.ipynb 12
 #| eval: false
