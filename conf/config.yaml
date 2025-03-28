@@ -7,7 +7,9 @@ development_mode: false
 CDS_API_KEY: 
   path: "$HOME/.cdsapirc"
 
-gadm_file: "https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg"
+mdg_shapefile: "https://data.humdata.org/dataset/26fa506b-0727-4d9d-a590-d2abee21ee22/resource/ed94d52e-349e-41be-80cb-62dc0435bd34/download/mdg_adm_bngrc_ocha_20181031_shp.zip"
+
+dataset: "reanalysis-era5-single-levels"
 
 query: 
   product_type: reanalysis

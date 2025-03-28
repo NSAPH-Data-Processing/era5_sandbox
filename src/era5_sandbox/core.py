@@ -117,6 +117,7 @@ def main(cfg: DictConfig) -> None:
     testAPI(cfg=cfg)
 
 # %% ../../notes/00_core.ipynb 14
+#| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
 
