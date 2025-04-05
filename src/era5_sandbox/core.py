@@ -16,6 +16,8 @@ from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from omegaconf import DictConfig, OmegaConf
 from pyprojroot import here
+from importlib import import_module
+
 
 # %% ../../notes/00_core.ipynb 5
 def describe(
@@ -45,6 +47,13 @@ def _expand_path(
     return path
 
 # %% ../../notes/00_core.ipynb 7
+def _get_callable(func_path):
+    """Dynamically import a callable from a string path."""
+    module_name, func_name = func_path.rsplit(".", 1)
+    module = import_module(module_name)
+    return getattr(module, func_name)
+
+# %% ../../notes/00_core.ipynb 8
 def _create_directory_structure(
         base_path: str,  # The base directory where the structure will be created
         structure: dict  # A dictionary representing the directory structure
@@ -65,7 +74,7 @@ def _create_directory_structure(
         if isinstance(substructure, dict):
             _create_directory_structure(current_path, substructure)
 
-# %% ../../notes/00_core.ipynb 9
+# %% ../../notes/00_core.ipynb 10
 class GoogleDriver:
     """
     A class to handle Google Drive authentication and file management.
@@ -96,10 +105,10 @@ class GoogleDriver:
     def get_drive(self):
         return self.drive
 
-# %% ../../notes/00_core.ipynb 18
+# %% ../../notes/00_core.ipynb 19
 from fastcore.basics import patch
 
-# %% ../../notes/00_core.ipynb 19
+# %% ../../notes/00_core.ipynb 20
 @patch
 def read_healthsheds(self:GoogleDriver, healthshed_zip_name):
 
@@ -122,7 +131,7 @@ def read_healthsheds(self:GoogleDriver, healthshed_zip_name):
         
         return gdf
 
-# %% ../../notes/00_core.ipynb 23
+# %% ../../notes/00_core.ipynb 24
 def testAPI(
     cfg: DictConfig=None,
     dataset:str="reanalysis-era5-pressure-levels"
@@ -167,7 +176,7 @@ def testAPI(
         print("Error: {}".format(e))
         return False
 
-# %% ../../notes/00_core.ipynb 27
+# %% ../../notes/00_core.ipynb 28
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -177,7 +186,7 @@ def main(cfg: DictConfig) -> None:
     # test the api
     testAPI(cfg=cfg)
 
-# %% ../../notes/00_core.ipynb 28
+# %% ../../notes/00_core.ipynb 29
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
