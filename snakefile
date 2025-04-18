@@ -44,7 +44,7 @@ rule spatial_aggregate_raw_era5:
     input:
         data_dir / "input/{year}_{month}.nc"
     output:
-        data_dir / "intermediate/environmental_exposure-era5_healthshed_{variable}_{year}_{month}.nc"
+        data_dir / "intermediate/environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet"
     params:
         variable="{variable}"
     script:
