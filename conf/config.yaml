@@ -2,6 +2,9 @@ defaults:
   - _self_
   - datapaths: datapaths
   - aggregation: aggregation
+  - geographies/madagascar: madagascar  # Specify the Madagascar geography
+  # Uncomment the following line to switch to Nepal
+  # - geographies/nepal: nepal
 
 development_mode: false
 

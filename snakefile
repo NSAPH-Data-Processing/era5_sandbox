@@ -19,6 +19,7 @@ years_cfg = OmegaConf.to_container(cfg.query.year, resolve=True)
 months_cfg = OmegaConf.to_container(cfg.query.month, resolve=True)
 variable_cfg = OmegaConf.to_container(cfg.query.variable, resolve=True)
 agg_variable_cfg = OmegaConf.to_container(cfg.aggregation.variable, resolve=True)
+geographies_cfg
 
 rule all:
     input:
