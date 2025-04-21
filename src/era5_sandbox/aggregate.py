@@ -228,7 +228,7 @@ def aggregate_to_healthsheds(
     return gdf
 
 
-# %% ../../notes/02_aggregate.ipynb 35
+# %% ../../notes/02_aggregate.ipynb 36
 def aggregate_data(
         cfg: DictConfig,  # hydra configuration file
         input_file: str, # path to the input file
@@ -288,7 +288,7 @@ def aggregate_data(
     # Save the result to a file
     result.to_parquet(output_file)
 
-# %% ../../notes/02_aggregate.ipynb 36
+# %% ../../notes/02_aggregate.ipynb 37
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -298,7 +298,7 @@ def main(cfg: DictConfig) -> None:
 
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=aggregation_variable)
 
-# %% ../../notes/02_aggregate.ipynb 37
+# %% ../../notes/02_aggregate.ipynb 38
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False

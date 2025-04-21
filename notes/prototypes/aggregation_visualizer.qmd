@@ -16,9 +16,14 @@ library(leaflet)
 library(terra)
 library(dplyr)
 library(here)
+library(arrow)
+library(sf)
 ```
 
 ```{r}
-nc_files <- here("data/input") %>%
-    list.files(full.names=TRUE)
+here("data", "intermediate") %>% list.files(full.names=TRUE) -> inputs
+```
+
+```{r}
+df <- read_parquet(inputs[1])
 ```

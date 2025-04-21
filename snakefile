@@ -19,13 +19,13 @@ years_cfg = OmegaConf.to_container(cfg.query.year, resolve=True)
 months_cfg = OmegaConf.to_container(cfg.query.month, resolve=True)
 variable_cfg = OmegaConf.to_container(cfg.query.variable, resolve=True)
 agg_variable_cfg = OmegaConf.to_container(cfg.aggregation.variable, resolve=True)
-geographies_cfg
+geographies_cfg = OmegaConf.to_container(cfg.query.geography, resolve=True)
 
 rule all:
     input:
-        expand(data_dir / "input/{year}_{month}.nc", year=years_cfg, month=months_cfg),#, variable=variable_cfg)
-        expand(data_dir / "intermediate/environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet", 
-               variable=agg_variable_cfg, year=years_cfg, month=months_cfg)
+        expand(data_dir / "input/{geography}_{year}_{month}.nc", geography=geographies_cfg, year=years_cfg, month=months_cfg),#, variable=variable_cfg)
+        expand(data_dir / "intermediate/{geography}_environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet", 
+               geography=geographies_cfg, variable=agg_variable_cfg, year=years_cfg, month=months_cfg)
 
 rule test_api:
     output:
@@ -35,18 +35,19 @@ rule test_api:
 
 rule download_raw_era5:
     output:
-        data_dir / "input/{year}_{month}.nc"
+        data_dir / "input/{geography}_{year}_{month}.nc"
     shell:
         """
-        python src/era5_sandbox/download.py "++query.year={wildcards.year}" "++query.month={wildcards.month}"
+        python src/era5_sandbox/download.py "++query.year={wildcards.year}" "++query.month={wildcards.month}" "++query.geography={wildcards.geography}"
         """
 
 rule spatial_aggregate_raw_era5:
     input:
-        data_dir / "input/{year}_{month}.nc"
+        data_dir / "input/{geography}_{year}_{month}.nc"
     output:
-        data_dir / "intermediate/environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet"
+        data_dir / "intermediate/{geography}_environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet"
     params:
-        variable="{variable}"
+        variable="{variable}",
+        geography="{geography}"
     script:
         "src/era5_sandbox/aggregate.py"
