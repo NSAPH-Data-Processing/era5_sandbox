@@ -9,7 +9,7 @@ available in `notes/index.ipynb` and the associated notebooks.
 
 To review a PR on this repository, follow these steps:
 
-0. Obtain an API key for the ERA5 datastore from [here](https://cds.climate.copernicus.eu/how-to-api)
+0. Obtain an API key for the ERA5 datastore from [here](https://cds.climate.copernicus.eu/how-to-api), and ask Tinashe for access to the Golden Lab `googledriver` API key
 
 1. Clone this repository to your workspace on FASRC
 
