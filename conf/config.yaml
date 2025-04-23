@@ -2,6 +2,7 @@ defaults:
   - _self_
   - datapaths: datapaths
   - aggregation: aggregation
+  - geographies: geographies
 
 development_mode: false
 
@@ -17,6 +18,9 @@ mdg_shapefile: "https://data.humdata.org/dataset/26fa506b-0727-4d9d-a590-d2abee2
 dataset: "reanalysis-era5-single-levels"
 
 query: 
+  # geography: ["madagascar"] # or ["nepal"]
+  geography: ["madagascar", "nepal"]
+
   product_type: reanalysis
   # check precipitation
   # variable: ["2m_dewpoint_temperature", "2m_temperature", "skin_temperature", "total_precipitation"]
