@@ -1,0 +1,92 @@
+---
+title: "Visualizing the Downloads"
+format: html
+---
+
+Let's do a quick visualization dashboard for the downloaded
+data for QA purposes and learning how to manipulate spatial features
+data.
+
+## Testing
+
+First let's make sure we know how to do this in R in general:
+
+```{r}
+library(leaflet)
+library(terra)
+library(dplyr)
+library(here)
+library(arrow)
+library(sf)
+library(purrr)
+library(furrr)
+library(tibble)
+library(tidyr)
+```
+
+```{r}
+here("data", "input") %>% list.files(full.names=TRUE, pattern = "madagascar|nepal") -> raw_downloads
+```
+
+```{r}
+# parallelize some stuff
+# make sure you start the job with the appropriate number of cpus per task
+plan(multicore, workers = 4)
+```
+
+```{r}
+nc_data <- rast(raw_downloads[1])
+
+# Print a summary of the dataset
+print(nc_data)
+
+# Summarize NA values for each variable
+na_summary <- future_map_dfr(1:nlyr(nc_data), function(i) {
+  layer_name <- names(nc_data)[i]
+  na_count <- sum(is.na(values(nc_data[[i]])))
+  total_count <- ncell(nc_data[[i]])
+  tibble(
+    layer = layer_name,
+    na_count = na_count,
+    total_count = total_count,
+    na_percentage = (na_count / total_count) * 100
+  )
+})
+
+na_summary %>% summary()
+```
+
+
+Now let's wrap that in a function:
+
+```{r}
+summarize_netcdf_na <- function(nc_data) {
+
+  nc_data <- rast(nc_data)
+
+  na_summary <- future_map_dfr(1:nlyr(nc_data), function(i) { #nlyr(nc_data)
+    layer_name <- names(nc_data)[i]
+    na_count <- sum(is.na(values(nc_data[[i]])))
+    total_count <- ncell(nc_data[[i]])
+    tibble(
+      layer = layer_name,
+      na_count = na_count,
+      total_count = total_count,
+      na_percentage = (na_count / total_count) * 100
+    )
+  })
+
+}
+
+```
+
+```{r}
+set_names(raw_downloads) %>% 
+  map(summarize_netcdf_na) %>% 
+  tibble::enframe() %>%
+  unnest() -> raw_na_summary
+```
+
+```{r}
+write.csv(raw_na_summary, here("data/testing/raw_na_summary.csv"))
+```

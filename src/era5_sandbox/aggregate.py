@@ -247,11 +247,14 @@ def aggregate_data(
     if cfg.development_mode:
         describe(cfg)
         return None
+
+    #get geography
+    geography = cfg['query'].geography[0]
     
     # get the healthshed shapefile
     driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
     drive = driver.get_drive()
-    healthsheds = driver.read_healthsheds(cfg.GOOGLE_DRIVE_AUTH_JSON.healthsheds_id)
+    healthsheds = driver.read_healthsheds(cfg.geographies[geography].healthsheds)
 
     # get the aggregation configuration
     # exposure_variable = cfg.aggregation.variable
@@ -280,7 +283,7 @@ def aggregate_data(
         res_poly2cell=result_poly2cell,
         raster=resampled_tiff,
         shapes=healthsheds,
-        names_column="fs_uid",
+        names_column=cfg.geographies[geography].unique_id,
         aggregation_func=agg_func,
         aggregation_name=exposure_variable
     )
@@ -288,7 +291,7 @@ def aggregate_data(
     # Save the result to a file
     result.to_parquet(output_file)
 
-# %% ../../notes/02_aggregate.ipynb 37
+# %% ../../notes/02_aggregate.ipynb 40
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -298,7 +301,7 @@ def main(cfg: DictConfig) -> None:
 
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=aggregation_variable)
 
-# %% ../../notes/02_aggregate.ipynb 38
+# %% ../../notes/02_aggregate.ipynb 41
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
