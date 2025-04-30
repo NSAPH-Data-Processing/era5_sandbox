@@ -162,6 +162,8 @@ def download_raw_era5(
         bounds = create_bounding_box(cfg.geographies[geography]['shapefile'])
         query['area'] = bounds
         client.retrieve(dataset, query).download(target)
+
+        print("Downloaded file to: {}".format(target))
     else:
         print(f"Testing mode. Not downloading data. Query is {query}")
 
