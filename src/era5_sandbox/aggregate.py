@@ -27,8 +27,8 @@ from math import ceil, floor
 from rasterstats.io import Raster
 from rasterstats.utils import boxify_points, rasterize_geom
 
-try: from era5_sandbox.core import GoogleDriver, _get_callable, describe
-except: from core import GoogleDriver, _get_callable, describe
+try: from era5_sandbox.core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler
+except: from core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler
 
 # %% ../../notes/02_aggregate.ipynb 8
 def resample_netcdf(
@@ -58,7 +58,7 @@ def resample_netcdf(
     else:
         raise TypeError("agg_func must be a callable function like np.mean, np.max, etc.")
 
-# %% ../../notes/02_aggregate.ipynb 11
+# %% ../../notes/02_aggregate.ipynb 12
 @dataclass
 class RasterFile:
     path: str
@@ -86,7 +86,7 @@ class RasterFile:
     def __str__(self):
         return f"RasterFile(path='{self.path}', shape={self.shape()}, crs='{self.crs}')"
 
-# %% ../../notes/02_aggregate.ipynb 13
+# %% ../../notes/02_aggregate.ipynb 14
 def netcdf_to_tiff(
     ds: xr.Dataset, # The aggregated xarray dataset to convert.    
     band: int,      # The day to rasterise; 1 indexed just like human english
@@ -117,7 +117,7 @@ def netcdf_to_tiff(
 
     return raster_file
 
-# %% ../../notes/02_aggregate.ipynb 18
+# %% ../../notes/02_aggregate.ipynb 19
 def polygon_to_raster_cells(
     vectors,
     raster,
@@ -191,7 +191,7 @@ def polygon_to_raster_cells(
 
         return cell_map
 
-# %% ../../notes/02_aggregate.ipynb 25
+# %% ../../notes/02_aggregate.ipynb 26
 def aggregate_to_healthsheds(
     res_poly2cell: list, # the result of polygon_to_raster_cells    
     raster: RasterFile, # the raster data
@@ -231,7 +231,7 @@ def aggregate_to_healthsheds(
     return gdf
 
 
-# %% ../../notes/02_aggregate.ipynb 38
+# %% ../../notes/02_aggregate.ipynb 39
 def aggregate_data(
         cfg: DictConfig,
         input_file: str,
@@ -258,7 +258,10 @@ def aggregate_data(
 
     agg_func = _get_callable(cfg.aggregation.daily.function)
 
-    resampled_nc_file = resample_netcdf(input_file, agg_func=agg_func)
+    with ClimateDataFileHandler(input_file) as handler:
+        ds_path = handler.get_dataset("instant")
+        resampled_nc_file = resample_netcdf(ds_path, agg_func=agg_func)
+    
     days = len(resampled_nc_file.valid_time.values)
 
     # Initialize output DataFrame
@@ -298,7 +301,7 @@ def aggregate_data(
     print(f"Saving final monthly parquet file: {output_file}")
     result_df.to_parquet(output_file, compression="snappy")
 
-# %% ../../notes/02_aggregate.ipynb 43
+# %% ../../notes/02_aggregate.ipynb 44
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -308,7 +311,7 @@ def main(cfg: DictConfig) -> None:
 
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=aggregation_variable)
 
-# %% ../../notes/02_aggregate.ipynb 44
+# %% ../../notes/02_aggregate.ipynb 45
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False

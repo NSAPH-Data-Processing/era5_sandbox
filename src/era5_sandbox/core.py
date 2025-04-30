@@ -13,7 +13,9 @@ import json
 import tempfile
 import argparse
 import zipfile
+import shutil
 import geopandas as gpd
+from pathlib import Path
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from omegaconf import DictConfig, OmegaConf
@@ -224,16 +226,17 @@ class ClimateDataFileHandler:
         if self.unzipped_dir is not None:
             self.unzipped_dir.cleanup()
 
-# %% ../../notes/00_core.ipynb 27
+# %% ../../notes/00_core.ipynb 32
 @patch
 def __enter__(self:ClimateDataFileHandler):
     self.prepare()
     return self
 
+@patch
 def __exit__(self:ClimateDataFileHandler, exc_type, exc_val, exc_tb):
     self.cleanup()
 
-# %% ../../notes/00_core.ipynb 29
+# %% ../../notes/00_core.ipynb 35
 def testAPI(
     cfg: DictConfig=None,
     dataset:str="reanalysis-era5-pressure-levels"
@@ -278,7 +281,7 @@ def testAPI(
         print("Error: {}".format(e))
         return False
 
-# %% ../../notes/00_core.ipynb 33
+# %% ../../notes/00_core.ipynb 39
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -288,7 +291,7 @@ def main(cfg: DictConfig) -> None:
     # test the api
     testAPI(cfg=cfg)
 
-# %% ../../notes/00_core.ipynb 34
+# %% ../../notes/00_core.ipynb 40
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
