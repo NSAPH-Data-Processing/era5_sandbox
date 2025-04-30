@@ -1,8 +1,10 @@
 ---
 title: "Visualizing the Downloads"
 format: html
+params:
+  output_path: "data/testing/raw_na_summary.csv"
+  in_pipeline: false
 ---
-
 Let's do a quick visualization dashboard for the downloaded
 data for QA purposes and learning how to manipulate spatial features
 data.
@@ -22,6 +24,9 @@ library(purrr)
 library(furrr)
 library(tibble)
 library(tidyr)
+library(readr)
+library(stringr)
+library(lubridate)
 ```
 
 ```{r}
@@ -35,13 +40,17 @@ plan(multicore, workers = 4)
 ```
 
 ```{r}
-nc_data <- rast(raw_downloads[1])
+ex_data <- str_subset(raw_downloads, "2019_12") %>% str_subset("madagascar")
+```
+
+```{r, eval=params$in_pipeline}
+nc_data <- rast(ex_data)
 
 # Print a summary of the dataset
 print(nc_data)
 
 # Summarize NA values for each variable
-na_summary <- future_map_dfr(1:nlyr(nc_data), function(i) {
+na_summary <- future_map_dfr(1:500, function(i) {
   layer_name <- names(nc_data)[i]
   na_count <- sum(is.na(values(nc_data[[i]])))
   total_count <- ncell(nc_data[[i]])
@@ -80,7 +89,7 @@ summarize_netcdf_na <- function(nc_data) {
 
 ```
 
-```{r}
+```{r, eval=params$in_pipeline}
 set_names(raw_downloads) %>% 
   map(summarize_netcdf_na) %>% 
   tibble::enframe() %>%
@@ -88,5 +97,37 @@ set_names(raw_downloads) %>%
 ```
 
 ```{r}
-write.csv(raw_na_summary, here("data/testing/raw_na_summary.csv"))
+#write.csv(raw_na_summary, here("data/testing/raw_na_summary.csv"))
+summaries <- read_csv(here("data/testing/raw_na_summary.csv"))
+```
+
+```{r}
+summaries %>% summary()
+```
+
+It looks like there are no NAs in the raw downloads...
+
+We have to check the daily aggregations then.
+
+```{r}
+here("data", "intermediate") %>% list.files(full.names=TRUE, pattern = "madagascar|nepal") -> mid_aggregations
+```
+
+```{r}
+set_names(mid_aggregations) %>%
+  map(read_parquet, col_select = -geometry) %>%
+  tibble::enframe() %>%
+  unnest() -> mid_aggregations
+```
+
+```{r}
+mid_aggregations %>%
+  mutate(
+    country = str_extract(name, "madagascar|nepal"),
+    year_mo = str_extract(name, "20[0-9]+_[0-9]+"),
+    date = ym(year_mo),
+    variable = str_extract(name, "t2m|d2m")
+  )
+
+
 ```

@@ -51,3 +51,22 @@ rule spatial_aggregate_raw_era5:
         geography="{geography}"
     script:
         "src/era5_sandbox/aggregate.py"
+
+rule summarize_na_dashboard:
+    input:
+        rmd = "notes/prototypes/aggregation_visualizer.Rmd",
+        downloads = expand(data_dir / "input/{geography}_{year}_{month}.nc", 
+                           geography=geographies_cfg, 
+                           year=years_cfg, 
+                           month=months_cfg)
+    output:
+        summary = data_dir / "testing/raw_na_summary.csv"
+    shell:
+        """
+        Rscript -e "rmarkdown::render(
+            input = '{input.rmd}', 
+            params = list(output_path = '{output.summary}'), 
+            output_file = tempfile(), 
+            quiet = TRUE
+        )"
+        """

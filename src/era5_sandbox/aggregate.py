@@ -9,6 +9,7 @@ import tempfile
 import rasterio
 import hydra
 import argparse
+import os
 
 import pandas as pd
 import geopandas as gpd
@@ -34,7 +35,8 @@ def resample_netcdf(
         fpath: str, # Path to the netCDF file.
         resample: str = "1D", # Resampling frequency (e.g., '1H', '1D')
         agg_func: callable = np.mean, # Aggregation function (e.g., np.mean, np.sum).
-        time_dim: str = "valid_time" # Name of the time dimension in the dataset.
+        time_dim: str = "valid_time", # Name of the time dimension in the dataset.
+        **xr_open_kwargs  # keywords for python's xarray module
     ) -> xr.Dataset:   
     """
     Resample a netCDF file to a specified frequency and aggregation method.
@@ -48,7 +50,7 @@ def resample_netcdf(
         xarray.Dataset: Resampled dataset.
     """
 
-    ds = xr.open_dataset(fpath)
+    ds = xr.open_dataset(fpath, **xr_open_kwargs)
 
     if callable(agg_func):
         # Use xarray's reduce method with the callable
@@ -60,6 +62,7 @@ def resample_netcdf(
 @dataclass
 class RasterFile:
     path: str
+    band: int # note that this is 1-indexed
     data: Optional[np.ndarray] = field(default=None, init=False)
     transform: Optional[rasterio.Affine] = field(default=None, init=False)
     crs: Optional[str] = field(default=None, init=False)
@@ -69,7 +72,7 @@ class RasterFile:
     def load(self):
         """Load raster data and basic metadata."""
         with rasterio.open(self.path) as src:
-            self.data = src.read(1)  # first band
+            self.data = src.read(self.band)  # each day gets one rasterfile
             self.transform = src.transform
             self.crs = src.crs
             self.nodata = src.nodata
@@ -86,6 +89,7 @@ class RasterFile:
 # %% ../../notes/02_aggregate.ipynb 13
 def netcdf_to_tiff(
     ds: xr.Dataset, # The aggregated xarray dataset to convert.    
+    band: int,      # The day to rasterise; 1 indexed just like human english
     variable: str, # The variable name to convert.
     crs: str = "EPSG:4326", # Coordinate reference system (default is WGS84).    
     ):
@@ -107,9 +111,9 @@ def netcdf_to_tiff(
         ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
         ds_ = ds_.rio.write_crs(crs)
         # Save as GeoTIFF
-        variable.rio.to_raster(f"{tmpdirname}/output.tif")
+        ds_.rio.to_raster(f"{tmpdirname}/output.tif")
         # Load the raster file
-        raster_file = RasterFile(f"{tmpdirname}/output.tif").load()
+        raster_file = RasterFile(path=f"{tmpdirname}/output.tif", band=band).load()
 
     return raster_file
 
@@ -117,7 +121,6 @@ def netcdf_to_tiff(
 def polygon_to_raster_cells(
     vectors,
     raster,
-    band=1,
     nodata=None,
     affine=None,
     all_touched=False,
@@ -149,7 +152,7 @@ def polygon_to_raster_cells(
 
     cell_map = []
 
-    with Raster(raster, affine, nodata, band) as rast:
+    with Raster(raster, affine, nodata) as rast:
         # used later to crop raster and find start row and col
         min_lon, dlon = affine.c, affine.a
         max_lat, dlat = affine.f, -affine.e
@@ -228,70 +231,74 @@ def aggregate_to_healthsheds(
     return gdf
 
 
-# %% ../../notes/02_aggregate.ipynb 36
+# %% ../../notes/02_aggregate.ipynb 38
 def aggregate_data(
-        cfg: DictConfig,  # hydra configuration file
-        input_file: str, # path to the input file
-        output_file: str, # path to the output file
-        exposure_variable: str # the variable to aggregate
-    )->None:
+        cfg: DictConfig,
+        input_file: str,
+        output_file: str,
+        exposure_variable: str
+    ) -> None:
     '''
-    Run the agggregation step of the pipeline.
-
-    Note, this function is the second step in the snakemake 
-    pipeline. This means that in order to define the input
-    file, we use the snakemake.input and snakemake.output variables
-    injected into the runtime by snakemake.
+    Aggregate raster data day-by-day and store all days as separate columns in a single Parquet file.
     '''
 
     if cfg.development_mode:
         describe(cfg)
         return None
 
-    #get geography
     geography = cfg['query'].geography[0]
-    
-    # get the healthshed shapefile
+    year = cfg['query']['year']
+    month = cfg['query']['month']
+
+
+    # Load healthsheds
     driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
     drive = driver.get_drive()
     healthsheds = driver.read_healthsheds(cfg.geographies[geography].healthsheds)
 
-    # get the aggregation configuration
-    # exposure_variable = cfg.aggregation.variable
     agg_func = _get_callable(cfg.aggregation.daily.function)
-    
+
     resampled_nc_file = resample_netcdf(input_file, agg_func=agg_func)
+    days = len(resampled_nc_file.valid_time.values)
 
-    resampled_tiff = netcdf_to_tiff(
-        ds=resampled_nc_file,
-        variable=exposure_variable,
-        crs="EPSG:4326"
-    )
+    # Initialize output DataFrame
+    result_df = healthsheds[[cfg.geographies[geography].unique_id, "geometry"]].copy()
 
-    # run the polygon to raster cell function
-    result_poly2cell=polygon_to_raster_cells(
-        vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
-        raster=resampled_tiff.data, # the raster data above
-        band=1, # the value of the day that we're using
-        nodata=resampled_tiff.nodata, # any intersections with no data, may have to be np.nan
-        affine=resampled_tiff.transform, # some math thing need to revise
-        all_touched=True, 
-        verbose=True
-    )
+    for day in range(1, days + 1):
+        print(f"Processing day {day}...")
 
-    result = aggregate_to_healthsheds(
-        res_poly2cell=result_poly2cell,
-        raster=resampled_tiff,
-        shapes=healthsheds,
-        names_column=cfg.geographies[geography].unique_id,
-        aggregation_func=agg_func,
-        aggregation_name=exposure_variable
-    )
+        resampled_tiff = netcdf_to_tiff(
+            ds=resampled_nc_file,
+            band=day,
+            variable=exposure_variable,
+            crs="EPSG:4326"
+        )
 
-    # Save the result to a file
-    result.to_parquet(output_file)
+        result_poly2cell = polygon_to_raster_cells(
+            vectors=healthsheds.geometry.values,
+            raster=resampled_tiff.data,
+            nodata=resampled_tiff.nodata,
+            affine=resampled_tiff.transform,
+            all_touched=True,
+            verbose=True
+        )
 
-# %% ../../notes/02_aggregate.ipynb 40
+        res = aggregate_to_healthsheds(
+            res_poly2cell=result_poly2cell,
+            raster=resampled_tiff,
+            shapes=healthsheds,
+            names_column=cfg.geographies[geography].unique_id,
+            aggregation_func=agg_func,
+            aggregation_name=exposure_variable
+        )
+
+        day_col = f"day_{day:02d}"
+        result_df[day_col] = res[exposure_variable]
+
+    print(f"Saving final monthly parquet file: {output_file}")
+    result_df.to_parquet(output_file, compression="snappy")
+
+# %% ../../notes/02_aggregate.ipynb 43
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -301,7 +308,7 @@ def main(cfg: DictConfig) -> None:
 
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=aggregation_variable)
 
-# %% ../../notes/02_aggregate.ipynb 41
+# %% ../../notes/02_aggregate.ipynb 44
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
