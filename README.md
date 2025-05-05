@@ -13,7 +13,7 @@ To review a PR on this repository, follow these steps:
 
 1. Clone this repository to your workspace on FASRC
 
-2. Install the package with `pip`
+2. Create a conda environment with `conda create -n era5_sandbox python=3.10` and install all of the necessary dependencies for the package with `pip install -e .`
 
 3. Run the `core` module to test your API key and setup the data
 directory structure
