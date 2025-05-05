@@ -5,4 +5,4 @@
 #SBATCH --mem 250GB # memory 
 #SBATCH -t 0-12:00 # time (D-HH:MM)
 
-snakemake --cores 10
+snakemake --cores 10 --rerun-incomplete
