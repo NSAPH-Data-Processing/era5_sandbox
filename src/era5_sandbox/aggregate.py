@@ -246,7 +246,7 @@ def aggregate_data(
         describe(cfg)
         return None
 
-    geography = cfg['query'].geography[0]
+    geography = cfg['query'].geography
     year = cfg['query']['year']
     month = cfg['query']['month']
     daily_aggs = cfg['aggregation']['aggregation'][exposure_variable]['hourly_to_daily']
@@ -323,6 +323,7 @@ def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
     input_file = str(snakemake.input[0])  # First input file
     output_file = str(snakemake.output[0])
+    geography = str(snakemake.params.geography)
     aggregation_variable = str(snakemake.params.variable)
 
     variables_dict = {
@@ -330,6 +331,8 @@ def main(cfg: DictConfig) -> None:
         "2m_dewpoint_temperature": "d2m",
         "total_precipitation": "tp"
     }
+
+    cfg['query']['geography'] = geography
     
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=variables_dict[aggregation_variable])
 
