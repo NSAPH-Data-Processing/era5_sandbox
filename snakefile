@@ -56,18 +56,28 @@ rule spatial_aggregate_raw_era5:
 rule summarize_na_dashboard:
     input:
         rmd = "notes/prototypes/aggregation_visualizer.Rmd",
-        downloads = expand(data_dir / "input/{geography}_{year}_{month}.nc", 
-                           geography=geographies_cfg, 
-                           year=years_cfg, 
-                           month=months_cfg)
     output:
-        summary = data_dir / "testing/raw_na_summary.csv"
+        data_dir / "notes/prototypes/figures/{geography}_mean_temperature_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_max_temperature_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_min_temperature_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_mean_dewpoint_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_max_dewpoint_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_min_dewpoint_{year}.png}",
+        data_dir / "notes/prototypes/figures/{geography}_total_precipitation_{year}.png}"
     shell:
         """
         Rscript -e "rmarkdown::render(
-            input = '{input.rmd}', 
-            params = list(output_path = '{output.summary}'), 
-            output_file = tempfile(), 
-            quiet = TRUE
-        )"
+            input = './notes/prototypes/aggregation_visualizer.Rmd',
+            params = list(
+                in_pipeline = TRUE,
+                output_files = list(
+                raw_na_summary = 'data/testing/raw_na_summary.csv',
+                temp_agg = 'data/testing/temperature_agg_long.csv',
+                precip_agg = 'data/testing/precipitation_agg_long.csv',
+                dewpoint_agg = 'data/testing/dewpoint_agg_long.csv'
+                )
+            ),
+            output_file = tempfile(),
+            quiet = FALSE
+            )"
         """

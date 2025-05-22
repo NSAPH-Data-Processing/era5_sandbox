@@ -266,7 +266,7 @@ def aggregate_data(
         daily_agg_func = _get_callable(daily_agg['function'])
 
         with ClimateDataFileHandler(input_file) as handler:
-            if exposure_variable in ["t2m", "d2m"]:
+            if exposure_variable in ["t2m", "d2m", "swvl1"]:
                 ds_path = handler.get_dataset("instant")
             else:
                 ds_path = handler.get_dataset("accum")
@@ -329,6 +329,7 @@ def main(cfg: DictConfig) -> None:
     variables_dict = {
         "2m_temperature": "t2m",
         "2m_dewpoint_temperature": "d2m",
+        "volumetric_soil_water_layer_1": "swvl1",
         "total_precipitation": "tp"
     }
 
