@@ -30,3 +30,15 @@ aggregation:
     daily_to_healthshed:
       - name: mean
         function: "numpy.nanmean"
+
+  swvl1:
+    hourly_to_daily:
+      - name: mean
+        function: "numpy.nanmean"
+      - name: min
+        function: "numpy.nanmin"
+      - name: max
+        function: "numpy.nanmax"
+    daily_to_healthshed:
+      - name: mean
+        function: "numpy.nanmean"
