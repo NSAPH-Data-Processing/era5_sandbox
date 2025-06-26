@@ -1,0 +1,47 @@
+---
+title: "Publish"
+format: html
+execute:
+  engine: python
+jupyter: python3
+---
+
+> This is the `publish` module for the ERA5 dataset pipeline. It defines a functions that make use of the pyDataverse API to publish our outputs to the Harvard Dataverse.
+
+```{python}
+#| default_export publish
+```
+
+```{python}
+#| hide
+from nbdev.showdoc import *
+```
+
+First, we'll test out the API by pinging the Harvard DataVerse
+
+```{python}
+from pyprojroot import here
+import yaml
+```
+
+```{python}
+api_token_file = here() / "sandbox/dataverse_api_key.yml"
+with open(api_token_file, "r") as f:
+    config = yaml.load(f, Loader=yaml.BaseLoader)
+```
+
+Now, following the [docs]() for the dataverse tutorial, load an nativeAPI up:
+
+```{python}
+from pyDataverse.api import NativeApi
+```
+
+
+```{python}
+api = NativeApi(config['base_url'], config['api_token'])
+resp=api.get_info_version()
+```
+
+```{python}
+resp.text
+```
