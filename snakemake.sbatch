@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-#SBATCH -p test # partition (queue)
+#SBATCH -p shared # partition (queue)
 #SBATCH -c 12 # number of cores 
 #SBATCH --mem 90GB # memory 
-#SBATCH -t 0-12:00 # time (D-HH:MM)
+#SBATCH -t 0-20:00 # time (D-HH:MM)
 
-snakemake --cores 6
+snakemake --cores 12

@@ -6,7 +6,7 @@ execute:
 jupyter: python3
 ---
 
-> This is the `publish` module for the ERA5 dataset pipeline. It defines a functions that make use of the pyDataverse API to publish our outputs to the Harvard Dataverse.
+> This is the `publish` module for the ERA5 dataset pipeline. It defines a functions that make use of the `pyDataverse` library and API to publish our outputs to the Harvard Dataverse.
 
 ```{python}
 #| default_export publish
@@ -20,8 +20,11 @@ from nbdev.showdoc import *
 First, we'll test out the API by pinging the Harvard DataVerse
 
 ```{python}
+#| export
+#| 
 from pyprojroot import here
 import yaml
+import json
 ```
 
 ```{python}
@@ -30,12 +33,13 @@ with open(api_token_file, "r") as f:
     config = yaml.load(f, Loader=yaml.BaseLoader)
 ```
 
-Now, following the [docs]() for the dataverse tutorial, load an nativeAPI up:
+Now, following the [docs]() for the dataverse tutorial, load a NativeAPI up:
 
 ```{python}
 from pyDataverse.api import NativeApi
 ```
 
+The NativeAPI is a catchall API object to be able to do general stuff:
 
 ```{python}
 api = NativeApi(config['base_url'], config['api_token'])
@@ -45,3 +49,110 @@ resp=api.get_info_version()
 ```{python}
 resp.text
 ```
+
+Looks good! Now that we know that it works, we can think more
+about how to publish data there.
+
+## Harvard Dataverse
+
+Let's create a dummy dataset with the components we're
+planning to upload, and then upload and promptly delete it.
+
+To do that, we must import the `models` module and create a Dataset object:
+
+```{python}
+from pyDataverse.models import Dataset
+ds = Dataset()
+```
+
+This `ds` object is pretty straightforward since it doesn't contain anything yet:
+
+```{python}
+ds.get()
+```
+
+We can populate the object from the dummy data on the github repo:
+
+```{python}
+from pyDataverse.utils import read_file
+from urllib.request import urlretrieve
+import tempfile
+
+url = "https://raw.githubusercontent.com/gdcc/pyDataverse/refs/heads/main/tests/data/user-guide/dataset.json"
+
+with tempfile.NamedTemporaryFile(mode='w+') as tmp:
+    urlretrieve(url, tmp.name)
+    ds.from_json(read_file(tmp.name))
+```
+
+We have to validate the JSON correctly:
+
+```{python}
+ds.validate_json()
+```
+
+Modifying it is easy:
+
+```{python}
+ds.set({"title": "Youth from Austria 2005"})
+ds.get()
+```
+
+Now, to create the dataset we use the API:
+
+```{python}
+#| eval: false
+#| this is only run in interactive sessions for demo purposes
+resp = api.create_dataset(":root", ds.json())
+```
+
+If you caught the `resp` object, it contains the PID for the newly created dataset.
+
+However, if you didn't you can use the SearchAPI to find it:
+
+```{python}
+from pyDataverse.api import SearchApi
+
+search_api = SearchApi(config['base_url'], config['api_token'])
+resp = search_api.search("Youth from Austria", data_type="dataset")
+```
+
+```{python}
+results = resp.json()['data']['items']
+```
+
+```{python}
+result = [x for x in results if "Youth from Austria" in x['name']][0]
+result
+```
+
+We can grab the PID of this entry:
+
+```{python}
+pid = result['global_id']
+```
+
+Now to look at the data we created using the NativeAPI again:
+
+```{python}
+uploaded_ds = api.get_dataset(pid)
+uploaded_ds.json()['data']
+```
+
+Now, to delete this dataset:
+
+```{python}
+#| eval: false
+#| only run in interactive testing
+resp = api.delete_dataset(pid)
+resp.json()
+```
+
+With that understanding, we can develop a quick module to do the following:
+
+1. Make the dataset LEGO Compatible
+2. Create metadata for the dataset entry
+3. Bump the version
+4. Upload and publish the data to dataverse
+
+## 
