@@ -1,11 +1,13 @@
 #!/bin/bash
 #
 #SBATCH -p intermediate # partition (queue)
-#SBATCH -c 12 # number of cores 
+#SBATCH -c 20 # number of cores 
 #SBATCH --mem 250GB # memory 
-#SBATCH -t 0-20:00 # time (D-HH:MM)
+#SBATCH -t 1-12:00 # time (D-HH:MM)
 
-snakemake --cores 12 --rerun-incomplete
+snakemake --cores 20
+
+# python src/era5_sandbox/publish.py
 
 # Rscript -e "rmarkdown::render(
 #             input = './notes/prototypes/aggregation_visualizer.Rmd',
