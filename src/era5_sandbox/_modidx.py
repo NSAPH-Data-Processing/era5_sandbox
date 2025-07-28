@@ -61,4 +61,7 @@ d = { 'settings': { 'branch': 'main',
                                                                                     'era5_sandbox/download.py'),
                                        'era5_sandbox.download.fetch_GADM': ( 'download_raw_data.html#fetch_gadm',
                                                                              'era5_sandbox/download.py'),
-                                       'era5_sandbox.download.main': ('download_raw_data.html#main', 'era5_sandbox/download.py')}}}
+                                       'era5_sandbox.download.main': ('download_raw_data.html#main', 'era5_sandbox/download.py')},
+            'era5_sandbox.publish': { 'era5_sandbox.publish.gather_exposure_geodataframes': ( 'publish.html#gather_exposure_geodataframes',
+                                                                                              'era5_sandbox/publish.py'),
+                                      'era5_sandbox.publish.main': ('publish.html#main', 'era5_sandbox/publish.py')}}}
