@@ -27,6 +27,8 @@ def _validate_query(
     )->bool:
     '''
     Check that the query is valid
+    ###TODO Not a good idea to overwrite components of the query body because the user may believe something and the function may give somehting else back
+     Better to just tell them something is wrong
     '''
 
     required_keys = ['product_type', 'variable', 'year', 'month', 'day', 'time', 'area', 'data_format', 'download_format']
@@ -173,6 +175,8 @@ def download_raw_era5(
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     download_raw_era5(cfg=cfg)
+    # better approach would be to have the function only use the specific arguments of the config
+
 
 # %% ../../notes/01_download_raw_data.ipynb 12
 #| eval: false

@@ -435,4 +435,5 @@ dependencies:
       - types-setuptools==76.0.0.20250313
       - uritemplate==4.1.1
       - watchdog==6.0.0
+      - -e .
 prefix: /n/home03/ttapera/.conda/envs/era5_sandbox
