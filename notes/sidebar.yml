@@ -4,3 +4,17 @@ website:
       - index.ipynb
       - 00_core.ipynb
       - 01_download_raw_data.ipynb
+      - 02_aggregate.ipynb
+      - 03_publish.ipynb
+      - 03_publish.qmd
+      - 10_pytask_demo.ipynb
+      - 20_pytask_config.ipynb
+      - 20_pytask_logger.ipynb
+      - 21_pytask_download.ipynb
+      - section: prototypes
+        contents:
+          - prototypes/download_QA.ipynb
+          - prototypes/kenya_demo_01_intro.ipynb
+          - prototypes/kenya_demo_02_fishnet.ipynb
+          - prototypes/kenya_demo_03_aggregate.ipynb
+          - prototypes/learning_aggregations_w_michelle_20250328.ipynb
