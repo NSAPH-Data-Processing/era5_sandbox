@@ -1,0 +1,252 @@
+---
+title: "Aggregation: The `aggregation` Module as a `pytask` Task"
+format: html
+engine: jupyter
+---
+
+# task_aggregate
+
+> This task aggregates the downloaded data into spatial and temporal averages. It uses xarray to compute summary statistics over the specified time period and spatial region. The aggregation is done diurnally, so we will fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
+
+```{python}
+#| default_exp task_aggregate
+```
+
+```{python}
+#| hide
+from nbdev.showdoc import *
+
+```
+
+```{python}
+#| export
+
+from era5_sandbox.config import BLD, data_catalog
+from era5_sandbox.core import ClimateDataFileHandler
+from pyprojroot import here
+import xarray as xr
+
+```
+
+To do diurnal aggregation, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the [astral library](https://astral.readthedocs.io/en/latest/) to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.
+
+```{python}
+
+eg_file = BLD / "2024_11_nepal.nc"
+with ClimateDataFileHandler(eg_file) as handler:
+    ds_path = handler.get_dataset("instant")
+
+    ds = xr.open_dataset(ds_path, chunks = {"valid_time": 24})
+
+```
+
+We can see the astral library in action below:
+
+```{python}
+#| export
+from astral import Observer, sun
+import pandas as pd
+import numpy as np
+
+```
+
+```{python}
+# get the location of a datapoint in the dataset
+lat, long = ds.coords["latitude"].values[0], ds.coords["longitude"].values[0]
+time = ds['valid_time'].values[0]
+dt = pd.to_datetime(time, utc=True)
+
+```
+
+```{python}
+dt
+
+```
+
+```{python}
+observer = Observer(latitude=lat, longitude=long, elevation=0)
+sun_info = sun.sun(observer, date=dt)
+sun_info
+
+```
+
+```{python}
+%%timeit
+import random
+
+#fetch a random time from valid_time
+options = ds['valid_time'].values
+
+random_time = random.choice(options)
+dt = pd.to_datetime(random_time, utc=True)
+sun_info = sun.sun(observer, date=dt)
+if dt < sun_info['sunrise']:
+    print(f"Randomly selected time: {dt} is NIGHTTIME")
+elif dt >= sun_info['sunrise'] and dt < sun_info['sunset']:
+    print(f"Randomly selected time: {dt} is DAYTIME")
+else:
+    print(f"Randomly selected time: {dt} is NIGHTTIME")
+
+
+```
+
+This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. Let's put this in a function
+
+```{python}
+#| export
+from tqdm import tqdm
+
+def compute_diurnal_class(
+        ds: xr.Dataset
+    )-> list:
+    """
+    Compute the diurnal value for each data point in the dataset.
+    This function iterates over each data point in the dataset,
+    calculates the sunrise and sunset times for the given time, latitude and longitude,
+    and returns whether or not that data point is daytime or nighttime.
+    """
+    diurnal_class = []
+    
+    for i in tqdm(range(len(ds['valid_time'])), desc="Computing diurnal class"):
+        time = ds['valid_time'].values[i]
+        dt = pd.to_datetime(time, utc=True)
+        observer = Observer(latitude=lat, longitude=long, elevation=0)
+        sun_info = sun.sun(observer, date=dt)
+
+        if dt < sun_info['sunrise']:
+            diurnal_class.append("night")
+        elif dt >= sun_info['sunrise'] and dt < sun_info['sunset']:
+            diurnal_class.append("day")
+        else:
+            diurnal_class.append("night")
+    
+    return diurnal_class
+
+```
+
+```{python}
+compute_diurnal_class(ds)
+```
+
+We can then add this value to the dataset as a new variable, which we can use to compute the diurnal averages.
+
+```{python}
+diurnal_vals = compute_diurnal_class(ds)
+ds = ds.assign_coords(diurnal_class=("valid_time", diurnal_vals))
+
+```
+
+Now, to see if it will aggregate:
+
+```{python}
+ds.coords["date"] = ds["valid_time"].dt.floor("D")
+```
+
+```{python}
+print(ds['diurnal_class'].dims)
+print(ds['date'].dims)
+```
+
+```{python}
+ds["d2m"].isel(valid_time=0)
+ds["d2m"].values.shape
+np.isnan(ds["d2m"].values).sum()
+
+```
+
+```{python}
+aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
+```
+
+```{python}
+aggregated['d2m'].values
+```
+
+That appears to work! So we can implement it in a function, similar to the one we used in the original download hydra pipeline.
+
+```{python}
+#| export
+import numpy as np
+
+def resample_netcdf_diurnal(
+        fpath: str, # Path to the netCDF file.
+        diurnal_col: str = "diurnal_class", # Name of the column for diurnal classification.
+        agg_func: callable = np.mean, # Aggregation function (e.g., np.mean, np.sum).
+        time_dim: str = "valid_time", # Name of the time dimension in the dataset.
+        chunks: dict | None = None # keywords for python's xarray module, e.g chunking
+    ) -> xr.Dataset:   
+    """
+    Resample a netCDF file to a specified frequency and aggregation method.
+    
+    Args:
+        fpath (str): Path to the netCDF file.
+        diurnal_col (str): Name of the column for diurnal classification.
+        agg_func (callable): Aggregation function (e.g., np.mean, np.sum).
+    
+    Returns:
+        xarray.Dataset: Resampled dataset.
+    """
+    if chunks is None:
+        with ClimateDataFileHandler(fpath) as handler:
+            fpath = handler.get_dataset("instant")
+            ds = xr.open_dataset(fpath)
+    else:
+        with ClimateDataFileHandler(fpath) as handler:
+            fpath = handler.get_dataset("instant")
+            ds = xr.open_dataset(fpath, chunks=chunks)
+
+    diurnal_vals = compute_diurnal_class(ds)
+    ds = ds.assign_coords(**{diurnal_col: ("valid_time", diurnal_vals)})
+
+    if callable(agg_func):
+        # Use xarray's reduce method with the callable
+        ds.coords["date"] = ds[time_dim].dt.floor("D")
+        return ds.groupby(["date", diurnal_col]).reduce(agg_func, dim=time_dim)
+    else:
+        raise TypeError("agg_func must be a callable function like np.mean, np.max, etc.")
+
+```
+
+Chunking is necessary for the data size while testing, so we will use it in the function. We can then use this function to compute the diurnal averages for the dataset.
+
+```{python}
+resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
+
+```
+
+Awesome, now we know how to do the diurnal aggregation, and can implement it in the task the same way we did in the hydra snakemake pipeline.
+
+Next, we use the same approach to compute the spatial averages. We will use the `xarray` library to compute the mean over the specified spatial region. Fortunately, most of this work is already done for us in the previous pipeline, so we can reuse the code to compute the spatial averages.
+
+```{python}
+from era5_sandbox.aggregate import netcdf_to_tiff
+
+```
+
+```{python}
+variable = "swvl1"  # Example variable name
+crs = "EPSG:4326"  # Example CRS
+
+
+variable = ds[variable]
+ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
+ds_ = ds.rio.write_crs(crs)
+# Save as GeoTIFF
+ds_.rio.to_raster(f"output.tif")
+
+```
+
+```{python}
+resampled_tiff = netcdf_to_tiff(
+    ds=resampled_nc,
+    band=1,
+    variable="swvl1",
+    crs="EPSG:4326"
+)
+
+```
+
+```{python}
+ex_netcdf = resample_netcdf_diurnal(ds_path)
+
+```

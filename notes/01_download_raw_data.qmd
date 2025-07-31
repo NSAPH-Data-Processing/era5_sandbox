@@ -1,0 +1,252 @@
+---
+title: "Download Module: Downloading Raw Data from CDSAPI"
+---
+
+## download
+
+> This module downloads the raw data from CDS and saves it in the local directory
+
+```{python}
+#| default_exp download
+
+```
+
+```{python}
+#| hide
+from nbdev.showdoc import *
+```
+
+We use a similar approach to the one in the tutorial to download the data
+to local storage.
+
+```{python}
+#| export
+import os
+import hydra
+import cdsapi
+import tempfile
+import zipfile
+import requests
+import geopandas as gpd
+from pathlib import Path
+from pyprojroot import here
+from shapely.geometry import box
+from omegaconf import DictConfig, ListConfig, OmegaConf
+
+try: from era5_sandbox.core import _expand_path
+except: from core import _expand_path
+```
+
+```{python}
+#| exporti
+def _validate_query(
+        query_body: DictConfig
+    )->bool:
+    '''
+    Check that the query is valid
+    ###TODO Not a good idea to overwrite components of the query body because the user may believe something and the function may give somehting else back
+     Better to just tell them something is wrong
+    '''
+
+    required_keys = ['product_type', 'variable', 'year', 'month', 'day', 'time', 'area', 'data_format', 'download_format']
+    if not all([key in query_body.keys() for key in required_keys]):
+        print(f"Missing required key in query. Required keys are {required_keys}")
+        print("Query validation failed")
+        raise ValueError("Invalid query")
+    
+    if isinstance(query_body['year'], ListConfig):
+        query_body['year'] = [str(x).zfill(2) for x in query_body['year']]
+    else:
+        query_body['year'] = str(query_body['year'])
+    if isinstance(query_body['month'], ListConfig):
+        query_body['month'] = [str(x).zfill(2) for x in query_body['month']]
+    else:
+        query_body['month'] = str(query_body['month']).zfill(2)
+    
+    if isinstance(query_body['day'], ListConfig):
+        query_body['day'] = [str(x).zfill(2) for x in query_body['day']]
+    else:
+        query_body['day'] = str(query_body['day']).zfill(2)
+
+    return OmegaConf.to_container(query_body, resolve=True)
+```
+
+```{python}
+#| export
+def fetch_GADM(
+        url: str="https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg",
+        output_file: str="gadm41_MDG.gpkg" # file path to save the GADM data
+    )-> str:
+    '''
+    Fetch the GADM data for Madagascar
+    https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg
+    '''
+
+    output_file_path = _expand_path(output_file)
+    if os.path.exists(output_file_path):
+        print("GADM data already exists")
+        return output_file_path
+    
+    print("Fetching GADM bounding box data for region")
+    os.system("curl --output {} {}".format(output_file, url))
+    print("GADM data fetched")
+    
+    return output_file_path
+```
+
+```{python}
+#| export
+
+def create_bounding_box(
+    zip_url_or_path: str,
+    buffer_km: float = 50,
+    round_to: int = 1
+) -> list:
+    '''
+    Create a bounding box from OCHA/HDX shapefile data with a buffer.
+
+    Parameters:
+        zip_url_or_path (str): URL or local path to the zipped shapefile.
+        buffer_km (float): Buffer distance in kilometers to expand the bounding box.
+        round_to (int): Number of decimal places to round the bounding box coordinates.
+
+    Returns:
+        list: Bounding box in the CDS API area format [North, West, South, East].
+    '''
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Download if it's a URL
+        if zip_url_or_path.startswith("http"):
+            response = requests.get(zip_url_or_path)
+            zip_path = os.path.join(tmpdir, "ocha_data.zip")
+            with open(zip_path, "wb") as f:
+                f.write(response.content)
+        else:
+            zip_path = zip_url_or_path
+
+        # Unzip
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(tmpdir)
+
+        # Find the .shp file
+        shp_files = list(Path(tmpdir).rglob("*.shp"))
+        if not shp_files:
+            raise FileNotFoundError("No shapefile (.shp) found in the extracted archive.")
+        shp_path = str(shp_files[0])  # Use first found .shp
+
+        # Read shapefile
+        shape = gpd.read_file(shp_path)
+
+        # Reproject to projected CRS (you may want to detect the correct UTM zone)
+        shape_proj = shape.to_crs(epsg=32738)
+
+        # Apply buffer
+        buffered = shape_proj.geometry.buffer(buffer_km * 1000)
+
+        # Convert back to geographic coordinates
+        buffered_geo = gpd.GeoSeries(buffered, crs=shape_proj.crs).to_crs(epsg=4326)
+
+        # Get bounding box
+        bounds = buffered_geo.total_bounds  # [min_x, min_y, max_x, max_y]
+        bbox = [
+            round(bounds[3], round_to),  # North
+            round(bounds[0], round_to),  # West
+            round(bounds[1], round_to),  # South
+            round(bounds[2], round_to)   # East
+        ]
+
+        return bbox
+```
+
+```{python}
+#| export
+def download_raw_era5(
+        cfg: DictConfig  # hydra configuration file
+    )->None:
+    '''
+    Send the query to the API and download the data
+    '''
+
+    # parse the cfg
+    testing = cfg.development_mode # for testing
+    output_dir = here("data/input") # output directory
+    
+    geography = cfg.query.geography
+
+    target = os.path.join(_expand_path(output_dir), "{}_{}_{}.nc".format(geography, cfg.query['year'], cfg.query['month']))
+    
+    client = cdsapi.Client()
+    
+    query = _validate_query(cfg.query)
+
+    dataset = cfg.dataset
+    # to make sure the query is valid at the end
+    del query['geography']
+    
+    # Send the query to the client
+    if not testing:
+        bounds = create_bounding_box(cfg.geographies[geography]['shapefile'])
+        query['area'] = bounds
+        client.retrieve(dataset, query).download(target)
+
+        print("Downloaded file to: {}".format(target))
+    else:
+        print(f"Testing mode. Not downloading data. Query is {query}")
+
+    print("Done")
+```
+
+## Tests and Main
+
+Here we define some tests and the main function that will be used to download the data.
+
+```{python}
+#| eval: false
+from hydra import initialize, compose
+from omegaconf import OmegaConf
+
+# unfortunately, we have to use the initialize function to load the config file
+# this is because the @hydra decorator does not work with Notebooks very well
+# this is a known issue with Hydra: https://gist.github.com/bdsaglam/586704a98336a0cf0a65a6e7c247d248
+# 
+# just use the relative path from the notebook to the config dir
+try:
+    with initialize(version_base=None, config_path="../conf"):
+        cfg = compose(config_name='config.yaml')
+except Exception as e:
+    print(f"Error initializing Hydra: {e}")
+    with initialize(version_base=None, config_path="conf"):
+        cfg = compose(config_name='config.yaml')
+
+cfg.development_mode = False
+cfg.query['year'] = 2017
+cfg.query['month'] = 11
+#cfg.query['day'] = 1
+#cfg.query['time'] = "00:00"
+cfg.query['geography'] = "nepal"
+download_raw_era5(cfg)
+```
+
+```{python}
+#| export
+@hydra.main(config_path="../../conf", config_name="config", version_base=None)
+def main(cfg: DictConfig) -> None:
+    download_raw_era5(cfg=cfg)
+    # better approach would be to have the function only use the specific arguments of the config
+```
+
+```{python}
+#| export
+#| eval: false
+try: from nbdev.imports import IN_NOTEBOOK
+except: IN_NOTEBOOK=False
+
+if __name__ == "__main__" and not IN_NOTEBOOK:
+    print('Running from __main__ ...')
+    
+    main()
+```
+
+```{python}
+#| hide
+import nbdev; nbdev.nbdev_export()
+```

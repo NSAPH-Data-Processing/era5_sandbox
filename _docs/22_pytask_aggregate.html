@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Aggregation Task – era5_sandbox</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-20da06d658d047a248207d3462be1903.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="Aggregation Task – era5_sandbox">
+<meta property="og:description" content="Sandbox environment for era5 development">
+<meta property="og:site_name" content="era5_sandbox">
+<meta name="twitter:title" content="Aggregation Task – era5_sandbox">
+<meta name="twitter:description" content="Sandbox environment for era5 development">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">era5_sandbox</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./22_pytask_aggregate.html">Aggregation Task</a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">era5_sandbox</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <span class="sidebar-item-text sidebar-link text-start">
+ <span class="menu-text">Snakemake Modules</span></span>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">core</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./download_raw_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">download</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./02_aggregate.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">aggregate</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./03_publish.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">publish</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <span class="sidebar-item-text sidebar-link text-start">
+ <span class="menu-text">PyTask Modules</span></span>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pytask_demo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">task_data_preparation</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pytask_config.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">config</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pytask_logger.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">logger</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./pytask_download.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">task_download</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./22_pytask_aggregate.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">Aggregation Task</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#task_aggregate" id="toc-task_aggregate" class="nav-link active" data-scroll-target="#task_aggregate">task_aggregate</a>
+  <ul class="collapse">
+  <li><a href="#compute_diurnal_class" id="toc-compute_diurnal_class" class="nav-link" data-scroll-target="#compute_diurnal_class">compute_diurnal_class</a></li>
+  <li><a href="#resample_netcdf_diurnal" id="toc-resample_netcdf_diurnal" class="nav-link" data-scroll-target="#resample_netcdf_diurnal">resample_netcdf_diurnal</a></li>
+  </ul></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/TinasheMTapera/era5_sandbox/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Aggregation Task</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="task_aggregate" class="level1">
+<h1>task_aggregate</h1>
+<blockquote class="blockquote">
+<p>This task aggregates the downloaded data into spatial and temporal averages. It uses xarray to compute summary statistics over the specified time period and spatial region. The aggregation is done diurnally, so we will fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.</p>
+</blockquote>
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<p>To do diurnal aggregation, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the <a href="https://astral.readthedocs.io/en/latest/">astral library</a> to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.</p>
+<div id="cell-3" class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>eg_file <span class="op">=</span> BLD <span class="op">/</span> <span class="st">"2024_11_nepal.nc"</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> ClimateDataFileHandler(eg_file) <span class="im">as</span> handler:</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    ds_path <span class="op">=</span> handler.get_dataset(<span class="st">"instant"</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_dataset(ds_path, chunks <span class="op">=</span> {<span class="st">"valid_time"</span>: <span class="dv">24</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+FileNotFoundError                         Traceback (most recent call last)
+Cell In[1], line 2
+      1 eg_file = BLD / "2024_11_nepal.nc"
+----&gt; 2 with ClimateDataFileHandler(eg_file) as handler:
+      3     ds_path = handler.get_dataset("instant")
+      5     ds = xr.open_dataset(ds_path, chunks = {"valid_time": 24})
+
+File /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py:245, in __enter__(self)
+    243 @patch
+    244 def __enter__(self:ClimateDataFileHandler):
+--&gt; 245     self.prepare()
+    246     return self
+
+File /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py:195, in ClimateDataFileHandler.prepare(self)
+    192     return
+    194 if not self.original_path.exists():
+--&gt; 195     raise FileNotFoundError(f"{self.original_path} does not exist")
+    197 # Detect ZIP by magic number
+    198 # chatgpt implementation here; this is a common way to check for zip files
+    199 with open(self.original_path, "rb") as f:
+
+FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-b845ec10116b&gt;", line 2, in &lt;module&gt;
+    with ClimateDataFileHandler(eg_file) as handler:
+
+  File "/net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py", line 245, in __enter__
+    self.prepare()
+
+  File "/net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py", line 195, in prepare
+    raise FileNotFoundError(f"{self.original_path} does not exist")
+
+FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist</code></pre>
+</div>
+</div>
+<p>We can see the astral library in action below:</p>
+<div id="cell-5" class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get the location of a datapoint in the dataset</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>lat, <span class="bu">long</span> <span class="op">=</span> ds.coords[<span class="st">"latitude"</span>].values[<span class="dv">0</span>], ds.coords[<span class="st">"longitude"</span>].values[<span class="dv">0</span>]</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values[<span class="dv">0</span>]</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(time, utc<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 2
+      1 # get the location of a datapoint in the dataset
+----&gt; 2 lat, long = ds.coords["latitude"].values[0], ds.coords["longitude"].values[0]
+      3 time = ds['valid_time'].values[0]
+      4 dt = pd.to_datetime(time, utc=True)
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-78692b4d0476&gt;", line 2, in &lt;module&gt;
+    lat, long = ds.coords["latitude"].values[0], ds.coords["longitude"].values[0]
+                ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-6" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 dt
+
+NameError: name 'dt' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'dt' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-36673dcb6ee0&gt;", line 1, in &lt;module&gt;
+    dt
+
+NameError: name 'dt' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-7" class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>observer <span class="op">=</span> Observer(latitude<span class="op">=</span>lat, longitude<span class="op">=</span><span class="bu">long</span>, elevation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>sun_info</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 observer = Observer(latitude=lat, longitude=long, elevation=0)
+      2 sun_info = sun.sun(observer, date=dt)
+      3 sun_info
+
+NameError: name 'lat' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'lat' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-e3038fd43777&gt;", line 1, in &lt;module&gt;
+    observer = Observer(latitude=lat, longitude=long, elevation=0)
+                                 ^^^
+
+NameError: name 'lat' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-8" class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#fetch a random time from valid_time</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>options <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>random_time <span class="op">=</span> random.choice(options)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(random_time, utc<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunrise'</span>]:</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is NIGHTTIME"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> dt <span class="op">&gt;=</span> sun_info[<span class="st">'sunrise'</span>] <span class="kw">and</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunset'</span>]:</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is DAYTIME"</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is NIGHTTIME"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 get_ipython().run_cell_magic('timeit', '', 'import random\n\n#fetch a random time from valid_time\noptions = ds[\'valid_time\'].values\n\nrandom_time = random.choice(options)\ndt = pd.to_datetime(random_time, utc=True)\nsun_info = sun.sun(observer, date=dt)\nif dt &lt; sun_info[\'sunrise\']:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\nelif dt &gt;= sun_info[\'sunrise\'] and dt &lt; sun_info[\'sunset\']:\n    print(f"Randomly selected time: {dt} is DAYTIME")\nelse:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\n')
+
+File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py:2542, in InteractiveShell.run_cell_magic(self, magic_name, line, cell)
+   2540 with self.builtin_trap:
+   2541     args = (magic_arg_s, cell)
+-&gt; 2542     result = fn(*args, **kwargs)
+   2544 # The code below prevents the output from being displayed
+   2545 # when using magics with decorator @output_can_be_silenced
+   2546 # when the last Python token in the expression is a ';'.
+   2547 if getattr(fn, magic.MAGIC_OUTPUT_CAN_BE_SILENCED, False):
+
+File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py:1221, in ExecutionMagics.timeit(self, line, cell, local_ns)
+   1219 for index in range(0, 10):
+   1220     number = 10 ** index
+-&gt; 1221     time_number = timer.timeit(number)
+   1222     if time_number &gt;= 0.2:
+   1223         break
+
+File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py:182, in Timer.timeit(self, number)
+    180 gc.disable()
+    181 try:
+--&gt; 182     timing = self.inner(it, self.timer)
+    183 finally:
+    184     if gcold:
+
+File &lt;magic-timeit&gt;:4, in inner(_it, _timer)
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-55d4fcf3ba69&gt;", line 1, in &lt;module&gt;
+    get_ipython().run_cell_magic('timeit', '', 'import random\n\n#fetch a random time from valid_time\noptions = ds[\'valid_time\'].values\n\nrandom_time = random.choice(options)\ndt = pd.to_datetime(random_time, utc=True)\nsun_info = sun.sun(observer, date=dt)\nif dt &lt; sun_info[\'sunrise\']:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\nelif dt &gt;= sun_info[\'sunrise\'] and dt &lt; sun_info[\'sunset\']:\n    print(f"Randomly selected time: {dt} is DAYTIME")\nelse:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\n')
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 2542, in run_cell_magic
+    result = fn(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py", line 1221, in timeit
+    time_number = timer.timeit(number)
+                  ^^^^^^^^^^^^^^^^^^^^
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py", line 182, in timeit
+    timing = self.inner(it, self.timer)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+  File "&lt;magic-timeit&gt;", line 4, in inner
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<p>This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. Let’s put this in a function</p>
+<hr>
+<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L20" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="compute_diurnal_class" class="level3">
+<h3 class="anchored" data-anchor-id="compute_diurnal_class">compute_diurnal_class</h3>
+<blockquote class="blockquote">
+<pre><code> compute_diurnal_class (ds:xarray.core.dataset.Dataset)</code></pre>
+</blockquote>
+<p><em>Compute the diurnal value for each data point in the dataset. This function iterates over each data point in the dataset, calculates the sunrise and sunset times for the given time, latitude and longitude, and returns whether or not that data point is daytime or nighttime.</em></p>
+<div id="cell-11" class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>compute_diurnal_class(ds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 compute_diurnal_class(ds)
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-5beb4ec0e7fe&gt;", line 1, in &lt;module&gt;
+    compute_diurnal_class(ds)
+                          ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<p>We can then add this value to the dataset as a new variable, which we can use to compute the diurnal averages.</p>
+<div id="cell-13" class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>diurnal_vals <span class="op">=</span> compute_diurnal_class(ds)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>ds <span class="op">=</span> ds.assign_coords(diurnal_class<span class="op">=</span>(<span class="st">"valid_time"</span>, diurnal_vals))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 diurnal_vals = compute_diurnal_class(ds)
+      2 ds = ds.assign_coords(diurnal_class=("valid_time", diurnal_vals))
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-5f19459e1541&gt;", line 1, in &lt;module&gt;
+    diurnal_vals = compute_diurnal_class(ds)
+                                         ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<p>Now, to see if it will aggregate:</p>
+<div id="cell-15" class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>ds.coords[<span class="st">"date"</span>] <span class="op">=</span> ds[<span class="st">"valid_time"</span>].dt.floor(<span class="st">"D"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 ds.coords["date"] = ds["valid_time"].dt.floor("D")
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-3781120f40aa&gt;", line 1, in &lt;module&gt;
+    ds.coords["date"] = ds["valid_time"].dt.floor("D")
+                        ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-16" class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ds[<span class="st">'diurnal_class'</span>].dims)</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ds[<span class="st">'date'</span>].dims)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 print(ds['diurnal_class'].dims)
+      2 print(ds['date'].dims)
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-31c2df2957c7&gt;", line 1, in &lt;module&gt;
+    print(ds['diurnal_class'].dims)
+          ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-17" class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ds[<span class="st">"d2m"</span>].isel(valid_time<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ds[<span class="st">"d2m"</span>].values.shape</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>np.isnan(ds[<span class="st">"d2m"</span>].values).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 ds["d2m"].isel(valid_time=0)
+      2 ds["d2m"].values.shape
+      3 np.isnan(ds["d2m"].values).sum()
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-cc954680246c&gt;", line 1, in &lt;module&gt;
+    ds["d2m"].isel(valid_time=0)
+    ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-18" class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>aggregated <span class="op">=</span> ds.groupby([<span class="st">"date"</span>, <span class="st">"diurnal_class"</span>]).<span class="bu">reduce</span>(np.nanmean, dim<span class="op">=</span><span class="st">"valid_time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-e53df069b0eb&gt;", line 1, in &lt;module&gt;
+    aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
+                 ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-19" class="cell">
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>aggregated[<span class="st">'d2m'</span>].values</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 aggregated['d2m'].values
+
+NameError: name 'aggregated' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'aggregated' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-7a11f6759c31&gt;", line 1, in &lt;module&gt;
+    aggregated['d2m'].values
+    ^^^^^^^^^^
+
+NameError: name 'aggregated' is not defined</code></pre>
+</div>
+</div>
+<p>That appears to work! So we can implement it in a function, similar to the one we used in the original download hydra pipeline.</p>
+<hr>
+<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L49" target="_blank" style="float:right; font-size:smaller">source</a></p>
+</section>
+<section id="resample_netcdf_diurnal" class="level3">
+<h3 class="anchored" data-anchor-id="resample_netcdf_diurnal">resample_netcdf_diurnal</h3>
+<blockquote class="blockquote">
+<pre><code> resample_netcdf_diurnal (fpath:str, diurnal_col:str='diurnal_class',
+                          agg_func:&lt;built-infunctioncallable&gt;=&lt;function
+                          mean at 0x1506c0b30870&gt;,
+                          time_dim:str='valid_time',
+                          chunks:dict|None=None)</code></pre>
+</blockquote>
+<p>*Resample a netCDF file to a specified frequency and aggregation method.</p>
+<p>Args: fpath (str): Path to the netCDF file. diurnal_col (str): Name of the column for diurnal classification. agg_func (callable): Aggregation function (e.g., np.mean, np.sum).</p>
+<p>Returns: xarray.Dataset: Resampled dataset.*</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 6%">
+<col style="width: 25%">
+<col style="width: 34%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Default</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>fpath</td>
+<td>str</td>
+<td></td>
+<td>Path to the netCDF file.</td>
+</tr>
+<tr class="even">
+<td>diurnal_col</td>
+<td>str</td>
+<td>diurnal_class</td>
+<td>Name of the column for diurnal classification.</td>
+</tr>
+<tr class="odd">
+<td>agg_func</td>
+<td>callable</td>
+<td>mean</td>
+<td>Aggregation function (e.g., np.mean, np.sum).</td>
+</tr>
+<tr class="even">
+<td>time_dim</td>
+<td>str</td>
+<td>valid_time</td>
+<td>Name of the time dimension in the dataset.</td>
+</tr>
+<tr class="odd">
+<td>chunks</td>
+<td>dict | None</td>
+<td>None</td>
+<td>keywords for python’s xarray module, e.g chunking</td>
+</tr>
+<tr class="even">
+<td><strong>Returns</strong></td>
+<td><strong>Dataset</strong></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Chunking is necessary for the data size while testing, so we will use it in the function. We can then use this function to compute the diurnal averages for the dataset.</p>
+<div id="cell-23" class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>resampled_nc <span class="op">=</span> resample_netcdf_diurnal(ds_path, chunks<span class="op">=</span>{<span class="st">"valid_time"</span>: <span class="dv">24</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
+
+NameError: name 'ds_path' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds_path' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-30eefd249bc7&gt;", line 1, in &lt;module&gt;
+    resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
+                                           ^^^^^^^
+
+NameError: name 'ds_path' is not defined</code></pre>
+</div>
+</div>
+<p>Awesome, now we know how to do the diurnal aggregation, and can implement it in the task the same way we did in the hydra snakemake pipeline.</p>
+<p>Next, we use the same approach to compute the spatial averages. We will use the <code>xarray</code> library to compute the mean over the specified spatial region. Fortunately, most of this work is already done for us in the previous pipeline, so we can reuse the code to compute the spatial averages.</p>
+<div id="cell-25" class="cell">
+<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.aggregate <span class="im">import</span> netcdf_to_tiff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-26" class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>variable <span class="op">=</span> <span class="st">"swvl1"</span>  <span class="co"># Example variable name</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>crs <span class="op">=</span> <span class="st">"EPSG:4326"</span>  <span class="co"># Example CRS</span></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>variable <span class="op">=</span> ds[variable]</span>
+<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>ds_ <span class="op">=</span> variable.rio.set_spatial_dims(x_dim<span class="op">=</span><span class="st">"longitude"</span>, y_dim<span class="op">=</span><span class="st">"latitude"</span>)</span>
+<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>ds_ <span class="op">=</span> ds.rio.write_crs(crs)</span>
+<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as GeoTIFF</span></span>
+<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>ds_.rio.to_raster(<span class="ss">f"output.tif"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 5
+      1 variable = "swvl1"  # Example variable name
+      2 crs = "EPSG:4326"  # Example CRS
+----&gt; 5 variable = ds[variable]
+      6 ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
+      7 ds_ = ds.rio.write_crs(crs)
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-ea7bef151342&gt;", line 5, in &lt;module&gt;
+    variable = ds[variable]
+               ^^
+
+NameError: name 'ds' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-27" class="cell">
+<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>resampled_tiff <span class="op">=</span> netcdf_to_tiff(</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    ds<span class="op">=</span>resampled_nc,</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    band<span class="op">=</span><span class="dv">1</span>,</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    variable<span class="op">=</span><span class="st">"swvl1"</span>,</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    crs<span class="op">=</span><span class="st">"EPSG:4326"</span></span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 2
+      1 resampled_tiff = netcdf_to_tiff(
+----&gt; 2     ds=resampled_nc,
+      3     band=1,
+      4     variable="swvl1",
+      5     crs="EPSG:4326"
+      6 )
+
+NameError: name 'resampled_nc' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'resampled_nc' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-b31b1a53ee92&gt;", line 2, in &lt;module&gt;
+    ds=resampled_nc,
+       ^^^^^^^^^^^^
+
+NameError: name 'resampled_nc' is not defined</code></pre>
+</div>
+</div>
+<div id="cell-28" class="cell">
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>ex_netcdf <span class="op">=</span> resample_netcdf_diurnal(ds_path)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+Cell In[1], line 1
+----&gt; 1 ex_netcdf = resample_netcdf_diurnal(ds_path)
+
+NameError: name 'ds_path' is not defined</code></pre>
+</div>
+<div class="cell-output cell-output-error">
+<pre><code>NameError: name 'ds_path' is not defined
+Traceback (most recent call last):
+
+  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
+    exec(code_obj, self.user_global_ns, self.user_ns)
+
+  File "&lt;ipython-input-1-82c3dae6b138&gt;", line 1, in &lt;module&gt;
+    ex_netcdf = resample_netcdf_diurnal(ds_path)
+                                        ^^^^^^^
+
+NameError: name 'ds_path' is not defined</code></pre>
+</div>
+</div>
+
+
+</section>
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp("https:\/\/TinasheMTapera\.github\.io\/era5_sandbox");
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/TinasheMTapera/era5_sandbox/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>

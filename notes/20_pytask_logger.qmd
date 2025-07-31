@@ -1,0 +1,40 @@
+---
+title: "Logging: A simple logger to inject into `pytask` jobs"
+---
+
+## logger
+
+> A simple logger module for the pytask tasks
+
+```{python}
+#| default_exp pytask_logger
+```
+
+```{python}
+#| hide
+from nbdev.showdoc import *
+```
+
+```{python}
+#| export
+
+import logging
+from pathlib import Path
+from pyprojroot import here
+
+LOG_DIR = here("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+def setup_logger(name: str, log_file: Path, level=logging.INFO) -> logging.Logger:
+    formatter = logging.Formatter('%(asctime)s — %(name)s — %(levelname)s — %(message)s')
+
+    handler = logging.FileHandler(log_file, mode='a')
+    handler.setFormatter(formatter)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+    logger.addHandler(handler)
+    logger.propagate = False
+
+    return logger
+```

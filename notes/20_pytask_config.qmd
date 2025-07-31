@@ -1,0 +1,120 @@
+---
+title: "`pytask` Config: Defining the Pipeline Internals in `pytask`"
+---
+
+## config
+
+> This is the config module for the `pytask` pipeline. 
+This module defines the data catalog(s) and any hard-coded parameters that are used throughout the pipeline.
+
+```{python}
+#| default_exp config
+```
+
+```{python}
+#| hide
+from nbdev.showdoc import *
+```
+
+```{python}
+#| export
+
+from pathlib import Path
+from pyprojroot import here
+from pytask import DataCatalog
+
+SRC = here("src").resolve()
+BLD = here("bld").resolve()
+
+data_catalog = DataCatalog()
+```
+
+## The Download Task
+
+A good strategy may be to set the hard coded parameters in the config file, and then use the `pytask` data catalog to manage the data. This way, we can easily change the parameters without having to modify the code. This is especially useful for the API query, where we need to be able to set the parameter grid for the years and data types we want to download data for. So, let's create an entry in the data catalog specifically for the download task.
+
+A good strategy I thought about for grid parameter comprehension is to create a dataframe or namedtuple that expands all the combinations of parameters, and then uses each combination to create the tasks which are then easily added to the data catalog. This way, we can still easily inspect the pipeline and see what tasks are being run, while also being able to easily change the parameters in the config file without too much hassle.
+
+An important framework decision I'm making here is that each ROW of the dataframe corresponds to a single task, so that we can quickly understand at a glance what the task is doing, and also easily develop the code for the task itself. This is different from the hydra approach where a job is first specified by a default config, and then the parameters are swept over in the config file. This is a more flexible approach, IMO.
+
+So, to do this, we define one job as a query to the CDS API that must contain:
+- The dataset (re-analysis)
+- The year
+- The month
+- All days in the month
+- All times of day (hour)
+- The geography (region), which will need:
+    - The URL to the shapefile to calculate the bounding box
+
+Given one combination of all of these, a single job can complete the first "task" in parallel.
+
+```{python}
+#| export
+
+# download task parameters
+years = [x for x in range(2009, 2025)]
+months = [x for x in range(1, 13)]
+days = [x for x in range(1, 32)]
+times = [f"{x:02d}:00" for x in range(24)]
+geographies = [
+    {
+        "name": "madagascar", 
+        "shapefile": "https://data.humdata.org/dataset/26fa506b-0727-4d9d-a590-d2abee21ee22/resource/ed94d52e-349e-41be-80cb-62dc0435bd34/download/mdg_adm_bngrc_ocha_20181031_shp.zip"
+    },
+    {
+        "name": "nepal", 
+        "shapefile": "https://data.humdata.org/dataset/07db728a-4f0f-4e98-8eb0-8fa9df61f01c/resource/2eb4c47f-fd6e-425d-b623-d35be1a7640e/download/npl_adm_nd_20240314_ab_shp.zip"
+    }
+    ]
+product_type = "reanalysis"
+variables = ["2m_dewpoint_temperature", "2m_temperature", "total_precipitation", "volumetric_soil_water_layer_1"]
+```
+
+Now, we can use a namedtuple to create a class, `query`, that will be passed directly from the pytask data catalog to the task function.
+
+```{python}
+#| export
+
+from typing import NamedTuple
+
+class Query(NamedTuple):
+    """A named tuple to hold the query parameters for the download."""
+    year: str
+    month: str
+    day: list[str]
+    time: list[str]
+    geography: dict
+    product_type: str
+    variables: list[str]
+
+    def name(self):
+        """Return a unique name for the query based on year, month, and geography."""
+        return f"{self.year}_{self.month}_{self.geography['name']}"
+    def __str__(self):
+        return f"Query(year={self.year}, month={self.month}, geography={self.geography['name']})"
+
+queries = []
+
+for year in years:
+    for month in months:
+        for geography in geographies:
+            queries.append(Query(str(year), str(month), [str(x) for x in days], times, geography, product_type, variables))
+```
+
+```{python}
+print(f"Number of estimated jobs: {len(queries)}. Examples...")
+
+for query in queries[:5]:
+    print(query)
+```
+
+Now add them to the catalog:
+
+```{python}
+#| export
+data_catalog.add("queries", queries)
+```
+
+## The Aggregation Task
+
+To carry out the aggregation, we will follow similar logic to the original pipeline and use xarray to aggregate data into spatial and temporal averages. The aggregation task will take the downloaded data and compute the mean over the specified time period and spatial region. However, in this case, we want to aggregate the data diurnally, so we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
