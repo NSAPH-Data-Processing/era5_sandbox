@@ -64,6 +64,9 @@ To do that, we must import the `models` module and create a Dataset object:
 
 ```{python}
 from pyDataverse.models import Dataset
+```
+
+```{python}
 ds = Dataset()
 ```
 
@@ -79,7 +82,9 @@ We can populate the object from the dummy data on the github repo:
 from pyDataverse.utils import read_file
 from urllib.request import urlretrieve
 import tempfile
+```
 
+```{python}
 # url for dummy data
 url = "https://raw.githubusercontent.com/gdcc/pyDataverse/refs/heads/main/tests/data/user-guide/dataset.json"
 
@@ -121,9 +126,6 @@ from pyDataverse.api import SearchApi
 
 ```{python}
 #| eval: false
-
-from pyDataverse.api import SearchApi
-
 search_api = SearchApi(config['base_url'], config['api_token'])
 resp = search_api.search("Youth from Austria", data_type="dataset")
 results = resp.json()['data']['items']

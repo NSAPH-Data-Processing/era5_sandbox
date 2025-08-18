@@ -22,12 +22,28 @@ from nbdev.showdoc import *
 from pathlib import Path
 from pyprojroot import here
 from pytask import DataCatalog
+from typing import NamedTuple
 
-SRC = here("src").resolve()
-BLD = here("bld").resolve()
 
-data_catalog = DataCatalog()
+SRC = here() / "src" / "era5_sandbox"
+BLD = here() / "bld"
+
+demo_catalog = DataCatalog()
 ```
+
+## `DEV_MODE`: A Quick Development Flag
+
+I'm adding a flag to the config that can be used for quick development. 
+If you import this boolean variable, it can be used to skip tasks,
+setup samples, etc. on the fly by `marking` a task with the `pytask.mark.skipif`
+decorator. Change this to `False` when you're ready to run the full pipeline.
+
+```{python}
+#| export
+
+DEV_MODE=False
+```
+
 
 ## The Download Task
 
@@ -75,8 +91,6 @@ Now, we can use a namedtuple to create a class, `query`, that will be passed dir
 ```{python}
 #| export
 
-from typing import NamedTuple
-
 class Query(NamedTuple):
     """A named tuple to hold the query parameters for the download."""
     year: str
@@ -108,13 +122,33 @@ for query in queries[:5]:
     print(query)
 ```
 
-Now add them to the catalog:
+Now add them to the catalog. We're going to use a dictionary to
+nest data catalogs so that we can return specific task products to
+named data catalog nodes.
 
 ```{python}
 #| export
-data_catalog.add("queries", queries)
+
+products = ["mydata", 'mydata2', "download", "aggregate", "viz", "publish"]
+
+data_catalog = {
+
+    product: DataCatalog(name=f"{product}")
+    for product in products
+}
+data_catalog['download'].add("queries", queries)
 ```
 
 ## The Aggregation Task
 
 To carry out the aggregation, we will follow similar logic to the original pipeline and use xarray to aggregate data into spatial and temporal averages. The aggregation task will take the downloaded data and compute the mean over the specified time period and spatial region. However, in this case, we want to aggregate the data diurnally, so we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
+
+To do this, let's use a dataframe as opposed to a list of class objects.
+
+```{python}
+#| export
+
+# aggregate task parameters
+
+
+```

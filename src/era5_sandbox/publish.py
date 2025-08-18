@@ -13,16 +13,16 @@ from pyprojroot import here
 # %% ../../notes/03_publish.qmd 7
 from pyDataverse.api import NativeApi
 
-# %% ../../notes/03_publish.qmd 24
+# %% ../../notes/03_publish.qmd 26
 from pyDataverse.api import SearchApi
 
-# %% ../../notes/03_publish.qmd 30
+# %% ../../notes/03_publish.qmd 32
 import geopandas as gpd
 import pandas as pd
 import re
 import glob
 
-# %% ../../notes/03_publish.qmd 33
+# %% ../../notes/03_publish.qmd 35
 # 
 
 def gather_exposure_geodataframes(
@@ -80,17 +80,17 @@ def gather_exposure_geodataframes(
 
     return [pd.concat(merged_df).reset_index(drop=True), initial_gdf[[polygon_id, "geometry"]]]
 
-# %% ../../notes/03_publish.qmd 37
+# %% ../../notes/03_publish.qmd 39
 from pyDataverse.models import Datafile
 import os
 import pathlib
 
-# %% ../../notes/03_publish.qmd 42
+# %% ../../notes/03_publish.qmd 44
 from hydra import initialize, compose
 from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
 
-# %% ../../notes/03_publish.qmd 44
+# %% ../../notes/03_publish.qmd 46
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -167,7 +167,7 @@ def main(cfg: DictConfig) -> None:
 
     print("All files processed and uploaded successfully.")
 
-# %% ../../notes/03_publish.qmd 45
+# %% ../../notes/03_publish.qmd 47
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False

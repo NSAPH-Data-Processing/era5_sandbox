@@ -164,7 +164,9 @@ available in the sandbox folder, and the path to said folder is set in the confi
 ```{python}
 from hydra import initialize, compose
 from omegaconf import OmegaConf
+```
 
+```{python}
 # unfortunately, we have to use the initialize function to load the config file
 # this is because the @hydra decorator does not work with Notebooks very well
 # this is a known issue with Hydra: https://gist.github.com/bdsaglam/586704a98336a0cf0a65a6e7c247d248
@@ -359,6 +361,9 @@ class ClimateDataFileHandler:
 ```{python}
 import xarray as xr
 from fastcore.test import test_fail
+```
+
+```{python}
 
 eg_file = here() / "data/input/madagascar_2023_10.nc"
 
@@ -477,7 +482,9 @@ We can see that this API tester tool works with Hydra configuration:
 ```{python}
 from hydra import initialize, compose
 from omegaconf import OmegaConf
+```
 
+```{python}
 # unfortunately, we have to use the initialize function to load the config file
 # this is because the @hydra decorator does not work with Notebooks very well
 # this is a known issue with Hydra: https://gist.github.com/bdsaglam/586704a98336a0cf0a65a6e7c247d248

@@ -398,9 +398,13 @@ That looks great! The data is aggregated to the healthshed level, and we can see
 Now we can wrap this up in a main function that will simply take in the input file and generate this output. We can also add some tests to make sure the data is aggregated correctly; tests will run automatically in this notebook.
 
 ```{python}
-%%timeit
-
 import random
+```
+
+
+```{python}
+#| eval: false
+%%timeit
 
 variables = ["t2m", "d2m"]
 years = ["20{:02d}".format(m) for m in range(9, 24)]
@@ -465,7 +469,7 @@ plt.show()
 3.2 seconds per aggregation is pretty cool!
 
 ```{python}
-
+#| eval: false
 result.to_parquet(here() / "data/testing/test_aggregation.parquet")
 ```
 
@@ -565,6 +569,7 @@ def aggregate_data(
 ```
 
 ```{python}
+#| eval: false
 try:
     with initialize(version_base=None, config_path="../conf"):
         cfg = compose(config_name='config.yaml')
@@ -584,14 +589,17 @@ aggregate_data(cfg, here() / "data/input/nepal_2017_11.nc", here() / "data/testi
 ```
 
 ```{python}
+#| eval: false
 parquet_file = gpd.read_parquet(here() / "data/testing/test_nepal_aggregation.parquet")
 ```
 
 ```{python}
+#| eval: false
 parquet_file
 ```
 
 ```{python}
+#| eval: false
 parquet_file.plot(column="day_22_daily_mean", legend=True)
 ```
 

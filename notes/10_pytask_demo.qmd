@@ -62,13 +62,18 @@ The former tells Python where to find the source code and build directory for `p
 
 ```{python}
 #| export
+
+import os
 from pathlib import Path
 from typing import Annotated
 
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 from era5_sandbox.config import BLD
+from era5_sandbox.config import data_catalog, demo_catalog
 
+from pytask import PickleNode
 from pytask import Product
 ```
 
@@ -90,7 +95,7 @@ Using `nbdev`, we can also include all of the bells and whistles of function doc
 #| export
 
 def task_create_random_data(
-        seed: Annotated[int, 42], # Default seed for reproducibility
+        seed: Annotated[int, 42],                                   # Default seed for reproducibility
         path_to_data: Annotated[Path, Product] = BLD / "data.pkl" # Path to the object in the build directory
     ) -> None:
     "Create a random data set and save it as a pickle file. Return the path to the saved file."
@@ -117,6 +122,8 @@ task_create_random_data(42)
 Once this module and function are exported with `nbdev_export`, the functions are in a python package. We can then use the command line to look at the registered tasks:
 
 ```{python}
+#| eval: false
+
 %%sh
 pytask collect
 ```
@@ -125,8 +132,6 @@ Let's add another task in the same module. This task plots the data we generated
 
 ```{python}
 #| export
-
-import matplotlib.pyplot as plt
 
 def task_plot_data(
     path_to_data: Annotated[Path, BLD / "data.pkl"], # Path to the data file created by the previous task
@@ -163,7 +168,6 @@ In Jupyter or iPython, you can interact with the task outputs directly:
 
 ```{python}
 #| eval: false
-import os
 
 # list all the files in the build directory
 for file in os.listdir(BLD):
@@ -185,7 +189,7 @@ from pytask import DataCatalog, Product
 SRC = Path(__file__).parent.resolve()
 BLD = SRC.joinpath("..", "..", "bld").resolve()
 
-data_catalog = DataCatalog()
+demo_catalog = DataCatalog()
 ```
 
 With just this definition, we're now able to refer directly to data by name in our tasks, and `pytask` will handle the paths and formats for us. This allows us to focus on the logic of our tasks rather than the details of data management.
@@ -199,12 +203,9 @@ Let's create a task that modifies the data frame by adding a new column. This ta
 ```{python}
 #| export
 
-from pytask import PickleNode
-from era5_sandbox.config import data_catalog
-
 def task_add_one(
     path_to_data: Annotated[Path, BLD / "data.pkl"],  # Path to the data file created by the previous task
-    node: Annotated[PickleNode, Product] = data_catalog["mydata"]
+    node: Annotated[PickleNode, Product] = demo_catalog["mydata"]
 ) -> None:
     """
     Add one to the 'y' column of the data frame and save it as a new pickle file.
@@ -229,8 +230,8 @@ So below, we're directly accessing the `data_catalog` to get the `mydata` node, 
 #| export
 
 def task_add_another_column(
-    df: Annotated[pd.DataFrame, data_catalog["mydata"]] # which object in the catalog to fetch from the catalog with node.load()
-) -> Annotated[pd.DataFrame, data_catalog["mydata2"]]:  # which object in the catalog to save the return value to
+    df: Annotated[pd.DataFrame, demo_catalog["mydata"]] # which object in the catalog to fetch from the catalog with node.load()
+) -> Annotated[pd.DataFrame, demo_catalog["mydata2"]]:  # which object in the catalog to save the return value to
     """
     Add another column to the data frame stored in the PickleNode.
     """
@@ -246,7 +247,7 @@ def task_add_another_column(
 To test this interactively, we'd have to import the data catalog's object
 
 ```{python}
-df = data_catalog["mydata"].load()  # load the data frame from the PickleNode
+df = demo_catalog["mydata"].load()  # load the data frame from the PickleNode
 result = task_add_another_column(df)  # call the task function with the loaded data frame
 ```
 
@@ -257,6 +258,7 @@ result
 Now that we know it will work, we can invoke pytask:
 
 ```{python}
+#| eval: false
 %%sh
 pytask
 ```

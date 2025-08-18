@@ -230,7 +230,7 @@ def aggregate_to_healthsheds(
     gdf = gpd.GeoDataFrame(df, geometry=shapes.geometry.values, crs=shapes.crs)
     return gdf
 
-# %% ../../notes/02_aggregate.qmd 36
+# %% ../../notes/02_aggregate.qmd 37
 def aggregate_data(
         cfg: DictConfig,
         input_file: str,
@@ -316,7 +316,7 @@ def aggregate_data(
     result_df.to_parquet(output_file, compression="snappy")
     # return(result_df)
 
-# %% ../../notes/02_aggregate.qmd 41
+# %% ../../notes/02_aggregate.qmd 42
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -336,7 +336,7 @@ def main(cfg: DictConfig) -> None:
     
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=variables_dict[aggregation_variable])
 
-# %% ../../notes/02_aggregate.qmd 42
+# %% ../../notes/02_aggregate.qmd 43
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
