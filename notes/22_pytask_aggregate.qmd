@@ -40,6 +40,8 @@ from era5_sandbox.aggregate import polygon_to_raster_cells, aggregate_to_healths
 
 To do diurnal aggregation, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the [astral library](https://astral.readthedocs.io/en/latest/) to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.
 
+Here's our example file:
+
 ```{python}
 
 eg_file = BLD / "2024_11_nepal.nc"
@@ -60,6 +62,7 @@ import numpy as np
 from tqdm import tqdm
 import random
 import datetime
+from pytz import UTC 
 
 ```
 
@@ -73,7 +76,6 @@ dt = pd.to_datetime(time, utc=True)
 
 ```{python}
 dt
-
 ```
 
 ```{python}
@@ -83,6 +85,7 @@ sun_info
 
 ```
 
+Astral is very fast:
 ```{python}
 %%timeit
 
@@ -102,7 +105,8 @@ else:
 
 ```
 
-This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. Let's put this in a function so that we can use the resampling in `xarray`.
+This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. The runtime will be limited only by the looping.
+Let's put this in a function so that we can use the resampling in `xarray`.
 
 The resampling approach will be a single function that can resample in three ways:
 
@@ -112,124 +116,253 @@ The resampling approach will be a single function that can resample in three way
 
 Therefore, we'll need 2 internal functions; one to do diurnal, and one to do solar date bins.
 
-Essentially, we are going to create an array-shaped index/mask, (time, latitude, longitude):
+Essentially, we are going to create an array-shaped index/mask, (time, latitude, longitude). As a
+demonstration, this loop goes through the first 24 time points in the dataset,
+and calculates the sun info for each latitude and longitude, assigning the values to an array:
 
 ```{python}
+%%time 
 times = ds['valid_time'].values[:24]
 lats = ds.coords['latitude'].values
 lons = ds.coords['longitude'].values
 
 result = np.full((len(times), len(lats), len(lons)), "", dtype=object)
 
-for lon in lons:
+for i, dt in enumerate(times):
 
-    for lat in lats:
+    for j, lat in enumerate(lats):
 
-        for dt in times:
-
+        for k, lon in enumerate(lons):
+            
+            # set the geographical position
             observer = Observer(latitude=lat, longitude=lon, elevation=0)
+            
+            # use the time
             dt = pd.to_datetime(dt, utc=True)
+
+            # where/when is the sun at this time for this position
             sun_info = sun.sun(observer, date=dt)
+            result[i, j, k] = sun_info
+```
+
+So we know that in the first hour, the sun goes up and comes down at slightly different
+times based on latitude and longitude. Take the first hour, for example:
+
+```{python}
+print(result.shape)
+hour_1 = 0 # 0th index of the results
+
+min_lat = 0
+min_lon = 0
+max_lat = 48
+max_lon = 90
+print(f"Even though the reading came from the first HOUR of data UTC, the sun info at the minimum latitude/longitude is: {result[hour_1, min_lat, min_lon]}")
+
+print(f"this is different from the sun info at the maximum latitude/longitude is: {result[hour_1, max_lat, max_lon]}")
 ```
 
 ```{python}
 #| export
 
 def compute_diurnal_class_bins(
+        ds: xr.Dataset
+    )-> list:
+    """
+    Compute the diurnal value for each data point in the dataset.
+    This function iterates over each data point in the dataset,
+    calculates the sunrise and sunset times for the given time, latitude and longitude,
+    and returns whether or not that data point is before dawn, during the day, or after dusk.
+    """
+
+    times = ds['valid_time'].values
+    lats = ds.coords['latitude'].values
+    lons = ds.coords['longitude'].values
+
+    result = np.full((len(times), len(lats), len(lons)), "", dtype=object)
+
+    for i, dt in enumerate(tqdm(times, desc="Classifying data points by sun position")):
+        # use the time
+        dt = pd.to_datetime(dt, utc=True)
+
+        for j, lat in enumerate(lats):
+
+            for k, lon in enumerate(lons):
+                
+                # set the geographical position
+                observer = Observer(latitude=lat, longitude=lon, elevation=0)
+                
+                # where/when is the sun at this time for this position
+                sun_info = sun.sun(observer, date=dt)
+                
+                if dt < sun_info['sunrise']:
+                    result[i, j, k] = "pre_dawn"
+                elif dt >= sun_info['sunrise'] and dt < sun_info['sunset']:
+                    result[i, j, k] = "day"
+                else:
+                    result[i, j, k] = "post_dusk"
+
+    return result
+```
+
+```{python}
+ex=compute_diurnal_class_bins(ds)
+```
+
+So, for our 720 time points, we should find that
+if we take the `set()` of all the classifications within that slice,
+there should be a few of them with 2 classes.
+In other words, at any given hour, almost all of
+the readings are "day", because it is daytime across all
+of Madagascar, _but_ at certain timepoints, the sun is rising
+or setting in the northern part of the country and so some
+portion of the slice is classified differently:
+
+```{python}
+for x in range(720):
+    print(set(ex[x].flatten()))
+```
+
+This works! Now we can do a similar, but slightly more
+complicated function to define "night" and "day",
+where "night" includes all of the values after the sun goes down.
+
+![illustrated](./notes/IMG_740012467778-1.jpeg)
+
+
+```{python}
+#| export
+
+def compute_solar_day_night_class_bins(
         ds: xr.Dataset,
-        time_dim: str = "valid_time"
+        night_direction: Literal["before", "after"],
     )-> list:
     """
     Compute the diurnal value for each data point in the dataset.
     This function iterates over each data point in the dataset,
     calculates the sunrise and sunset times for the given time, latitude and longitude,
     and returns whether or not that data point is daytime or nighttime.
+    The definition of "nighttime" can be set to be all the darkness before the sun
+    came up (before), or all the darkness after it went down (after).
     """
-    diurnal_class = []
-    
-    for i in tqdm(range(len(ds['valid_time'])), desc="Computing diurnal class"):
-        time = ds['valid_time'].values[i]
-        dt = pd.to_datetime(time, utc=True)
-        observer = Observer(latitude=lat, longitude=long, elevation=0)
-        sun_info = sun.sun(observer, date=dt)
 
-        if dt < sun_info['sunrise']:
-            diurnal_class.append("pre_dawn")
-        elif dt >= sun_info['sunrise'] and dt < sun_info['sunset']:
-            diurnal_class.append("day")
-        else:
-            diurnal_class.append("post_dusk")
-    
-    return pd.DataFrame({time_dim: ds['valid_time'], "diurnal_class": "diurnal_class"})
+    times = ds['valid_time'].values
+    lats = ds.coords['latitude'].values
+    lons = ds.coords['longitude'].values
 
-def compute_solar_day_night_class_bins(
-        ds: xr.Dataset,
-        night_direction: Literal["before", "after"],
-        time_dim: str = "valid_time"
-    ) -> pd.DataFrame:
-    """
-    This function creates a mask/index for lat, lon, and time;
-    it will return an index that tells us where each data poin falls as a day or night value
-    """
-    times = pd.to_datetime(ds[time_dim].values, utc=True)
+    result = np.full((len(times), len(lats), len(lons)), "", dtype=object)
+    datetimes = np.full((len(times), len(lats), len(lons)), "", dtype=object)
 
-    df = pd.DataFrame({time_dim: times})
-    df["value_index"] = range(len(df))  # Keep original indexing
-        
-    for ind, row in tqdm(df.iterrows(), total=df.shape[0], desc="Computing solar bins"):
-    
-        dt = row[time_dim]  # Extract the timestamp
-        lat, long = ds.coords["latitude"].values[ind], ds.coords["longitude"].values[ind]
-        observer = Observer(latitude=lat, longitude=long, elevation=0)
-        
-        prev_day = dt - pd.Timedelta(days=1)
-        next_day = dt + pd.Timedelta(days=1)
+    for i, dt in enumerate(tqdm(times, desc="Classifying data points by sun position")):
+        # use the time
+        dt = pd.to_datetime(dt, utc=True)
 
-        try:
-            sun_info_today = sun.sun(observer, date=dt.date())
-            sun_info_previous = sun.sun(observer, date=prev_day.date())
-            sun_info_next = sun.sun(observer, date=next_day.date())
+        for j, lat in enumerate(lats):
 
-            if night_direction == "before":
-                mask_night = (df[time_dim] >= sun_info_previous["sunset"]) & (df[time_dim] < sun_info_today["sunrise"])
-                df.loc[mask_night, "solar_class"] = "night"
-                df.loc[mask_night, "solar_date"] = dt.date()
+            for k, lon in enumerate(lons):
+                
+                # set the geographical position
+                observer = Observer(latitude=lat, longitude=lon, elevation=0)
+                if night_direction == "before":
+                    # Night is from previous sunset to today's sunrise
+                    sun_today = sun.sun(observer, date=dt.date())
+                    sun_prev = sun.sun(observer, date=(dt - pd.Timedelta(days=1)).date())
+                    night_start = sun_prev["sunset"].astimezone(pd.Timestamp.utcnow().tz)
+                    night_end = sun_today["sunrise"].astimezone(pd.Timestamp.utcnow().tz)
+                    
+                    # the reading is from yesterday's nighttime
+                    if night_start <= dt < night_end:
+                        result[i, j, k] = "night"
+                        # the date counts as today
+                        datetimes[i, j, k] = dt.date()
 
-                mask_day = (df[time_dim] >= sun_info_today["sunrise"]) & (df[time_dim] < sun_info_today["sunset"])
-                df.loc[mask_day, "solar_class"] = "day"
-                df.loc[mask_day, "solar_date"] = dt.date()
-            else:
-                mask_day = (df[time_dim] >= sun_info_today["sunrise"]) & (df[time_dim] < sun_info_today["sunset"])
-                df.loc[mask_day, "solar_class"] = "day"
-                df.loc[mask_day, "solar_date"] = dt.date()
+                    # the reading is from daytime
+                    elif sun_today["sunrise"] <= dt < sun_today["sunset"]:
+                        result[i, j, k] = "day"
+                        # the date counts as today
+                        datetimes[i, j, k] = dt.date()
+                    
+                    # the reading is from today's nighttime, but counts as tomorrow's night
+                    else:
+                        result[i, j, k] = "night"
+                        # the date is tomorrow
+                        datetimes[i, j, k] = (dt + pd.Timedelta(days=1)).date()
 
-                mask_night = (df[time_dim] >= sun_info_today["sunset"]) & (df[time_dim] < sun_info_next["sunrise"])
-                df.loc[mask_night, "solar_class"] = "night"
-                df.loc[mask_night, "solar_date"] = dt.date()
-        except Exception as e:
-            print(f"Skipping {dt} due to error: {e}")
+                elif night_direction == "after":
+                    # Night is from today's sunset to next sunrise
+                    sun_today = sun.sun(observer, date=dt.date())
+                    sun_next = sun.sun(observer, date=(dt + pd.Timedelta(days=1)).date())
+                    night_start = sun_today["sunset"].astimezone(pd.Timestamp.utcnow().tz)
+                    night_end = sun_next["sunrise"].astimezone(pd.Timestamp.utcnow().tz)
 
-    return df
+                    # the reading is from daytime
+                    if sun_today["sunrise"] <= dt < sun_today["sunset"]:
+                        result[i, j, k] = "day"
+                        # the date counts as today
+                        datetimes[i, j, k] = dt.date()
+                    # the reading is from tonight
+                    elif night_start <= dt < night_end:
+                        result[i, j, k] = "night"
+                        # the date counts as today
+                        datetimes[i, j, k] = dt.date()
+
+                    # the reading is from yesterday night
+                    else:
+                        # the date counts as yesterday
+                        result[i, j, k] = "day"
+                        datetimes[i, j, k] = (dt - pd.Timedelta(days=1)).date()
+                else:
+                    raise ValueError(f"Invalid night_direction: {night_direction}")
+
+    return result, datetimes
+
 ```
 
-#TODO we are still debugging this function;
-
 ```{python}
-compute_solar_day_night_class_bins(ds, "before")
+ex_class, ex_dt = compute_solar_day_night_class_bins(ds, "before")
 ```
 
+```{python}
+ex_class
+```
 
-
-We can then add this value to the dataset as a new variable, which we can use to compute the diurnal averages.
+As before, we should see that most slices are homogenous,
+meaning most of the time, all the readings are from the day,
+but some slices should have day and night values:
 
 ```{python}
-diurnal_vals, overnight_vals = compute_diurnal_overnight_class(ds)
+for slice_ in range(720):
+    print(set(ex_class[slice_].flatten()))
+```
 
-ds = ds.assign_coords({
-    'diurnal_class': ("valid_time", diurnal_vals),
-    'overnight_date': ("valid_time", overnight_vals),
-    "date": ds['valid_time'].dt.floor("D")
-})
+The returned array can serve as a new index for the dataset:
+
+```{python}
+solar_class_da = xr.DataArray(
+    data=ex_class,
+    dims=("valid_time", "latitude", "longitude"),
+    coords={
+        "valid_time": ds["valid_time"],
+        "latitude": ds["latitude"],
+        "longitude": ds["longitude"]
+    },
+    name="solar_class"
+)
+
+solar_date_da = xr.DataArray(
+    data=ex_dt,
+    dims=("valid_time", "latitude", "longitude"),
+    coords={
+        "valid_time": ds["valid_time"],
+        "latitude": ds["latitude"],
+        "longitude": ds["longitude"]
+    },
+    name="solar_date"
+)
+
+ds['solar_date'] = solar_date_da
+ds['solar_class'] = solar_class_da
+
+ds
 ```
 
 ## Diurnal Resampling
@@ -237,28 +370,42 @@ ds = ds.assign_coords({
 Now, to see if it will resample by both day and diurnal class:
 
 ```{python}
-print(ds['diurnal_class'].dims)
-print(ds['date'].dims)
-print(ds['overnight_date'].dims)
+ds_stacked = ds.stack(z=("valid_time", "latitude", "longitude"))
+df = ds_stacked[["t2m", "solar_date", "solar_class"]].to_dataframe().dropna().drop(columns=['latitude', 'longitude'])
+df
 ```
 
 ```{python}
-ds["d2m"].isel(valid_time=0)
-ds["d2m"].values.shape
-np.isnan(ds["d2m"].values).sum()
-
+agg = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])["t2m"].mean()
+agg
 ```
 
 ```{python}
-aggregated = ds.groupby(["date", 'diurnal_class']).reduce(np.nanmean, dim='valid_time')
-#aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
+agg_ds = agg.to_xarray().unstack()
+agg_ds
 ```
+
+That appears to work! To generalize it into an `xarray.Dataset`:
 
 ```{python}
-aggregated['d2m'].values
+vars_to_aggregate = ["d2m", "t2m", "tp", "swvl1"]
+agg_vars = []
+
+for var in vars_to_aggregate:
+    df = ds_stacked[[var, "solar_date", "solar_class"]].to_dataframe().dropna()
+    df = df.drop(columns=["latitude", "longitude"])
+    agg = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])[var].mean()
+    agg_da = agg.to_xarray().unstack()
+    agg_vars.append(agg_da)
+
+agg_ds = xr.merge(agg_vars)
+
+agg_ds
 ```
 
-That appears to work! So we can implement it in a function, similar to the one we used in the original download hydra pipeline.
+```{r}
+
+```
 
 ```{python}
 #| export
