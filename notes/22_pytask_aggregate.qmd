@@ -36,15 +36,15 @@ from era5_sandbox.aggregate import polygon_to_raster_cells, aggregate_to_healths
 
 ```
 
-## Diurnal Aggregation Based on Sun Position
+## Diurnal Classification Based on Sun Position
 
-To do diurnal aggregation, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the [astral library](https://astral.readthedocs.io/en/latest/) to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.
+To do diurnal classificaiton, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the [astral library](https://astral.readthedocs.io/en/latest/) to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.
 
 Here's our example file:
 
 ```{python}
 
-eg_file = BLD / "2024_11_nepal.nc"
+eg_file = data_catalog['download']['2024_11_nepal'].load()
 with ClimateDataFileHandler(eg_file) as handler:
     ds_path = handler.get_dataset("instant")
 
@@ -166,7 +166,7 @@ print(f"this is different from the sun info at the maximum latitude/longitude is
 
 def compute_diurnal_class_bins(
         ds: xr.Dataset
-    )-> list:
+    )-> np.ndarray:
     """
     Compute the diurnal value for each data point in the dataset.
     This function iterates over each data point in the dataset,
@@ -217,6 +217,8 @@ of Madagascar, _but_ at certain timepoints, the sun is rising
 or setting in the northern part of the country and so some
 portion of the slice is classified differently:
 
+![illustrated](./notes/IMG_740012467778-1.jpeg)
+
 ```{python}
 for x in range(720):
     print(set(ex[x].flatten()))
@@ -225,9 +227,6 @@ for x in range(720):
 This works! Now we can do a similar, but slightly more
 complicated function to define "night" and "day",
 where "night" includes all of the values after the sun goes down.
-
-![illustrated](./notes/IMG_740012467778-1.jpeg)
-
 
 ```{python}
 #| export
@@ -318,6 +317,7 @@ def compute_solar_day_night_class_bins(
 ```
 
 ```{python}
+%%time
 ex_class, ex_dt = compute_solar_day_night_class_bins(ds, "before")
 ```
 
@@ -334,7 +334,7 @@ for slice_ in range(720):
     print(set(ex_class[slice_].flatten()))
 ```
 
-The returned array can serve as a new index for the dataset:
+The returned array can serve as new "variable indexes" for the dataset:
 
 ```{python}
 solar_class_da = xr.DataArray(
@@ -367,7 +367,8 @@ ds
 
 ## Diurnal Resampling
 
-Now, to see if it will resample by both day and diurnal class:
+Now, to see if it will resample by both solar day and diurnal class. This was a little complicated,
+so ChatGPT recommended to first "stack" the dataset so that the z dimension is flattened to a multi-index dataframe:
 
 ```{python}
 ds_stacked = ds.stack(z=("valid_time", "latitude", "longitude"))
@@ -375,10 +376,14 @@ df = ds_stacked[["t2m", "solar_date", "solar_class"]].to_dataframe().dropna().dr
 df
 ```
 
+Then, by treating it as a dataframe, statistical operations are easy:
+
 ```{python}
 agg = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])["t2m"].mean()
 agg
 ```
+
+Then, you can unstack the dataframe to return it to an `xarray`:
 
 ```{python}
 agg_ds = agg.to_xarray().unstack()
@@ -388,13 +393,15 @@ agg_ds
 That appears to work! To generalize it into an `xarray.Dataset`:
 
 ```{python}
-vars_to_aggregate = ["d2m", "t2m", "tp", "swvl1"]
+agg_func = np.mean
+vars_to_aggregate = [v for v in ds.data_vars if v not in ["solar_date", "solar_class"]]
 agg_vars = []
 
 for var in vars_to_aggregate:
     df = ds_stacked[[var, "solar_date", "solar_class"]].to_dataframe().dropna()
     df = df.drop(columns=["latitude", "longitude"])
-    agg = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])[var].mean()
+    grouped = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])[var]
+    agg = grouped.aggregate(agg_func)
     agg_da = agg.to_xarray().unstack()
     agg_vars.append(agg_da)
 
@@ -403,167 +410,65 @@ agg_ds = xr.merge(agg_vars)
 agg_ds
 ```
 
-```{r}
-
-```
+This can get its own function:
 
 ```{python}
 #| export
 
-
-```
-
-```{python}
-#| export
-
-def resample_netcdf_diurnal(
-        fpath: str,
-        diurnal_col: str = "diurnal_class",
-        overnight_col: str = "overnight_date",
+def stack_and_resample(
+        ds: xr.Dataset,
+        solar_class_array: np.ndarray,
+        solar_date_array: np.ndarray,
         agg_func: callable = np.mean,
-        time_dim: str = "valid_time",
-        chunks: dict | None = None
-    ) -> xr.Dataset:
-    """
-    Resample a netCDF file with optional overnight-aware aggregation.
 
-    Args:
-        fpath (str): Path to the netCDF file.
-        diurnal_col (str): Name of the column for diurnal classification.
-        overnight_col (str): Name of the column for overnight grouping.
-        agg_func (callable): Aggregation function (e.g., np.mean, np.sum).
-    """
-    if chunks is None:
-        with ClimateDataFileHandler(fpath) as handler:
-            fpath = handler.get_dataset("instant")
-            ds = xr.open_dataset(fpath)
-    else:
-        with ClimateDataFileHandler(fpath) as handler:
-            fpath = handler.get_dataset("instant")
-            ds = xr.open_dataset(fpath, chunks=chunks)
+        solar_class_name: str = "solar_class",
+        solar_date_name: str = "solar_date"
 
-    # Compute diurnal and overnight values
-    diurnal_vals, overnight_vals = compute_diurnal_overnight_class(ds)
-    ds = ds.assign_coords({
-        diurnal_col: ("valid_time", diurnal_vals),
-        overnight_col: ("valid_time", overnight_vals),
-        "date": ds[time_dim].dt.floor("D")
-    })
+    )-> xr.Dataset:
 
-    if callable(agg_func):
-        # Group first by day/diurnal, then optionally overnight
-        grouped = ds.groupby(["date", diurnal_col]).reduce(agg_func, dim=time_dim)
+    ds[solar_class_name] = solar_class_array
+    ds[solar_date_name] = solar_date_array
 
-        if overnight_col in ds.coords:
-            overnight_grouped = ds.where(ds[overnight_col].notnull(), drop=True)
-            overnight_grouped = overnight_grouped.groupby(overnight_col).reduce(agg_func, dim=time_dim)
-            # Combine outputs if needed
-            return grouped.merge(overnight_grouped.rename({overnight_col: "overnight"}))
-        else:
-            return grouped
-    else:
-        raise TypeError("agg_func must be a callable function like np.mean, np.max, etc.")
+    agg_func = np.mean
+    vars_to_aggregate = [v for v in ds.data_vars if v not in [solar_class_name, solar_date_name]]
+    agg_vars = []
 
-def resample_netcdf_solar_day(
-        fpath: str,
-        agg_func: callable = np.mean,
-        time_dim: str = "valid_time",
-        chunks: dict | None = None,
-        lat: float = 0.0,
-        long: float = 0.0
-    ) -> xr.Dataset:
-    
-    if chunks is None:
-        with ClimateDataFileHandler(fpath) as handler:
-            fpath = handler.get_dataset("instant")
-            ds = xr.open_dataset(fpath)
-    else:
-        with ClimateDataFileHandler(fpath) as handler:
-            fpath = handler.get_dataset("instant")
-            ds = xr.open_dataset(fpath, chunks=chunks)
+    for var in tqdm(vars_to_aggregate, desc=f"Aggregating to daily level using {agg_func}"):
+        df = ds_stacked[[var, solar_date_name, solar_class_name]].to_dataframe().dropna()
+        df = df.drop(columns=["latitude", "longitude"])
+        grouped = df.groupby([solar_date_name, solar_class_name, "latitude", "longitude"])[var]
+        agg = grouped.aggregate(agg_func)
+        agg_da = agg.to_xarray().unstack()
+        agg_vars.append(agg_da)
 
-    df = compute_day_night_bins(ds, lat=lat, long=long, time_dim=time_dim)
-    
-    # Assign class and date to ds
-    ds = ds.isel({time_dim: df["value_index"].values})
-    ds = ds.assign_coords({
-        "solar_class": ("valid_time", df["solar_class"].values),
-        "date": ("valid_time", pd.to_datetime(df["solar_date"].values))
-    })
+    agg_ds = xr.merge(agg_vars)
 
-    return ds.groupby(["date", "solar_class"]).reduce(agg_func, dim=time_dim)
+    return agg_ds
 
 ```
 
-Chunking is necessary for the data size while testing, so we will use it in the function. We can then use this function to compute the diurnal averages for the dataset.
+```{python}
+ds_resampled = stack_and_resample(ds, solar_class_da, solar_date_da)
+```
+
+Once that is done, we still have to convert the data array to Netcdf. We'll have to 
+do this by solar class, since the dataset is multidimensional:
 
 ```{python}
-resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
+from era5_sandbox.aggregate import netcdf_to_tiff
+
+for date in ds_resampled.solar_date.values:
+    ds_day = ds_resampled.sel(solar_class="day", solar_date=date).drop_vars("solar_class")
+    ds_day = ds_day.rename({"solar_date": "valid_time"})
+    raster = netcdf_to_tiff(ds_day, band=1, variable="swvl1")
+    print(raster)
 
 ```
 
-Awesome, now we know how to do the diurnal aggregation, and can implement it in the task the same way we did in the hydra snakemake pipeline.
-
-Next, we use the same approach to compute the spatial averages. We will use the `xarray` library to compute the mean over the specified spatial region. Fortunately, most of this work is already done for us in the previous pipeline, so we can reuse the code to compute the spatial averages. However, we do also have to consider the extra dimension of 
-`diurnal_class`. To get around this, we're going to create a second `netcdf_to_tiff` function
-that is designed to handle the diurnal classes:
+And once that's done, we
 
 ```{python}
-from era5_sandbox.aggregate import RasterFile
-from rasterstats.io import Raster
-import tempfile
-import rasterio
-```
-
-```{python}
-#| export
-
-def netcdf_to_tiff_diurnal(
-    ds: xr.Dataset, # The aggregated xarray dataset to convert.    
-    band: int,      # The day to rasterise; 1 indexed just like human english
-    variable: str, # The variable name to convert.
-    diurnal_class: Literal["pre_dawn", "day", "post_dusk"], # special parameter for the diurnal pipeline; writing the predawn, day, or post_dusk data  
-    crs: str = "EPSG:4326" # Coordinate reference system (default is WGS84). 
-    ):
-
-    """
-    Convert a netCDF file to a GeoTIFF file.
-    """
-
-    with tempfile.TemporaryDirectory() as tmpdirname:
-
-        # Select the variable and time index
-        variable = ds[variable].sel(diurnal_class=diurnal_class)
-        ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude").transpose('date', 'latitude', 'longitude')
-        ds_ = ds_.rio.write_crs(crs)
-        # Save as GeoTIFF
-        ds_.rio.to_raster(f"{tmpdirname}/output.tif")
-        # Load the raster file
-        raster_file = RasterFile(path=f"{tmpdirname}/output.tif", band=band).load()
-
-    return raster_file
-```
-
-```{python}
-variable = "swvl1"  # Example variable name
-crs = "EPSG:4326"  # Example CRS
-
-netcdf_to_tiff_diurnal(
-    ds=resampled_nc,
-    band=3,
-    variable=variable,
-    crs=crs,
-    diurnal_class = "pre_dawn"
-)
-```
-
-We've now split the `netcdf_to_tiff` into a diurnal version `netcdf_to_tiff_diurnal`.
-This may be inefficient because it means we're doubling the parameter space, but I think
-this is the best way to include the diurnal aggregation without exploding the runtime (it doubles the parameter grid only of the `aggregage` task, which is the shortest one per operation).
-
-```{python}
-ex_netcdf = resample_netcdf_diurnal(ds_path)
-ex_tiff_day = netcdf_to_tiff_diurnal(ex_netcdf, variable = variable, crs=crs, band=1, diurnal_class = "day")
+resampled_tiff_day.data.shape, resampled_tiff_day.transform, resampled_tiff_day.crs, resampled_tiff_day.bounds
 ```
 
 ### Polygon to Raster Cells
@@ -591,9 +496,9 @@ healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
 ```{python}
 res_poly2cell=polygon_to_raster_cells(
     vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
-    raster=ex_tiff_day.data, # the raster data above
-    nodata=ex_tiff_day.nodata, # any intersections with no data, may have to be np.nan
-    affine=ex_tiff_day.transform, # some math thing need to revise
+    raster=raster.data, # the raster data above
+    nodata=raster.nodata, # any intersections with no data, may have to be np.nan
+    affine=raster.transform, # some math thing need to revise
     all_touched=True, 
     verbose=True
 )
