@@ -337,77 +337,81 @@ for slice_ in range(720):
 The returned array can serve as new "variable indexes" for the dataset:
 
 ```{python}
-solar_class_da = xr.DataArray(
-    data=ex_class,
-    dims=("valid_time", "latitude", "longitude"),
-    coords={
-        "valid_time": ds["valid_time"],
-        "latitude": ds["latitude"],
-        "longitude": ds["longitude"]
-    },
-    name="solar_class"
-)
-
-solar_date_da = xr.DataArray(
-    data=ex_dt,
-    dims=("valid_time", "latitude", "longitude"),
-    coords={
-        "valid_time": ds["valid_time"],
-        "latitude": ds["latitude"],
-        "longitude": ds["longitude"]
-    },
-    name="solar_date"
-)
-
-ds['solar_date'] = solar_date_da
-ds['solar_class'] = solar_class_da
-
-ds
+ds_classified = ds.copy()
+ds_classified['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex_class)
+ds_classified["solar_date"] = (("valid_time", "latitude", "longitude"), ex_dt)
 ```
 
 ## Diurnal Resampling
 
-Now, to see if it will resample by both solar day and diurnal class. This was a little complicated,
-so ChatGPT recommended to first "stack" the dataset so that the z dimension is flattened to a multi-index dataframe:
+Now, to see if it will resample by both solar day and diurnal class. Let's try in pandas:
 
 ```{python}
-ds_stacked = ds.stack(z=("valid_time", "latitude", "longitude"))
-df = ds_stacked[["t2m", "solar_date", "solar_class"]].to_dataframe().dropna().drop(columns=['latitude', 'longitude'])
-df
+ds_df = ds_classified.to_dataframe()
+ds_df = ds_df.reset_index()
+ds_df = ds_df.drop(columns=['valid_time', 'number', 'expver'])
 ```
 
-Then, by treating it as a dataframe, statistical operations are easy:
+That seems to work. Now, we can try grouping by solar date and solar class:
 
 ```{python}
-agg = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])["t2m"].mean()
-agg
+ds_df.groupby(["solar_date", "solar_class", "latitude", "longitude"]).agg(np.mean)
 ```
 
-Then, you can unstack the dataframe to return it to an `xarray`:
+This gives us an aggregated dataframe. To convert it back to an `xarray.Dataset`, we can use `to_xarray()`:
 
 ```{python}
-agg_ds = agg.to_xarray().unstack()
-agg_ds
+ds_agg = ds_df.groupby(["solar_date", "solar_class", "latitude", "longitude"]).agg(np.nanmean).to_xarray()
 ```
 
-That appears to work! To generalize it into an `xarray.Dataset`:
+We cannot however keep it in this format because we have a multi-index from
+the solar class. So, we need to create two separate arrays for each class:
 
 ```{python}
-agg_func = np.mean
-vars_to_aggregate = [v for v in ds.data_vars if v not in ["solar_date", "solar_class"]]
-agg_vars = []
+ds_agg_day = ds_agg.sel(solar_class="day").drop_vars("solar_class")
+ds_agg_night = ds_agg.sel(solar_class="night").drop_vars("solar_class")
+```
 
-for var in vars_to_aggregate:
-    df = ds_stacked[[var, "solar_date", "solar_class"]].to_dataframe().dropna()
-    df = df.drop(columns=["latitude", "longitude"])
-    grouped = df.groupby(["solar_date", "solar_class", "latitude", "longitude"])[var]
-    agg = grouped.aggregate(agg_func)
-    agg_da = agg.to_xarray().unstack()
-    agg_vars.append(agg_da)
+Can we successfully convert this to a tiff?
 
-agg_ds = xr.merge(agg_vars)
+```{python}
+raster = netcdf_to_tiff(ds_agg_day, band=2, variable="swvl1")
+```
 
-agg_ds
+And then get the polygons?
+#TODO here
+
+### Polygon to Raster Cells
+
+The penultimate step of the aggregate pipeline in the original version is
+assigning each datapoint to the respective healthshed. The `vectors` argument
+comes from the healthshed, and represents each geographic polygon on the ground
+that we want to aggregate data to.
+
+```{python}
+from hydra import initialize, compose
+try:
+    with initialize(version_base=None, config_path="../conf"):
+        cfg = compose(config_name='config.yaml')
+except Exception as e:
+    print(f"Error initializing Hydra: {e}")
+    with initialize(version_base=None, config_path="conf"):
+        cfg = compose(config_name='config.yaml')
+
+driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
+drive = driver.get_drive()
+healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
+```
+
+```{python}
+res_poly2cell=polygon_to_raster_cells(
+    vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
+    raster=raster.data, # the raster data above
+    nodata=np.nan, # any intersections with no data, may have to be np.nan
+    affine=raster.transform, # some math thing need to revise
+    all_touched=True, 
+    verbose=True
+)
 ```
 
 This can get its own function:
@@ -457,19 +461,14 @@ do this by solar class, since the dataset is multidimensional:
 ```{python}
 from era5_sandbox.aggregate import netcdf_to_tiff
 
-for date in ds_resampled.solar_date.values:
-    ds_day = ds_resampled.sel(solar_class="day", solar_date=date).drop_vars("solar_class")
-    ds_day = ds_day.rename({"solar_date": "valid_time"})
-    raster = netcdf_to_tiff(ds_day, band=1, variable="swvl1")
+for class_ in ds_resampled.solar_class.values:
+    ds_ = ds_resampled.sel(solar_class=class_).drop_vars("solar_class")
+    ds_ = ds_.rename({"solar_date": "valid_time"})
+    raster = netcdf_to_tiff(ds_, band=1, variable="swvl1")
     print(raster)
 
 ```
 
-And once that's done, we
-
-```{python}
-resampled_tiff_day.data.shape, resampled_tiff_day.transform, resampled_tiff_day.crs, resampled_tiff_day.bounds
-```
 
 ### Polygon to Raster Cells
 

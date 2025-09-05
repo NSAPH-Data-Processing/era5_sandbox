@@ -41,7 +41,7 @@ decorator. Change this to `False` when you're ready to run the full pipeline.
 ```{python}
 #| export
 
-DEV_MODE=False
+DEV_MODE=True
 ```
 
 
@@ -143,12 +143,12 @@ data_catalog['download'].add("queries", queries)
 
 To carry out the aggregation, we will follow similar logic to the original pipeline and use xarray to aggregate data into spatial and temporal averages. The aggregation task will take the downloaded data and compute the mean over the specified time period and spatial region. However, in this case, we want to aggregate the data diurnally, so we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
 
-To do this, let's use a dataframe as opposed to a list of class objects.
+To do this, let's use a dataframe as opposed to a list of class objects, since it's easier to envisage.
 
 ```{python}
 #| export
 
 # aggregate task parameters
 
-
+list(data_catalog['download']._entries)
 ```
