@@ -44,11 +44,13 @@ Here's our example file:
 
 ```{python}
 
-eg_file = data_catalog['download']['2024_11_nepal'].load()
+eg_file = data_catalog['download']['2020_4_nepal'].load()
 with ClimateDataFileHandler(eg_file) as handler:
-    ds_path = handler.get_dataset("instant")
+    
+    ds = xr.open_dataset(handler.get_dataset("instant"))
+    #ds = xr.open_dataset(handler.get_dataset("accum"))
 
-    ds = xr.open_dataset(ds_path, chunks = {"valid_time": 24})
+ds
 
 ```
 
@@ -337,45 +339,41 @@ for slice_ in range(720):
 The returned array can serve as new "variable indexes" for the dataset:
 
 ```{python}
-ds_classified = ds.copy()
-ds_classified['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex_class)
-ds_classified["solar_date"] = (("valid_time", "latitude", "longitude"), ex_dt)
+ds_masked = ds.copy()
+ds_masked['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex_class)
+ds_masked["solar_date"] = (("valid_time", "latitude", "longitude"), ex_dt)
 ```
 
 ## Diurnal Resampling
 
-Now, to see if it will resample by both solar day and diurnal class. Let's try in pandas:
+Now, to see if it will resample by both solar day and diurnal class. Let's try by masking and making copies with NaN in the masked values:
 
 ```{python}
-ds_df = ds_classified.to_dataframe()
-ds_df = ds_df.reset_index()
-ds_df = ds_df.drop(columns=['valid_time', 'number', 'expver'])
+ds_day = ds_masked.where(ds_masked["solar_class"] == "day").drop_vars(["solar_class", "solar_date"])
+ds_night = ds_masked.where(ds_masked["solar_class"] == "night").drop_vars(["solar_class", "solar_date"])
 ```
 
-That seems to work. Now, we can try grouping by solar date and solar class:
+Next, we set the time zone for Madagascar since, to resample by day and night,
+we should observe the local time:
 
 ```{python}
-ds_df.groupby(["solar_date", "solar_class", "latitude", "longitude"]).agg(np.mean)
+ds_day = ds_day.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
+ds_night = ds_night.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
 ```
 
-This gives us an aggregated dataframe. To convert it back to an `xarray.Dataset`, we can use `to_xarray()`:
+Now if we can resample by day:
 
 ```{python}
-ds_agg = ds_df.groupby(["solar_date", "solar_class", "latitude", "longitude"]).agg(np.nanmean).to_xarray()
-```
-
-We cannot however keep it in this format because we have a multi-index from
-the solar class. So, we need to create two separate arrays for each class:
-
-```{python}
-ds_agg_day = ds_agg.sel(solar_class="day").drop_vars("solar_class")
-ds_agg_night = ds_agg.sel(solar_class="night").drop_vars("solar_class")
+ds_day_rs = ds_day.resample(valid_time="1D").reduce(np.nanmean)
+ds_night_rs = ds_night.resample(valid_time="1D").reduce(np.nanmean)
+ds_day_rs
 ```
 
 Can we successfully convert this to a tiff?
 
 ```{python}
-raster = netcdf_to_tiff(ds_agg_day, band=2, variable="swvl1")
+from era5_sandbox.aggregate import netcdf_to_tiff
+raster = netcdf_to_tiff(ds_day_rs, band=1, variable="d2m")
 ```
 
 And then get the polygons?
@@ -400,7 +398,7 @@ except Exception as e:
 
 driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
 drive = driver.get_drive()
-healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
+healthsheds = driver.read_healthsheds("healthsheds2022.zip")
 ```
 
 ```{python}
