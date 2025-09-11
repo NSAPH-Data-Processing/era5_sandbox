@@ -145,10 +145,94 @@ To carry out the aggregation, we will follow similar logic to the original pipel
 
 To do this, let's use a dataframe as opposed to a list of class objects, since it's easier to envisage.
 
+Here we will use a dataframe with the jobs as rows;
+the first column is "input" which is the list of query object names from
+the download task, and the last column is the output object name. Columns
+in between can be any parameters needed for the aggregation task, which
+then get expanded to the full list of jobs with itertools.product or explode or similar.
+
 ```{python}
 #| export
 
 # aggregate task parameters
 
-list(data_catalog['download']._entries)
+inputs = list(data_catalog['download']._entries)
+inputs.remove("queries")  # remove the "queries" entry
+outputs = [f"{i}_agg" for i in inputs]
+
+variable_dict = {
+    "2m_dewpoint_temperature": "d2m",
+    "2m_temperature": "t2m",
+    "total_precipitation": "tp",
+    "volumetric_soil_water_layer_1": "swvl1"
+}
+
+# list of params that get fed into the task functions
+agg_params = {
+    "time": ["day", "night"],
+    "solar_classification": ["before"],
+    "variables": variables,
+    "variables_short": [variable_dict[x] for x in variables],
+    "aggregation_name": ["mean", "sum", "max", "min"]
+}
+
+from itertools import product
+import pandas as pd
+
+# expand all the params
+agg_params = pd.DataFrame(list(product(*agg_params.values())), columns=agg_params.keys())
+```
+
+Inspecting it:
+
+```{python}
+agg_params
+```
+
+Let's keep only rows where the variables and variables_short match
+
+```{python}
+#| export
+
+agg_params = agg_params[agg_params.apply(lambda x: variable_dict[x['variables']] == x['variables_short'], axis=1)]
+```
+
+```{python}
+agg_params
+```
+
+Great, and now keeping sum only for precipitation:
+
+```{python}
+#| export
+#| 
+mask = (agg_params['variables_short'] == "tp") & (agg_params['aggregation_name'] != "sum")
+agg_params = agg_params[~mask]
+```
+
+```{python}
+agg_params
+```
+
+Now we add the input and output columns by joining:
+
+```{python}
+#| export
+inp_out = pd.DataFrame({"input": inputs, "output": outputs})
+aggregate_jobs = inp_out.merge(agg_params, how="cross")
+```
+
+This result gives us the full list of jobs for the aggregation task. 26 rows for the parameters,
+and 386 inputs/outputs, giving a total of 10036 jobs:
+
+```{python}
+aggregate_jobs
+```
+
+Now we add this to the data catalog:
+
+```{python}
+#| export
+
+data_catalog['aggregate'].add("jobs", aggregate_jobs)
 ```

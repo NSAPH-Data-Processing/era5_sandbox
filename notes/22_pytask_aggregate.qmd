@@ -361,7 +361,7 @@ ds_day = ds_day.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values)
 ds_night = ds_night.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
 ```
 
-Now if we can resample by day:
+Now if we can resample by day...
 
 ```{python}
 ds_day_rs = ds_day.resample(valid_time="1D").reduce(np.nanmean)
@@ -374,101 +374,13 @@ Can we successfully convert this to a tiff?
 ```{python}
 from era5_sandbox.aggregate import netcdf_to_tiff
 raster = netcdf_to_tiff(ds_day_rs, band=1, variable="d2m")
+
+raster
 ```
 
-And then get the polygons?
-#TODO here
+Looks great! This raster represents one calendar day of daytime values.
 
-### Polygon to Raster Cells
-
-The penultimate step of the aggregate pipeline in the original version is
-assigning each datapoint to the respective healthshed. The `vectors` argument
-comes from the healthshed, and represents each geographic polygon on the ground
-that we want to aggregate data to.
-
-```{python}
-from hydra import initialize, compose
-try:
-    with initialize(version_base=None, config_path="../conf"):
-        cfg = compose(config_name='config.yaml')
-except Exception as e:
-    print(f"Error initializing Hydra: {e}")
-    with initialize(version_base=None, config_path="conf"):
-        cfg = compose(config_name='config.yaml')
-
-driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
-drive = driver.get_drive()
-healthsheds = driver.read_healthsheds("healthsheds2022.zip")
-```
-
-```{python}
-res_poly2cell=polygon_to_raster_cells(
-    vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
-    raster=raster.data, # the raster data above
-    nodata=np.nan, # any intersections with no data, may have to be np.nan
-    affine=raster.transform, # some math thing need to revise
-    all_touched=True, 
-    verbose=True
-)
-```
-
-This can get its own function:
-
-```{python}
-#| export
-
-def stack_and_resample(
-        ds: xr.Dataset,
-        solar_class_array: np.ndarray,
-        solar_date_array: np.ndarray,
-        agg_func: callable = np.mean,
-
-        solar_class_name: str = "solar_class",
-        solar_date_name: str = "solar_date"
-
-    )-> xr.Dataset:
-
-    ds[solar_class_name] = solar_class_array
-    ds[solar_date_name] = solar_date_array
-
-    agg_func = np.mean
-    vars_to_aggregate = [v for v in ds.data_vars if v not in [solar_class_name, solar_date_name]]
-    agg_vars = []
-
-    for var in tqdm(vars_to_aggregate, desc=f"Aggregating to daily level using {agg_func}"):
-        df = ds_stacked[[var, solar_date_name, solar_class_name]].to_dataframe().dropna()
-        df = df.drop(columns=["latitude", "longitude"])
-        grouped = df.groupby([solar_date_name, solar_class_name, "latitude", "longitude"])[var]
-        agg = grouped.aggregate(agg_func)
-        agg_da = agg.to_xarray().unstack()
-        agg_vars.append(agg_da)
-
-    agg_ds = xr.merge(agg_vars)
-
-    return agg_ds
-
-```
-
-```{python}
-ds_resampled = stack_and_resample(ds, solar_class_da, solar_date_da)
-```
-
-Once that is done, we still have to convert the data array to Netcdf. We'll have to 
-do this by solar class, since the dataset is multidimensional:
-
-```{python}
-from era5_sandbox.aggregate import netcdf_to_tiff
-
-for class_ in ds_resampled.solar_class.values:
-    ds_ = ds_resampled.sel(solar_class=class_).drop_vars("solar_class")
-    ds_ = ds_.rename({"solar_date": "valid_time"})
-    raster = netcdf_to_tiff(ds_, band=1, variable="swvl1")
-    print(raster)
-
-```
-
-
-### Polygon to Raster Cells
+### Testing Polygon to Raster Cells & Healthshed Aggregation
 
 The penultimate step of the aggregate pipeline in the original version is
 assigning each datapoint to the respective healthshed. The `vectors` argument
@@ -494,49 +406,105 @@ healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
 res_poly2cell=polygon_to_raster_cells(
     vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
     raster=raster.data, # the raster data above
-    nodata=raster.nodata, # any intersections with no data, may have to be np.nan
+    nodata=np.nan, # any intersections with no data, may have to be np.nan
     affine=raster.transform, # some math thing need to revise
     all_touched=True, 
     verbose=True
 )
 ```
 
-Then, the aggregate to healthsheds function gives us the actual values:
+This works fine. Finally, we aggregate to healthsheds:
 
 ```{python}
+from era5_sandbox.aggregate import aggregate_to_healthsheds
+
 result = aggregate_to_healthsheds(
     res_poly2cell=res_poly2cell,
-    raster=ex_tiff_day,
+    raster=raster,
     shapes=healthsheds,
     names_column="fid",
     aggregation_func=np.nanmean,
-    aggregation_name="mean_soil_moisture"
+    aggregation_name="mean_dewpoint_day"
 )
-result.head()
 ```
 
-This works, so we only need to make sure we've exported the diurnal mapping for the
-resamping data, and ensure that the task acknowledges the diurnal values for `pre_dawn`, `day`,
-and `post_dusk`.
+Below shows the result of aggregating the daytime dewpoint temperature to the healthshed level:
 
-The function to run an aggregation we will need the input file, the variable, 
-the aggregation function, the healthsheds, and the diurnal class for that date.
+```{python}
+result
+```
 
+# Putting it all together in a `pytask` task
+
+Below we define our `pytask` task to aggregate data to the healthshed level.
 
 ```{python}
 def task_aggregate_data_diurnal(
-        input_file: Path,
-        geography: str,   
-        year: int,
-        month: int,
+        input_file: Path, # input data Path from the download task
         aggregation_func: callable = np.nanmean, # the aggregation function
         aggregation_name: str = "mean", # the name of the aggregation function
-        
-        healthshed_aggs = 
+        time: Literal["day", "night"] = "day", # whether to aggregate by day or night
+        night_direction: Literal["before", "after"] = "before", # how to define night
+        variable: str = "2m_dewpoint_temperature", # the variable to aggregate
     ) -> None:
     """
     Aggregate data from a CDSAPI Query to the healthshed
     level. 
     """
-    pass
+    jobs = data_catalog['aggregate']['jobs'].load()
+
+    for i, row in jobs.iterrows():
+
+        if row['variables'] != variable:
+            continue
+        if row['time'] != time:
+            continue
+        if row['aggregation_name'] != aggregation_name:
+            continue
+
+        print(f"Processing job {i+1}/{len(jobs)}: variable={variable}, time={time}, aggregation={aggregation_name}")
+
+        with ClimateDataFileHandler(input_file) as handler:
+            ds = xr.open_dataset(handler.get_dataset("instant"))
+            #ds = xr.open_dataset(handler.get_dataset("accum"))
+
+        if time == "day":
+            ds_masked = ds.copy()
+            ex=compute_diurnal_class_bins(ds_masked)
+            ds_masked['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex)
+            ds_time = ds_masked.where(ds_masked["solar_class"] == "day").drop_vars(["solar_class"])
+        elif time == "night":
+            ds_masked = ds.copy()
+            ex, ex_dt = compute_solar_day_night_class_bins(ds_masked, night_direction)
+            ds_masked['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex)
+            ds_masked["solar_date"] = (("valid_time", "latitude", "longitude"), ex_dt)
+            ds_time = ds_masked.where(ds_masked["solar_class"] == "night").drop_vars(["solar_class", "solar_date"])
+        else:
+            raise ValueError(f"Invalid time: {time}")
+
+        # set the local timezone for Madagascar
+        ds_time = ds_time.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
+
+        # resample by day or night
+        ds_time_rs = ds_time.resample(valid_time="1D").reduce(np.nanmean)
+
+        # convert to tiff
+        raster = netcdf_to_tiff(ds_time_rs, band=1, variable=variable)
+
+        # read healthsheds
+        try:
+            with initialize(version_base=None, config_path="../conf"):
+                cfg = compose(config_name='config.yaml')
+        except Exception as e:
+            print(f"Error initializing Hydra: {e}")
+            with initialize(version_base=None, config_path="conf"):
+                cfg = compose(config_name='config.yaml')
+
+        driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
+        drive = driver.get_drive()
+        healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
+
+
+
+
 ```
