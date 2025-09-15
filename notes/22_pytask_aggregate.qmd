@@ -9,23 +9,30 @@ engine: jupyter
 > This task aggregates the downloaded data into spatial and temporal averages. It uses xarray to compute summary statistics over the specified time period and spatial region. The aggregation is done diurnally, so we will fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
 
 ```{python}
-#| default_exp task_aggregate
+#| default_exp task_aggregate:
+#| 
 ```
 
 ```{python}
-#| hide
+#| hide:
+# showdoc
+
 from nbdev.showdoc import *
 
 ```
 
 ```{python}
-#| export
+#| export:
+# imports
 
 import tempfile
 import rasterio
 import xarray as xr
 from pyprojroot import here
 from typing import Literal
+from pytask import task, Product
+from pathlib import Path
+from typing import Annotated
 from rasterstats.io import Raster
 from era5_sandbox.config import BLD, data_catalog
 from era5_sandbox.core import ClimateDataFileHandler
@@ -57,7 +64,8 @@ ds
 We can see the astral library in action below:
 
 ```{python}
-#| export
+#| export:
+# imports for astral example
 from astral import Observer, sun
 import pandas as pd
 import numpy as np
@@ -164,7 +172,8 @@ print(f"this is different from the sun info at the maximum latitude/longitude is
 ```
 
 ```{python}
-#| export
+#| export:
+# define the basic diurnal classification function
 
 def compute_diurnal_class_bins(
         ds: xr.Dataset
@@ -231,7 +240,8 @@ complicated function to define "night" and "day",
 where "night" includes all of the values after the sun goes down.
 
 ```{python}
-#| export
+#| export:
+# a more complicated binning function for solar day/night classification
 
 def compute_solar_day_night_class_bins(
         ds: xr.Dataset,
@@ -373,9 +383,9 @@ Can we successfully convert this to a tiff?
 
 ```{python}
 from era5_sandbox.aggregate import netcdf_to_tiff
-raster = netcdf_to_tiff(ds_day_rs, band=1, variable="d2m")
+raster_day = netcdf_to_tiff(ds_day_rs, band=1, variable="d2m")
 
-raster
+raster_night = netcdf_to_tiff(ds_night_rs, band=1, variable="d2m")
 ```
 
 Looks great! This raster represents one calendar day of daytime values.
@@ -405,9 +415,9 @@ healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
 ```{python}
 res_poly2cell=polygon_to_raster_cells(
     vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
-    raster=raster.data, # the raster data above
+    raster=raster_day.data, # the raster data above
     nodata=np.nan, # any intersections with no data, may have to be np.nan
-    affine=raster.transform, # some math thing need to revise
+    affine=raster_day.transform, # some math thing need to revise
     all_touched=True, 
     verbose=True
 )
@@ -418,80 +428,101 @@ This works fine. Finally, we aggregate to healthsheds:
 ```{python}
 from era5_sandbox.aggregate import aggregate_to_healthsheds
 
-result = aggregate_to_healthsheds(
+result_day = aggregate_to_healthsheds(
     res_poly2cell=res_poly2cell,
-    raster=raster,
+    raster=raster_day,
     shapes=healthsheds,
     names_column="fid",
     aggregation_func=np.nanmean,
     aggregation_name="mean_dewpoint_day"
+)
+
+result_night = aggregate_to_healthsheds(
+    res_poly2cell=res_poly2cell,
+    raster=raster_night,
+    shapes=healthsheds,
+    names_column="fid",
+    aggregation_func=np.nanmean,
+    aggregation_name="mean_dewpoint_night"
 )
 ```
 
 Below shows the result of aggregating the daytime dewpoint temperature to the healthshed level:
 
 ```{python}
-result
+result_day
 ```
+
+```{python}
+result_night
+```
+
+So from one input, we will have two outputs, one for daytime and one for nighttime, and this will have to loop over the bands (ie each day in the month).
 
 # Putting it all together in a `pytask` task
 
 Below we define our `pytask` task to aggregate data to the healthshed level.
 
 ```{python}
-def task_aggregate_data_diurnal(
-        input_file: Path, # input data Path from the download task
-        aggregation_func: callable = np.nanmean, # the aggregation function
-        aggregation_name: str = "mean", # the name of the aggregation function
-        time: Literal["day", "night"] = "day", # whether to aggregate by day or night
-        night_direction: Literal["before", "after"] = "before", # how to define night
-        variable: str = "2m_dewpoint_temperature", # the variable to aggregate
-    ) -> None:
-    """
-    Aggregate data from a CDSAPI Query to the healthshed
-    level. 
-    """
-    jobs = data_catalog['aggregate']['jobs'].load()
+#| export:
+# task definition
 
-    for i, row in jobs.iterrows():
+job_rows = data_catalog['aggregate']['jobs'].load()
 
-        if row['variables'] != variable:
-            continue
-        if row['time'] != time:
-            continue
-        if row['aggregation_name'] != aggregation_name:
-            continue
+aggregation_funcs = {
+    "mean": np.nanmean,
+    "sum": np.nansum,
+    "max": np.nanmax,
+    "min": np.nanmin
+}
 
-        print(f"Processing job {i+1}/{len(jobs)}: variable={variable}, time={time}, aggregation={aggregation_name}")
+for i, job in job_rows.iterrows():
+    #print(f"Job {i+1}: variable={job['variables']}, time={job['time']}, aggregation={job['aggregation_name']}")
 
+    # parse the row into function parameters
+    input_file = data_catalog['download'][job['input']].load()
+    solar_classification = job['solar_classification']
+    variable = job['variables_short']
+    time = job['time']
+    aggregation_func = aggregation_funcs[job['aggregation_name']]
+    aggregation_name = job['aggregation_name']
+
+    climate_handler_var = job['climate_handler_var']
+    local_tz = job['local_tz']
+
+    shapefile = job['shapefile']
+    hshd_unique_id = job['hshd_unique_id']
+
+    output_file = job['input'] + "_" + job['time'] + "_" + job['variables_short'] + "_" + job['aggregation_name'] + ".parquet"
+
+    def task_aggregate_data_diurnal(
+            input_file: Path = input_file, # input data Path from the download task
+            aggregation_func: callable = aggregation_func, # the aggregation function
+            aggregation_name: str = aggregation_name, # the name of the aggregation function
+            time: Literal["day", "night"] = time, # whether to aggregate by day or night
+            night_direction: Literal["before", "after"] = solar_classification, # how to define night
+            variable: str = variable, # the variable to aggregate,
+            climate_handler_var: Literal["instant", "accum"] = climate_handler_var, # whether the variable is instant or accum,
+            local_tz: str = local_tz, # the local timezone for resampling
+            shapefile: str = shapefile, # the shapefile for the healthsheds,
+            hshd_unique_id: str = hshd_unique_id, # the unique id column in the shapefile,
+            output_file: str = output_file # the output file name
+        ) -> Annotated[Path, data_catalog['aggregate'][output_file]]:
+        """
+        Task to aggregate data from a CDSAPI Query to the healthshed
+        level. Returns path to parquet file with aggregated data.
+        """
+
+        print(f"Aggregating: {output_file}")
+
+        # get input data
+        print("Reading input data...")
         with ClimateDataFileHandler(input_file) as handler:
-            ds = xr.open_dataset(handler.get_dataset("instant"))
-            #ds = xr.open_dataset(handler.get_dataset("accum"))
+            ds = xr.open_dataset(handler.get_dataset(climate_handler_var))
 
-        if time == "day":
-            ds_masked = ds.copy()
-            ex=compute_diurnal_class_bins(ds_masked)
-            ds_masked['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex)
-            ds_time = ds_masked.where(ds_masked["solar_class"] == "day").drop_vars(["solar_class"])
-        elif time == "night":
-            ds_masked = ds.copy()
-            ex, ex_dt = compute_solar_day_night_class_bins(ds_masked, night_direction)
-            ds_masked['solar_class'] = (('valid_time', 'latitude', 'longitude'), ex)
-            ds_masked["solar_date"] = (("valid_time", "latitude", "longitude"), ex_dt)
-            ds_time = ds_masked.where(ds_masked["solar_class"] == "night").drop_vars(["solar_class", "solar_date"])
-        else:
-            raise ValueError(f"Invalid time: {time}")
-
-        # set the local timezone for Madagascar
-        ds_time = ds_time.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
-
-        # resample by day or night
-        ds_time_rs = ds_time.resample(valid_time="1D").reduce(np.nanmean)
-
-        # convert to tiff
-        raster = netcdf_to_tiff(ds_time_rs, band=1, variable=variable)
-
-        # read healthsheds
+        #get the healthshed shapefile
+        print("Reading healthshed shapefile...")
+        from hydra import initialize, compose
         try:
             with initialize(version_base=None, config_path="../conf"):
                 cfg = compose(config_name='config.yaml')
@@ -502,9 +533,76 @@ def task_aggregate_data_diurnal(
 
         driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
         drive = driver.get_drive()
-        healthsheds = driver.read_healthsheds("Nepal_Healthsheds2024.zip")
+        healthsheds = driver.read_healthsheds(shapefile)
 
+        # compute the diurnal classification bins
+        print("Computing diurnal classification bins...")
+        class_bins, class_dts = compute_solar_day_night_class_bins(ds, night_direction)
 
+        ds_masked = ds.copy()
 
+        # assign classifications
+        print("Assigning classification bins to dataset...")
+        ds['solar_class'] = (('valid_time', 'latitude', 'longitude'), class_bins)
+        ds["solar_date"] = (("valid_time", "latitude", "longitude"), class_dts)
 
+        # mask the dataset to the requested time
+        mask = ds["solar_class"] == time
+        ds_masked = ds_masked.where(mask)
+
+        # set the local timezone
+        ds_masked = ds_masked.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert(local_tz))
+
+        # resample by local date
+        print("Resampling by local date...")
+        ds_rs = ds_masked.resample(valid_time="1D").reduce(aggregation_func)
+
+        # convert to tiff
+        print("Rasterizing resampled data...")
+        n_bands = ds_rs.dims['valid_time']
+
+        # polygon to raster cells for the first band
+        print("Converting polygons to raster cells...")
+        raster = netcdf_to_tiff(ds_rs, band=1, variable=variable)
+        res_poly2cell=polygon_to_raster_cells(
+            vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
+            raster=raster.data, # the raster data above
+            nodata=np.nan, # any intersections with no data, may have to be np.nan
+            affine=raster.transform, # some math thing need to revise
+            all_touched=True, 
+            verbose=True
+        )
+
+        for band in tqdm(range(1, n_bands + 1)):
+            print(f"Processing band {band} of {n_bands}...")
+            raster = netcdf_to_tiff(ds_rs, band=band, variable=variable)
+            result = aggregate_to_healthsheds(
+                res_poly2cell=res_poly2cell,
+                raster=raster,
+                shapes=healthsheds,
+                names_column=hshd_unique_id,
+                aggregation_func=aggregation_func,
+                aggregation_name=f"{aggregation_name}_{variable}_{time}"
+            )
+            # save to parquet
+
+            result.to_parquet(f"{BLD}/{output_file}")
+        
+        print("Aggregation complete.")
+        return Path(f"{BLD}/{output_file}")
+
+```
+
+That should wrap it up! To test, we can run a single job:
+
+```{python}
+#| eval: false
+#| runs the last defined job only
+task_aggregate_data_diurnal()
+```
+
+Or we can run the task in `pytask`:
+
+```bash
+pytask build -k "2009_1_nepal" --dry-run
 ```

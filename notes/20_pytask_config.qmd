@@ -8,16 +8,19 @@ title: "`pytask` Config: Defining the Pipeline Internals in `pytask`"
 This module defines the data catalog(s) and any hard-coded parameters that are used throughout the pipeline.
 
 ```{python}
-#| default_exp config
+#| default_exp config:
+# config module
 ```
 
 ```{python}
-#| hide
+#| hide:
+# hide showdoc
 from nbdev.showdoc import *
 ```
 
 ```{python}
-#| export
+#| export: 
+# imports
 
 from pathlib import Path
 from pyprojroot import here
@@ -39,8 +42,8 @@ setup samples, etc. on the fly by `marking` a task with the `pytask.mark.skipif`
 decorator. Change this to `False` when you're ready to run the full pipeline.
 
 ```{python}
-#| export
-
+#| export:
+# a dev flag for quick testing
 DEV_MODE=True
 ```
 
@@ -65,7 +68,7 @@ So, to do this, we define one job as a query to the CDS API that must contain:
 Given one combination of all of these, a single job can complete the first "task" in parallel.
 
 ```{python}
-#| export
+#| export:
 
 # download task parameters
 years = [x for x in range(2009, 2025)]
@@ -89,8 +92,9 @@ variables = ["2m_dewpoint_temperature", "2m_temperature", "total_precipitation",
 Now, we can use a namedtuple to create a class, `query`, that will be passed directly from the pytask data catalog to the task function.
 
 ```{python}
-#| export
+#| export:
 
+# a class for the query parameters
 class Query(NamedTuple):
     """A named tuple to hold the query parameters for the download."""
     year: str
@@ -127,7 +131,8 @@ nest data catalogs so that we can return specific task products to
 named data catalog nodes.
 
 ```{python}
-#| export
+#| export:
+# set up catalog
 
 products = ["mydata", 'mydata2', "download", "aggregate", "viz", "publish"]
 
@@ -152,12 +157,11 @@ in between can be any parameters needed for the aggregation task, which
 then get expanded to the full list of jobs with itertools.product or explode or similar.
 
 ```{python}
-#| export
+#| export:
 
 # aggregate task parameters
 
-inputs = list(data_catalog['download']._entries)
-inputs.remove("queries")  # remove the "queries" entry
+inputs = [x.name() for x in data_catalog['download']['queries'].load()]
 outputs = [f"{i}_agg" for i in inputs]
 
 variable_dict = {
@@ -192,7 +196,8 @@ agg_params
 Let's keep only rows where the variables and variables_short match
 
 ```{python}
-#| export
+#| export:
+# quick filter to keep only matching rows
 
 agg_params = agg_params[agg_params.apply(lambda x: variable_dict[x['variables']] == x['variables_short'], axis=1)]
 ```
@@ -204,9 +209,13 @@ agg_params
 Great, and now keeping sum only for precipitation:
 
 ```{python}
-#| export
-#| 
+#| export:
+# remove rows where tp aggregation is not sum
 mask = (agg_params['variables_short'] == "tp") & (agg_params['aggregation_name'] != "sum")
+agg_params = agg_params[~mask]
+
+# remove rows where non-tp aggregation is sum
+mask = (agg_params['variables_short'] != "tp") & (agg_params['aggregation_name'] == "sum")
 agg_params = agg_params[~mask]
 ```
 
@@ -217,13 +226,42 @@ agg_params
 Now we add the input and output columns by joining:
 
 ```{python}
-#| export
-inp_out = pd.DataFrame({"input": inputs, "output": outputs})
-aggregate_jobs = inp_out.merge(agg_params, how="cross")
+#| export:
+# set up inputs and parameters
+inputs = pd.DataFrame({"input": inputs})
+aggregate_jobs = inputs.merge(agg_params, how="cross")
 ```
 
-This result gives us the full list of jobs for the aggregation task. 26 rows for the parameters,
-and 386 inputs/outputs, giving a total of 10036 jobs:
+This result gives us the full list of jobs for the aggregation task. 20 rows for the parameters,
+and 384 inputs/outputs, giving a total of 7680 jobs:
+
+```{python}
+aggregate_jobs
+```
+
+A few more configuration items need to be added, like
+the local timezone for each geography, the healthshed filename,
+the healthshed unique ID variable name in the shapefile,
+and whether the variable is instantaneous or accumulated:
+
+```{python}
+#| export:
+# add a few more columns
+aggregate_jobs['local_tz'] = aggregate_jobs['input'].apply(
+    lambda x: "Asia/Kathmandu" if "nepal" in x else "Indian/Antananarivo"
+)
+aggregate_jobs['shapefile'] = aggregate_jobs['input'].apply(
+    lambda x: "Nepal_Healthsheds2024.zip" if "nepal" in x else "healthsheds2022.zip"
+)
+
+aggregate_jobs['hshd_unique_id'] = aggregate_jobs['input'].apply(
+    lambda x: "fid" if "nepal" in x else "fs_uid"
+)
+
+aggregate_jobs['climate_handler_var'] = aggregate_jobs['variables_short'].apply(
+    lambda x: "accum" if x == "tp" else "instant"
+)
+```
 
 ```{python}
 aggregate_jobs
@@ -232,7 +270,7 @@ aggregate_jobs
 Now we add this to the data catalog:
 
 ```{python}
-#| export
-
+#| export:
+# update catalog
 data_catalog['aggregate'].add("jobs", aggregate_jobs)
 ```

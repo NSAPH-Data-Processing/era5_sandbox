@@ -2,9 +2,12 @@
 
 # %% auto 0
 __all__ = ['SRC', 'BLD', 'demo_catalog', 'DEV_MODE', 'years', 'months', 'days', 'times', 'geographies', 'product_type',
-           'variables', 'queries', 'products', 'data_catalog', 'Query']
+           'variables', 'queries', 'products', 'data_catalog', 'inputs', 'outputs', 'variable_dict', 'agg_params',
+           'mask', 'aggregate_jobs', 'Query']
 
 # %% ../../notes/20_pytask_config.qmd 3
+#| export: # imports
+
 from pathlib import Path
 from pyprojroot import here
 from pytask import DataCatalog
@@ -17,10 +20,11 @@ BLD = here() / "bld"
 demo_catalog = DataCatalog()
 
 # %% ../../notes/20_pytask_config.qmd 5
-DEV_MODE=False
+#| export: # a dev flag for quick testing
+DEV_MODE=True
 
 # %% ../../notes/20_pytask_config.qmd 7
-# download task parameters
+#| export: # download task parameters
 years = [x for x in range(2009, 2025)]
 months = [x for x in range(1, 13)]
 days = [x for x in range(1, 32)]
@@ -39,6 +43,7 @@ product_type = "reanalysis"
 variables = ["2m_dewpoint_temperature", "2m_temperature", "total_precipitation", "volumetric_soil_water_layer_1"]
 
 # %% ../../notes/20_pytask_config.qmd 9
+#| export: # a class for the query parameters
 class Query(NamedTuple):
     """A named tuple to hold the query parameters for the download."""
     year: str
@@ -63,6 +68,8 @@ for year in years:
             queries.append(Query(str(year), str(month), [str(x) for x in days], times, geography, product_type, variables))
 
 # %% ../../notes/20_pytask_config.qmd 12
+#| export: # set up catalog
+
 products = ["mydata", 'mydata2', "download", "aggregate", "viz", "publish"]
 
 data_catalog = {
@@ -71,3 +78,71 @@ data_catalog = {
     for product in products
 }
 data_catalog['download'].add("queries", queries)
+
+# %% ../../notes/20_pytask_config.qmd 14
+#| export: # aggregate task parameters
+
+inputs = [x.name() for x in data_catalog['download']['queries'].load()]
+outputs = [f"{i}_agg" for i in inputs]
+
+variable_dict = {
+    "2m_dewpoint_temperature": "d2m",
+    "2m_temperature": "t2m",
+    "total_precipitation": "tp",
+    "volumetric_soil_water_layer_1": "swvl1"
+}
+
+# list of params that get fed into the task functions
+agg_params = {
+    "time": ["day", "night"],
+    "solar_classification": ["before"],
+    "variables": variables,
+    "variables_short": [variable_dict[x] for x in variables],
+    "aggregation_name": ["mean", "sum", "max", "min"]
+}
+
+from itertools import product
+import pandas as pd
+
+# expand all the params
+agg_params = pd.DataFrame(list(product(*agg_params.values())), columns=agg_params.keys())
+
+# %% ../../notes/20_pytask_config.qmd 18
+#| export: # quick filter to keep only matching rows
+
+agg_params = agg_params[agg_params.apply(lambda x: variable_dict[x['variables']] == x['variables_short'], axis=1)]
+
+# %% ../../notes/20_pytask_config.qmd 21
+#| export: # remove rows where tp aggregation is not sum
+mask = (agg_params['variables_short'] == "tp") & (agg_params['aggregation_name'] != "sum")
+agg_params = agg_params[~mask]
+
+# remove rows where non-tp aggregation is sum
+mask = (agg_params['variables_short'] != "tp") & (agg_params['aggregation_name'] == "sum")
+agg_params = agg_params[~mask]
+
+# %% ../../notes/20_pytask_config.qmd 24
+#| export: # set up inputs and parameters
+inputs = pd.DataFrame({"input": inputs})
+aggregate_jobs = inputs.merge(agg_params, how="cross")
+
+# %% ../../notes/20_pytask_config.qmd 28
+#| export: # add a few more columns
+aggregate_jobs['local_tz'] = aggregate_jobs['input'].apply(
+    lambda x: "Asia/Kathmandu" if "nepal" in x else "Indian/Antananarivo"
+)
+aggregate_jobs['shapefile'] = aggregate_jobs['input'].apply(
+    lambda x: "Nepal_Healthsheds2024.zip" if "nepal" in x else "healthsheds2022.zip"
+)
+
+aggregate_jobs['hshd_unique_id'] = aggregate_jobs['input'].apply(
+    lambda x: "fid" if "nepal" in x else "fs_uid"
+)
+
+aggregate_jobs['climate_handler_var'] = aggregate_jobs['variables_short'].apply(
+    lambda x: "accum" if x == "tp" else "instant"
+)
+
+# %% ../../notes/20_pytask_config.qmd 31
+#| export: # update catalog
+data_catalog['aggregate'].add("jobs", aggregate_jobs)

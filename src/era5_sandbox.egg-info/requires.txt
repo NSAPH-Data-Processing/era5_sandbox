@@ -4,11 +4,21 @@ ipykernel
 nbdev
 cdsapi
 hydra-core
+omegaconf
 ipykernel
 snakemake
 geopandas
 xarray
+shapely
 matplotlib
 cartopy
+rasterstats
+rioxarray
+pydrive2
+google-auth
+numpy
+tqdm
+pytask
+pytask-parallel
 
 [dev]
