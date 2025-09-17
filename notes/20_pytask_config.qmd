@@ -1,5 +1,8 @@
 ---
 title: "`pytask` Config: Defining the Pipeline Internals in `pytask`"
+execute:
+    freeze: auto
+engine: jupyter
 ---
 
 ## config
@@ -22,10 +25,11 @@ from nbdev.showdoc import *
 #| export: 
 # imports
 
+import pandas as pd
+
 from pathlib import Path
 from pyprojroot import here
 from pytask import DataCatalog
-from typing import NamedTuple
 
 
 SRC = here() / "src" / "era5_sandbox"
@@ -47,14 +51,64 @@ decorator. Change this to `False` when you're ready to run the full pipeline.
 DEV_MODE=True
 ```
 
+## The Data Catalog
+
+To manage our pipeline, we're going to use a nested data catalog structure.
+This way, we can easily return specific entries to specific tasks
+without having to manage multiple different data catalogs. Specifically,
+we'll have a data catalog for each stage of the pipeline, and each catalog
+will have entries for the inputs, outputs, and any other parameters needed
+for that stage. This is similar to how we used Hydra configs, but
+using the `pytask` data catalog, we can more easily gather the data
+for a specific task in structured manner entirely in Python.
+
+```{python}
+#| export:
+# the data catalog for the pipeline stages
+
+stages = ["mydata", 'mydata2', # from the demo, ignore
+    "download", # download task
+    "aggregate", # aggregation task
+    "publish", # publishing task
+    "viz"] # visualization task
+
+buckets = [
+    "inputs", # any specific inputs, eg for carrying over between tasks
+    "outputs", # specific output task returns
+    "jobs", # job parameters as a dataframe
+    "params" # any lingering hardcoded parameters
+    ]
+
+data_catalog = {
+
+    stage: {bucket: DataCatalog(name=f"{stage}_{bucket}") for bucket in buckets}
+    for stage in stages
+}
+```
+
 
 ## The Download Task
 
-A good strategy may be to set the hard coded parameters in the config file, and then use the `pytask` data catalog to manage the data. This way, we can easily change the parameters without having to modify the code. This is especially useful for the API query, where we need to be able to set the parameter grid for the years and data types we want to download data for. So, let's create an entry in the data catalog specifically for the download task.
+A good strategy may be to set pipeline stage parameters in the config file, 
+and then use the `pytask` data catalog to manage the data. This way, we can
+easily change the parameters without having to modify the code. This is especially 
+useful for the API query, where we need to be able to set the parameter grid for
+the years and data types we want to download data for. So, let's create an entry in the data catalog specifically for the download task.
 
-A good strategy I thought about for grid parameter comprehension is to create a dataframe or namedtuple that expands all the combinations of parameters, and then uses each combination to create the tasks which are then easily added to the data catalog. This way, we can still easily inspect the pipeline and see what tasks are being run, while also being able to easily change the parameters in the config file without too much hassle.
+A good strategy I thought about for grid parameter comprehension is to create a dataframe expands all the combinations of
+parameters, and then uses each combination to create the tasks which are then 
+easily added to the data catalog. This way, we can still easily inspect the 
+pipeline and see what tasks are being run, while also being able to easily 
+change the parameters in the config file without too much hassle.
 
-An important framework decision I'm making here is that each ROW of the dataframe corresponds to a single task, so that we can quickly understand at a glance what the task is doing, and also easily develop the code for the task itself. This is different from the hydra approach where a job is first specified by a default config, and then the parameters are swept over in the config file. This is a more flexible approach, IMO.
+An important framework decision I'm making here is that each ROW of the dataframe corresponds to a single task, so that we can quickly understand at a glance what the task is doing, and also easily develop the code for the task itself. This is different from the hydra approach where a job is first specified by a default config, and then the parameters are swept over in multiple config files. This is a more flexible approach, IMO, because:
+
+1. each row defines a single task run, so it's easy to understand what the run is doing
+2. it's easy to add or remove runs by simply expanding the list of parameters and using dataframe filters to remove irrelevant parameter combinations
+3. we don't have to independently inspect and manage multiple different/overriding config files
+4. it's all in Python, so we can use the full power of the language to define
+   the parameters and the tasks in a single sweep, not through the need of
+   hydra+snakemake multi stage/multi-lingual config system
 
 So, to do this, we define one job as a query to the CDS API that must contain:
 - The dataset (re-analysis)
@@ -65,65 +119,60 @@ So, to do this, we define one job as a query to the CDS API that must contain:
 - The geography (region), which will need:
     - The URL to the shapefile to calculate the bounding box
 
-Given one combination of all of these, a single job can complete the first "task" in parallel.
+Given one combination of all of these, a single SLURM job can complete the first "task" in parallel by having a run assigned to each row of the dataframe.
 
 ```{python}
 #| export:
 
-# download task parameters
-years = [x for x in range(2009, 2025)]
-months = [x for x in range(1, 13)]
-days = [x for x in range(1, 32)]
+# a dataframe for the query parameters, with nested entries for days, times, and variables
+# Dimensions
+years = [str(x) for x in range(2009, 2025)]  # 16 years
+months = [str(x).zfill(2) for x in range(1, 13)]      # 12 months
+geographies = ["madagascar", "nepal"]  # 2 geographies
+
+# nested values; we want ALL days, times, and variables for each job
+days = [str(x).zfill(2) for x in range(1, 32)]
 times = [f"{x:02d}:00" for x in range(24)]
-geographies = [
-    {
-        "name": "madagascar", 
-        "shapefile": "https://data.humdata.org/dataset/26fa506b-0727-4d9d-a590-d2abee21ee22/resource/ed94d52e-349e-41be-80cb-62dc0435bd34/download/mdg_adm_bngrc_ocha_20181031_shp.zip"
-    },
-    {
-        "name": "nepal", 
-        "shapefile": "https://data.humdata.org/dataset/07db728a-4f0f-4e98-8eb0-8fa9df61f01c/resource/2eb4c47f-fd6e-425d-b623-d35be1a7640e/download/npl_adm_nd_20240314_ab_shp.zip"
-    }
-    ]
-product_type = "reanalysis"
 variables = ["2m_dewpoint_temperature", "2m_temperature", "total_precipitation", "volumetric_soil_water_layer_1"]
-```
 
-Now, we can use a namedtuple to create a class, `query`, that will be passed directly from the pytask data catalog to the task function.
+product_type = "reanalysis"
 
-```{python}
-#| export:
+# Map shapefiles to geography
+shapefiles = {
+    "madagascar": "https://data.humdata.org/dataset/26fa506b-0727-4d9d-a590-d2abee21ee22/resource/ed94d52e-349e-41be-80cb-62dc0435bd34/download/mdg_adm_bngrc_ocha_20181031_shp.zip",
+    "nepal": "https://data.humdata.org/dataset/07db728a-4f0f-4e98-8eb0-8fa9df61f01c/resource/2eb4c47f-fd6e-425d-b623-d35be1a7640e/download/npl_adm_nd_20240314_ab_shp.zip"
+}
 
-# a class for the query parameters
-class Query(NamedTuple):
-    """A named tuple to hold the query parameters for the download."""
-    year: str
-    month: str
-    day: list[str]
-    time: list[str]
-    geography: dict
-    product_type: str
-    variables: list[str]
-
-    def name(self):
-        """Return a unique name for the query based on year, month, and geography."""
-        return f"{self.year}_{self.month}_{self.geography['name']}"
-    def __str__(self):
-        return f"Query(year={self.year}, month={self.month}, geography={self.geography['name']})"
-
-queries = []
-
+# Build row-wise combinations of (year, month, geography)
+rows = []
 for year in years:
     for month in months:
-        for geography in geographies:
-            queries.append(Query(str(year), str(month), [str(x) for x in days], times, geography, product_type, variables))
+        for geo in geographies:
+            rows.append({
+                "year": year,
+                "month": month,
+                "geography": geo,
+                "shapefile": shapefiles[geo],
+                "product_type": product_type,
+                "day": days,
+                "time": times,
+                "variables": variables,
+                "output": f"{year}_{month}_{geo}"
+            })
+
+# Create dataframe
+query_df = pd.DataFrame(rows)
 ```
 
 ```{python}
-print(f"Number of estimated jobs: {len(queries)}. Examples...")
+query_df
+```
 
-for query in queries[:5]:
-    print(query)
+```{python}
+print(f"Number of estimated jobs: {query_df.shape[0]}. Examples...")
+
+for i, row in query_df.sample(3).iterrows():
+    print(f"Year: {row['year']}, Month: {row['month']}, Geography: {row['geography']}, Link: {row['shapefile']}, Variables: {row['variables']}")
 ```
 
 Now add them to the catalog. We're going to use a dictionary to
@@ -134,34 +183,36 @@ named data catalog nodes.
 #| export:
 # set up catalog
 
-products = ["mydata", 'mydata2', "download", "aggregate", "viz", "publish"]
+data_catalog['download']['jobs'].add("queries_df", query_df)
+```
 
-data_catalog = {
+Our data catalog now has a `download|jobs` node with a `queries_df` entry that contains the dataframe of all the jobs to be run in this task.
 
-    product: DataCatalog(name=f"{product}")
-    for product in products
-}
-data_catalog['download'].add("queries", queries)
+```{python}
+data_catalog['download']['jobs']['queries_df'].load().head()
 ```
 
 ## The Aggregation Task
 
 To carry out the aggregation, we will follow similar logic to the original pipeline and use xarray to aggregate data into spatial and temporal averages. The aggregation task will take the downloaded data and compute the mean over the specified time period and spatial region. However, in this case, we want to aggregate the data diurnally, so we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.
 
-To do this, let's use a dataframe as opposed to a list of class objects, since it's easier to envisage.
+Once again, we will use a dataframe to define the parameters for the aggregation task.
 
 Here we will use a dataframe with the jobs as rows;
-the first column is "input" which is the list of query object names from
+the first column is "input" which is the list of query names from
 the download task, and the last column is the output object name. Columns
-in between can be any parameters needed for the aggregation task, which
-then get expanded to the full list of jobs with itertools.product or explode or similar.
+in between can be the parameters needed for the aggregation task, which
+then get expanded to the full list of jobs with `itertools.product`, `explode` or similar,
+and filtered as necessary.
+
+For explanations of the parameters, see the Aggregation Task notebook's final `task_aggregate_data_diurnal` function.
 
 ```{python}
 #| export:
 
 # aggregate task parameters
 
-inputs = [x.name() for x in data_catalog['download']['queries'].load()]
+inputs = query_df["output"].tolist()
 outputs = [f"{i}_agg" for i in inputs]
 
 variable_dict = {
@@ -206,7 +257,7 @@ agg_params = agg_params[agg_params.apply(lambda x: variable_dict[x['variables']]
 agg_params
 ```
 
-Great, and now keeping sum only for precipitation:
+Great, and now keeping `sum` only for total precipitation (we don't need mean, max, min for that variable), and removing `sum` for all other variables (we don't need sum for temperature or soil moisture):
 
 ```{python}
 #| export:
@@ -236,6 +287,7 @@ This result gives us the full list of jobs for the aggregation task. 20 rows for
 and 384 inputs/outputs, giving a total of 7680 jobs:
 
 ```{python}
+assert aggregate_jobs.shape[0] == 20 * len(inputs)
 aggregate_jobs
 ```
 
@@ -272,5 +324,11 @@ Now we add this to the data catalog:
 ```{python}
 #| export:
 # update catalog
-data_catalog['aggregate'].add("jobs", aggregate_jobs)
+data_catalog['aggregate']['jobs'].add("jobs_df", aggregate_jobs)
+```
+
+Our data catalog now has an `aggregate|jobs` node with a `jobs_df` entry that contains the dataframe of all the jobs to be run in this task.
+
+```{python}
+data_catalog['aggregate']['jobs']['jobs_df'].load().head()
 ```

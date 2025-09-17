@@ -19,7 +19,7 @@ from pytask import Product
 
 # %% ../../notes/10_pytask_demo.qmd 5
 def task_create_random_data(
-        seed: Annotated[int, 42], # Default seed for reproducibility
+        seed: Annotated[int, 42],                                   # Default seed for reproducibility
         path_to_data: Annotated[Path, Product] = BLD / "data.pkl" # Path to the object in the build directory
     ) -> None:
     "Create a random data set and save it as a pickle file. Return the path to the saved file."

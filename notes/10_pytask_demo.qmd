@@ -1,5 +1,8 @@
 ---
 title: "Demo: How to Create Pipelines with `pytask`"
+execute:
+    freeze: auto
+engine: jupyter
 ---
 
 ## task_data_preparation

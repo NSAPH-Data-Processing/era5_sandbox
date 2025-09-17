@@ -7,5 +7,5 @@
 
 # This is a test to see if we can use pytask to download ERA5 data in parallel
 
-pytask --dry-run 
-pytask --parallel-backend dask -n 20
+#pytask --dry-run 
+pytask --parallel-backend dask -n 20 -k "madagascar and 2019"

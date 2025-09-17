@@ -4,6 +4,7 @@
 __all__ = ['queries']
 
 # %% ../../notes/21_pytask_download.qmd 4
+#| export: # necessary imports
 import cdsapi
 import pytask
 from pytask import task, Product
@@ -11,43 +12,45 @@ from pathlib import Path
 from typing import Annotated
 
 from .config import data_catalog
-from .config import BLD, Query
+from .config import BLD
 from .config import DEV_MODE
 from .pytask_logger import setup_logger
 from .download import fetch_GADM, create_bounding_box
 
 # %% ../../notes/21_pytask_download.qmd 12
-queries = data_catalog['download']['queries'].load()
+#| export: # define the download task
 
-for query in queries:
+from pandas import Series
 
-    @pytask.mark.skipif(DEV_MODE, reason= "Development mode is enabled. See config.")
-    @task(id=query.name(), name=f"Download {query.name()}")
+queries = data_catalog['download']['jobs']['queries_df'].load()
+
+for i, job in queries.iterrows():
+
+    @task(id=job['output'], name=f"Download {job['output']}")
     def task_download_raw_data(
-        _query: Query = query   # The query object from the data catalog
-        #output_path: Annotated[Path, Product] = output_path
-    )-> Annotated[Path, data_catalog['download'][query.name()]]:
+        _query: Series = job   # The query object from the data catalog
+    )-> Annotated[Path, data_catalog['download']['outputs'][job['output']]]:
         
-        logger = setup_logger(_query.name(), Path(f"logs/{_query.name()}.log"))
-        output_path = BLD / f"{_query.name()}.nc"
-        logger.info(f"Starting download for {_query.name()} to {output_path}")
+        logger = setup_logger(_query['output'])
+        output_path = BLD / f"{_query['output']}.nc"
+        logger.info(f"Starting download for {_query['output']} to {output_path}")
         
         client = cdsapi.Client()
-        bounding_box = create_bounding_box(_query.geography['shapefile'])
+        bounding_box = create_bounding_box(_query['shapefile'])
     
         request = {
-                "product_type": _query.product_type,
-                "variable": _query.variables, 
-                "year": _query.year,
-                "month": _query.month,
-                "day": _query.day,
-                "time": _query.time,
+                "product_type": _query['product_type'],
+                "variable": _query['variables'], 
+                "year": _query['year'],
+                "month": _query['month'],
+                "day": _query['day'],
+                "time": _query['time'],
                 "data_format": "netcdf",
                 "download_format": "unarchived",
                 "area": bounding_box
             }
                 
         client.retrieve("reanalysis-era5-land", request).download(output_path)
-        logger.info(f"Downloaded data for {_query.name()} to {output_path}")
+        logger.info(f"Downloaded data for {_query['output']} to {output_path}")
 
         return output_path

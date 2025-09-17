@@ -8,6 +8,7 @@ __all__ = ['job_rows', 'aggregation_funcs', 'compute_diurnal_class_bins', 'compu
 
 import tempfile
 import rasterio
+import yaml
 import xarray as xr
 from pyprojroot import here
 from typing import Literal
@@ -15,15 +16,17 @@ from pytask import task, Product
 from pathlib import Path
 from typing import Annotated
 from rasterstats.io import Raster
+
 from .config import BLD, data_catalog
-from .core import ClimateDataFileHandler
+from .pytask_logger import setup_logger
 
 from .core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler, kelvin_to_celsius
 
-from .aggregate import polygon_to_raster_cells, aggregate_to_healthsheds, RasterFile
+from .aggregate import polygon_to_raster_cells, aggregate_to_healthsheds, RasterFile, netcdf_to_tiff
 
 # %% ../../notes/22_pytask_aggregate.qmd 7
-#| export: # imports for astral example
+#| export: #| echo: true
+# imports for astral example
 from astral import Observer, sun
 import pandas as pd
 import numpy as np
@@ -163,7 +166,7 @@ def compute_solar_day_night_class_bins(
 # %% ../../notes/22_pytask_aggregate.qmd 46
 #| export: # task definition
 
-job_rows = data_catalog['aggregate']['jobs'].load()
+job_rows = data_catalog['aggregate']['jobs']['jobs_df'].load()
 
 aggregation_funcs = {
     "mean": np.nanmean,
@@ -173,12 +176,12 @@ aggregation_funcs = {
 }
 
 for i, job in job_rows.iterrows():
-    print(f"Job {i+1}: variable={job['variables']}, time={job['time']}, aggregation={job['aggregation_name']}")
+    #print(f"Job {i+1}: variable={job['variables']}, time={job['time']}, aggregation={job['aggregation_name']}")
 
     # parse the row into function parameters
-    input_file = data_catalog['download'][job['input']].load()
+    input_file = data_catalog['download']['outputs'][job['input']]
     solar_classification = job['solar_classification']
-    variable = job['variables']
+    variable = job['variables_short']
     time = job['time']
     aggregation_func = aggregation_funcs[job['aggregation_name']]
     aggregation_name = job['aggregation_name']
@@ -191,8 +194,9 @@ for i, job in job_rows.iterrows():
 
     output_file = job['input'] + "_" + job['time'] + "_" + job['variables_short'] + "_" + job['aggregation_name'] + ".parquet"
 
+    @task(id=output_file, name=f"Aggregate {output_file}")
     def task_aggregate_data_diurnal(
-            input_file: Path = input_file, # input data Path from the download task
+            input_file: Path = data_catalog['download']['outputs'][job['input']], # input data Path from the download task
             aggregation_func: callable = aggregation_func, # the aggregation function
             aggregation_name: str = aggregation_name, # the name of the aggregation function
             time: Literal["day", "night"] = time, # whether to aggregate by day or night
@@ -203,42 +207,40 @@ for i, job in job_rows.iterrows():
             shapefile: str = shapefile, # the shapefile for the healthsheds,
             hshd_unique_id: str = hshd_unique_id, # the unique id column in the shapefile,
             output_file: str = output_file # the output file name
-        ) -> Annotated[Path, data_catalog['aggregate'][output_file]]:
+        ) -> Annotated[Path, data_catalog['aggregate']['outputs'][output_file]]:
         """
         Task to aggregate data from a CDSAPI Query to the healthshed
         level. Returns path to parquet file with aggregated data.
         """
 
-        print(f"Aggregating: {output_file}")
+        logger = setup_logger(output_file)
+
+        logger.info(f"Aggregating: {output_file}")
 
         # get input data
-        print("Reading input data...")
+        logger.info("Reading input data...")
         with ClimateDataFileHandler(input_file) as handler:
-            ds = xr.open_dataset(handler.get_dataset(climate_handler_var))
+            ds = xr.open_dataset(handler.get_dataset('instant'))
 
         #get the healthshed shapefile
-        print("Reading healthshed shapefile...")
-        from hydra import initialize, compose
-        try:
-            with initialize(version_base=None, config_path="../conf"):
-                cfg = compose(config_name='config.yaml')
-        except Exception as e:
-            print(f"Error initializing Hydra: {e}")
-            with initialize(version_base=None, config_path="conf"):
-                cfg = compose(config_name='config.yaml')
+        logger.info(f"Reading healthshed shapefile from yaml {here()}...")
+        with open(here() / "conf" / "config.yaml") as f:
+            healthshed_config = yaml.safe_load(f)
 
-        driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
-        drive = driver.get_drive()
-        healthsheds = driver.read_healthsheds(shapefile)
+            key_path = here() / healthshed_config['GOOGLE_DRIVE_AUTH_JSON']['path']
+
+            driver = GoogleDriver(json_key_path=key_path)
+            drive = driver.get_drive()
+            healthsheds = driver.read_healthsheds(shapefile)
 
         # compute the diurnal classification bins
-        print("Computing diurnal classification bins...")
+        logger.info("Computing diurnal classification bins...")
         class_bins, class_dts = compute_solar_day_night_class_bins(ds, night_direction)
 
         ds_masked = ds.copy()
 
         # assign classifications
-        print("Assigning classification bins to dataset...")
+        logger.info("Assigning classification bins to dataset...")
         ds['solar_class'] = (('valid_time', 'latitude', 'longitude'), class_bins)
         ds["solar_date"] = (("valid_time", "latitude", "longitude"), class_dts)
 
@@ -250,15 +252,15 @@ for i, job in job_rows.iterrows():
         ds_masked = ds_masked.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert(local_tz))
 
         # resample by local date
-        print("Resampling by local date...")
+        logger.info("Resampling by local date...")
         ds_rs = ds_masked.resample(valid_time="1D").reduce(aggregation_func)
 
         # convert to tiff
-        print("Rasterizing resampled data...")
+        logger.info("Rasterizing resampled data...")
         n_bands = ds_rs.dims['valid_time']
 
         # polygon to raster cells for the first band
-        print("Converting polygons to raster cells...")
+        logger.info("Converting polygons to raster cells...")
         raster = netcdf_to_tiff(ds_rs, band=1, variable=variable)
         res_poly2cell=polygon_to_raster_cells(
             vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
@@ -270,7 +272,7 @@ for i, job in job_rows.iterrows():
         )
 
         for band in tqdm(range(1, n_bands + 1)):
-            print(f"Processing band {band} of {n_bands}...")
+            logger.info(f"Processing band {band} of {n_bands}...")
             raster = netcdf_to_tiff(ds_rs, band=band, variable=variable)
             result = aggregate_to_healthsheds(
                 res_poly2cell=res_poly2cell,
@@ -282,7 +284,7 @@ for i, job in job_rows.iterrows():
             )
             # save to parquet
 
-            result.to_parquet(f"{BLD}/{output_file}.parquet")
+            result.to_parquet(f"{BLD}/{output_file}")
         
-        print("Aggregation complete.")
-        return Path(f"{BLD}/{output_file}.parquet")
+        logger.info("Aggregation complete.")
+        return Path(f"{BLD}/{output_file}")
