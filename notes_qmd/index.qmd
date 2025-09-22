@@ -1,0 +1,150 @@
+---
+title: "The ERA5 Spatial Aggregation Pipeline"
+---
+
+```{python}
+#| hide: null
+from era5_sandbox.core import *
+```
+
+## era5_sandbox
+
+> Sandbox environment for era5 development
+
+This package documents the development and implementation of functions and code for the Madagascar ERA5 dataset project. The goal is for exposure data to be made available at the daily resolution when possible. Finer resolutions shouldn’t ever be needed for our purposes, and it should then be relatively easy to aggregate at coarser resolutions, such as weekly or monthly. Additionally, we've extended this work to Nepal as well.
+
+Variables should generally be made available from 2010 onward, as that’s where our clinic data starts.
+
+All data are ideally made available at the “healthshed” geographical level. Healthsheds are defined as geographical areas where people who live all go to the same clinic. There are a total of ~2700 public clinics in Madagascar, hence ~2700 healthsheds, with each healthshed containing ~10000 people on average.
+
+Preliminary list of environmental variables
+
+- [x] 2-m air temperature from ERA5: daily min, max, mean
+ 
+- [x] 2-m air dew point temperature from ERA5: daily min, max, mean
+
+- [x] Precipitation: daily total (ERA5)
+
+- [x] Soil moisture: daily average (ERA5)
+
+Variables from other sources:
+
+- [ ] Sea surface temperature: daily average and maximum in the nearest neighbor for each healthshed.
+
+- [ ] Precipitation: daily total (CHIRPS)
+
+- [ ] Chlorophyll-A (Giacomo)
+
+- [ ] Wealth index: Available from Giacomo 
+
+- [ ] NDVI
+
+- [ ] Tropical storm
+
+- [ ] Flooding
+
+- [ ] Deforestation
+
+- [ ] Linking/segmenting healthsheds into climate zones and other 
+
+- [ ] Relative humidity: daily average (lower priority)
+
+Those from the ERA5 dataset will be housed here, but we may likely develop a separate repository for the other datasets.
+
+## Developer Guide
+
+This package is built and maintained with `nbdev`. If you are new to using `nbdev` here are some useful pointers to get you started.
+
+### Install era5_sandbox in Development mode
+
+```sh
+# make sure era5_sandbox package is installed in development mode
+$ pip install -e .
+```
+
+To make changes, go to the "notes" directory and edit the notebooks as necessary.
+Each notebook refers to a module in the era5_sandbox package. Cells are exported to the module
+when the notebook is saved and you run the following command:
+
+```sh
+$ nbdev_export
+```
+
+For e.g., to change functionality of the `testAPI()` function in the testAPI Hydra rule, you would edit the `testAPI` notebook in the `notes` directory `notes/testAPI.ipynb`, and then save that notebook and run `nbdev_export` to update the `core` module in the package.
+
+### How to Run the Pipeline
+
+The pipeline downloads ERA5 variables for a given date range and geographical bounding box. You can learn how each of these steps was by following the notebooks in `notes` in numerical order.
+
+::: {.callout-important}
+The pipeline has two implementations: one using `snakemake` and `hydra`, and another using `pytask`. The `pytask` implementation is the more recent one, and is recommended for future use. The `snakemake` implementation is left here for reference to legacy code.
+:::
+
+#### Using `pytask`
+
+To run the pipeline, the `pytask` config at `note/20_pytask_config.qmd` should be reviewed
+and updated if necessary. The pipeline can then be run with the following command:
+
+```sh
+$ sbatch pytask.sbatch
+```
+
+#### Using `snakemake` and `hydra`
+
+To run the pipeline, the config at `config/config.yaml` should be updated with the desired date range and geographical bounding box. The pipeline can then be run with the following command:
+
+```sh
+sbatch snakemake.sbatch
+```
+
+### What Does the Pipeline Produce?
+
+Using `pytask`'s data catalog, you can investigate the downloaded raw data with python, eg.:
+
+```{python}
+import xarray as xr
+from era5_sandbox.config import data_catalog
+from era5_sandbox.core import ClimateDataFileHandler
+
+ex_nc = list(data_catalog['download']['outputs']._entries).pop()
+ex_nc_path = data_catalog['download']['outputs'][ex_nc].load()
+
+with ClimateDataFileHandler(ex_nc_path) as handler:
+    ds = xr.open_dataset(handler.get_dataset("instant"))
+
+ds
+```
+
+And plot it with cartopy, eg.:
+
+```{python}
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+
+temperature = ds["t2m"]
+
+# Select a specific time step
+temperature_at_time = temperature.isel(valid_time=0)
+
+# Plot the data on a map
+plt.figure(figsize=(12, 8))
+ax = plt.axes(projection=ccrs.PlateCarree())
+temperature_at_time.plot(ax=ax, cmap="coolwarm", transform=ccrs.PlateCarree(), cbar_kwargs={"label": "Temperature (K)"})
+ax.coastlines()
+ax.add_feature(cfeature.BORDERS, linestyle=":")
+ax.set_title("Temperature at Time Step 0")
+plt.show()
+```
+
+You can also load the aggregated data:
+
+```{python}
+import pandas as pd
+import geopandas as gpd
+from era5_sandbox.config import data_catalog
+
+ex_agg_path = data_catalog['aggregate']['outputs']['2019_08_madagascar_night_d2m_max.parquet'].load()
+
+gpd.read_parquet(ex_agg_path).describe()
+```

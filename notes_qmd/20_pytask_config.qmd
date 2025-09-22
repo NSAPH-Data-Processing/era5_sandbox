@@ -12,18 +12,18 @@ This module defines the data catalog(s) and any hard-coded parameters that are u
 
 ```{python}
 #| default_exp config:
-# config module
+#
 ```
 
 ```{python}
 #| hide:
-# hide showdoc
+#
 from nbdev.showdoc import *
 ```
 
 ```{python}
-#| export: 
-# imports
+#| exports: 
+#
 
 import pandas as pd
 
@@ -46,8 +46,8 @@ setup samples, etc. on the fly by `marking` a task with the `pytask.mark.skipif`
 decorator. Change this to `False` when you're ready to run the full pipeline.
 
 ```{python}
-#| export:
-# a dev flag for quick testing
+#| exports:
+#
 DEV_MODE=True
 ```
 
@@ -63,8 +63,8 @@ using the `pytask` data catalog, we can more easily gather the data
 for a specific task in structured manner entirely in Python.
 
 ```{python}
-#| export:
-# the data catalog for the pipeline stages
+#| exports:
+#
 
 stages = ["mydata", 'mydata2', # from the demo, ignore
     "download", # download task
@@ -122,7 +122,7 @@ So, to do this, we define one job as a query to the CDS API that must contain:
 Given one combination of all of these, a single SLURM job can complete the first "task" in parallel by having a run assigned to each row of the dataframe.
 
 ```{python}
-#| export:
+#| exports:
 
 # a dataframe for the query parameters, with nested entries for days, times, and variables
 # Dimensions
@@ -208,7 +208,7 @@ and filtered as necessary.
 For explanations of the parameters, see the Aggregation Task notebook's final `task_aggregate_data_diurnal` function.
 
 ```{python}
-#| export:
+#| exports:
 
 # aggregate task parameters
 
@@ -247,7 +247,7 @@ agg_params
 Let's keep only rows where the variables and variables_short match
 
 ```{python}
-#| export:
+#| exports:
 # quick filter to keep only matching rows
 
 agg_params = agg_params[agg_params.apply(lambda x: variable_dict[x['variables']] == x['variables_short'], axis=1)]
@@ -260,7 +260,7 @@ agg_params
 Great, and now keeping `sum` only for total precipitation (we don't need mean, max, min for that variable), and removing `sum` for all other variables (we don't need sum for temperature or soil moisture):
 
 ```{python}
-#| export:
+#| exports:
 # remove rows where tp aggregation is not sum
 mask = (agg_params['variables_short'] == "tp") & (agg_params['aggregation_name'] != "sum")
 agg_params = agg_params[~mask]
@@ -277,7 +277,7 @@ agg_params
 Now we add the input and output columns by joining:
 
 ```{python}
-#| export:
+#| exports:
 # set up inputs and parameters
 inputs = pd.DataFrame({"input": inputs})
 aggregate_jobs = inputs.merge(agg_params, how="cross")
@@ -297,7 +297,7 @@ the healthshed unique ID variable name in the shapefile,
 and whether the variable is instantaneous or accumulated:
 
 ```{python}
-#| export:
+#| exports:
 # add a few more columns
 aggregate_jobs['local_tz'] = aggregate_jobs['input'].apply(
     lambda x: "Asia/Kathmandu" if "nepal" in x else "Indian/Antananarivo"
@@ -322,7 +322,7 @@ aggregate_jobs
 Now we add this to the data catalog:
 
 ```{python}
-#| export:
+#| exports:
 # update catalog
 data_catalog['aggregate']['jobs'].add("jobs_df", aggregate_jobs)
 ```

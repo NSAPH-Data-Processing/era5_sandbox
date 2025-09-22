@@ -31,9 +31,11 @@ Let's take a look at the data catalog we created in the config module:
 # necessary imports
 import cdsapi
 import pytask
+import os
 from pytask import task, Product
 from pathlib import Path
 from typing import Annotated
+from pandas import Series
 
 from era5_sandbox.config import data_catalog
 from era5_sandbox.config import BLD
@@ -91,8 +93,6 @@ This works! So now we just need to create a `task_` function that pytask will re
 #| export:
 # define the download task
 
-from pandas import Series
-
 queries = data_catalog['download']['jobs']['queries_df'].load()
 
 for i, job in queries.iterrows():
@@ -105,7 +105,12 @@ for i, job in queries.iterrows():
         logger = setup_logger(_query['output'])
         output_path = BLD / f"{_query['output']}.nc"
         logger.info(f"Starting download for {_query['output']} to {output_path}")
-        
+
+        # check if string file path exists
+        if os.path.exists(output_path):
+            logger.info(f"File {output_path} already exists. Skipping download.")
+            return output_path
+
         client = cdsapi.Client()
         bounding_box = create_bounding_box(_query['shapefile'])
     

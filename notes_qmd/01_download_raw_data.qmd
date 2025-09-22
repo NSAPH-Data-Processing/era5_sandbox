@@ -1,5 +1,8 @@
 ---
 title: "Download Module: Downloading Raw Data from CDSAPI"
+execute:
+    freeze: auto
+engine: jupyter
 ---
 
 ## download
@@ -7,12 +10,13 @@ title: "Download Module: Downloading Raw Data from CDSAPI"
 > This module downloads the raw data from CDS and saves it in the local directory
 
 ```{python}
-#| default_exp download
-
+#| default_exp download:
+# 
 ```
 
 ```{python}
-#| hide
+#| hide:
+#
 from nbdev.showdoc import *
 ```
 
@@ -20,7 +24,8 @@ We use a similar approach to the one in the tutorial to download the data
 to local storage.
 
 ```{python}
-#| export
+#| export:
+#
 import os
 import hydra
 import cdsapi
@@ -38,7 +43,8 @@ except: from core import _expand_path
 ```
 
 ```{python}
-#| exporti
+#| exporti:
+#
 def _validate_query(
         query_body: DictConfig
     )->bool:
@@ -71,15 +77,21 @@ def _validate_query(
     return OmegaConf.to_container(query_body, resolve=True)
 ```
 
+The background functionality in this module involves downloading the
+bounding box of a region of interest, and sending that to the
+CDS API query. As such, we define two helper functions to
+fetch the OCHA/HDX shapefiles for a geographic region, and
+another to create the bounding box from the files.
+
 ```{python}
-#| export
+#| export:
+#
 def fetch_GADM(
-        url: str="https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg",
+        url: str="https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg", # URL to fetch the GADM data for Madagascar
         output_file: str="gadm41_MDG.gpkg" # file path to save the GADM data
     )-> str:
     '''
-    Fetch the GADM data for Madagascar
-    https://geodata.ucdavis.edu/gadm/gadm4.1/gpkg/gadm41_MDG.gpkg
+    Fetch the GADM bounding box for geographic region
     '''
 
     output_file_path = _expand_path(output_file)
@@ -95,23 +107,15 @@ def fetch_GADM(
 ```
 
 ```{python}
-#| export
-
+#| exports:
+#
 def create_bounding_box(
-    zip_url_or_path: str,
-    buffer_km: float = 50,
-    round_to: int = 1
-) -> list:
+    zip_url_or_path: str, # URL or local path to the zipped shapefile.
+    buffer_km: float = 50, # Buffer distance in kilometers to expand the bounding box.
+    round_to: int = 1 # Number of decimal places to round the bounding box coordinates.
+) -> list: # Bounding box in the CDS API area format [North, West, South, East]
     '''
     Create a bounding box from OCHA/HDX shapefile data with a buffer.
-
-    Parameters:
-        zip_url_or_path (str): URL or local path to the zipped shapefile.
-        buffer_km (float): Buffer distance in kilometers to expand the bounding box.
-        round_to (int): Number of decimal places to round the bounding box coordinates.
-
-    Returns:
-        list: Bounding box in the CDS API area format [North, West, South, East].
     '''
     with tempfile.TemporaryDirectory() as tmpdir:
         # Download if it's a URL
@@ -157,8 +161,11 @@ def create_bounding_box(
         return bbox
 ```
 
+The primary function to download the data from CDSAPI is defined below.
+
 ```{python}
-#| export
+#| exports:
+#
 def download_raw_era5(
         cfg: DictConfig  # hydra configuration file
     )->None:
@@ -227,7 +234,8 @@ download_raw_era5(cfg)
 ```
 
 ```{python}
-#| export
+#| exports:
+#
 @hydra.main(config_path="../../conf", config_name="config", version_base=None)
 def main(cfg: DictConfig) -> None:
     download_raw_era5(cfg=cfg)
@@ -235,7 +243,7 @@ def main(cfg: DictConfig) -> None:
 ```
 
 ```{python}
-#| export
+#| export:
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
@@ -247,6 +255,7 @@ if __name__ == "__main__" and not IN_NOTEBOOK:
 ```
 
 ```{python}
-#| hide
+#| hide:
+#
 import nbdev; nbdev.nbdev_export()
 ```

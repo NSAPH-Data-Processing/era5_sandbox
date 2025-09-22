@@ -40,6 +40,7 @@ Requires-Dist: google-auth
 Requires-Dist: numpy
 Requires-Dist: tqdm
 Requires-Dist: pytask
+Requires-Dist: pygraphviz
 Requires-Dist: pytask-parallel
 Provides-Extra: dev
 Dynamic: author

@@ -1,5 +1,8 @@
 ---
 title: "Publish: Gather the Aggregated Data and Publish to DataVerse"
+execute:
+    freeze: auto
+engine: jupyter
 ---
 
 ## publish 
@@ -7,19 +10,21 @@ title: "Publish: Gather the Aggregated Data and Publish to DataVerse"
 > This is the `publish` module for the ERA5 dataset pipeline. It defines a functions that make use of the `pyDataverse` library and API to publish our outputs to the Harvard Dataverse.
 
 ```{python}
-#| default_exp publish
+#| default_exp publish:
+#
 ```
 
 ```{python}
-#| hide
+#| hide:
+#
 from nbdev.showdoc import *
 ```
 
 First, we'll test out the API by pinging the Harvard DataVerse
 
 ```{python}
-#| export
-#| 
+#| exports:
+#
 import hydra
 import yaml
 import json
@@ -36,7 +41,8 @@ with open(api_token_file, "r") as f:
 Now, following the [docs]() for the dataverse tutorial, load a NativeAPI up:
 
 ```{python}
-#| export
+#| exports:
+#
 from pyDataverse.api import NativeApi
 ```
 
@@ -111,7 +117,7 @@ Now, to create the dataset we use the API:
 
 ```{python}
 #| eval: false
-#| this is only run in interactive sessions for demo purposes
+# this is only run in interactive sessions for demo purposes
 resp = api.create_dataset(":root", ds.json())
 ```
 
@@ -120,13 +126,19 @@ If you caught the `resp` object, it contains the PID for the newly created datas
 However, if you didn't you can use the SearchAPI to find it:
 
 ```{python}
-#| export
+#| exports:
+#
 from pyDataverse.api import SearchApi
 ```
 
 ```{python}
-#| eval: false
 search_api = SearchApi(config['base_url'], config['api_token'])
+```
+
+```{python}
+#| eval: false
+#
+
 resp = search_api.search("Youth from Austria", data_type="dataset")
 results = resp.json()['data']['items']
 result = [x for x in results if "Youth from Austria" in x['name']][0]
@@ -160,7 +172,8 @@ With that understanding, we can develop a quick module to do the following:
 Let's take an example file to use as a model for LEGO compatibility
 
 ```{python}
-#| export
+#| exports:
+#
 import geopandas as gpd
 import pandas as pd
 import re
@@ -168,7 +181,7 @@ import glob
 ```
 
 ```{python}
-ex = gpd.read_parquet(here() / "data" / "testing" / "madagascar_environmental_exposure-era5_healthshed_2m_dewpoint_temperature_2009_6.parquet")
+ex = gpd.read_parquet(here() / "bld/2009_06_madagascar_day_swvl1_mean.parquet")
 ex.describe()
 ```
 
@@ -195,7 +208,7 @@ I think the smart thing to do is use a glob string to gather all of the pertinen
 This will be the first function we export to the library:
 
 ```{python}
-#| export
+#| exports:
 # 
 
 def gather_exposure_geodataframes(
@@ -277,7 +290,8 @@ result
 ```
 
 ```{python}
-#| export
+#| exports:
+#
 
 from pyDataverse.models import Datafile
 import os
@@ -321,7 +335,8 @@ We should get some functionality to gather the groups of these files automatical
 the hydra config:
 
 ```{python}
-#| export
+#| exports:
+#
 from hydra import initialize, compose
 from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
@@ -345,7 +360,8 @@ cfg.development_mode = False
 ```
 
 ```{python}
-#| export
+#| exports:
+#
 
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
@@ -426,7 +442,7 @@ def main(cfg: DictConfig) -> None:
 ```
 
 ```{python}
-#| export
+#| export:
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
@@ -436,6 +452,7 @@ if __name__ == "__main__" and not IN_NOTEBOOK:
 ```
 
 ```{python}
-#| hide
+#| hide:
+#
 import nbdev; nbdev.nbdev_export()
 ```

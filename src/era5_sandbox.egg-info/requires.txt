@@ -19,6 +19,7 @@ google-auth
 numpy
 tqdm
 pytask
+pygraphviz
 pytask-parallel
 
 [dev]

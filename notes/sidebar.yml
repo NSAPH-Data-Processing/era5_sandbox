@@ -8,8 +8,9 @@ website:
       - 02_aggregate.ipynb
       - 03_publish.ipynb
       - section: "PyTask Modules"
-      - 10_pytask_demo.ipynb
       - 20_pytask_config.ipynb
       - 20_pytask_logger.ipynb
       - 21_pytask_download.ipynb
       - 22_pytask_aggregate.ipynb
+      - section: "PyTask Demo"
+      - 10_pytask_demo.ipynb

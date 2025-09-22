@@ -21,7 +21,7 @@ from nbdev.showdoc import *
 ```
 
 ```{python}
-#| export:
+#| exports:
 # imports 
 
 import logging
@@ -38,7 +38,7 @@ LOG_DIR = here("logs") / log_date / log_time
 ```
 
 ```{python}
-#| export:
+#| exports:
 # main function to setup a logger
 
 

@@ -5,7 +5,7 @@ execute:
 engine: jupyter
 ---
 
-## task_data_preparation
+## Data Preparation Demo
 
 > Data preparation task for `pytask` demo
 
@@ -23,7 +23,8 @@ There are a number of reasons to use `pytask` over `snakemake`:
 We'll use nbdev to define the task functions, and then export them to the `src` directory. `pytask` is then invoked at the command line to run the tasks.
 
 ```{python}
-#| default_exp task_data_preparation
+#| default_exp task_data_preparation:
+#
 ```
 
 This demo task is taken from the tutorial at [pytask documentation](https://pytask-dev.readthedocs.io/en/stable/tutorials/write_a_task.html). At minimum, you need your package to contain the following in a config.py file:
@@ -64,8 +65,8 @@ paths = ["src/era5_sandbox"]
 The former tells Python where to find the source code and build directory for `pytask` objects and shims, while the latter tells `pytask` where to find the task definitions and dependency DAG.
 
 ```{python}
-#| export
-
+#| exports:
+#
 import os
 from pathlib import Path
 from typing import Annotated
@@ -94,8 +95,8 @@ In this example, we're generating random data into a data frame and saving the o
 Using `nbdev`, we can also include all of the bells and whistles of function documentation.
 
 ```{python}
-#|
-#| export
+#| exports:
+#
 
 def task_create_random_data(
         seed: Annotated[int, 42],                                   # Default seed for reproducibility
@@ -134,7 +135,8 @@ pytask collect
 Let's add another task in the same module. This task plots the data we generated. To link the previous task to this one as a dependency, we can list the output of the previous task as an input to this one. This way, `pytask` will know that it needs to run the first task before this one.
 
 ```{python}
-#| export
+#| exports:
+#
 
 def task_plot_data(
     path_to_data: Annotated[Path, BLD / "data.pkl"], # Path to the data file created by the previous task
@@ -204,7 +206,8 @@ This is a major advantage of `pytask` over `snakemake`, as it allows you to defi
 Let's create a task that modifies the data frame by adding a new column. This task will depend on the previous task's output, and we will use the data catalog to define the input and output data.
 
 ```{python}
-#| export
+#| exports:
+#
 
 def task_add_one(
     path_to_data: Annotated[Path, BLD / "data.pkl"],  # Path to the data file created by the previous task
@@ -230,7 +233,8 @@ This is another trick I'm deriving from {targets}. By formatting tasks as pure f
 So below, we're directly accessing the `data_catalog` to get the `mydata` node, and then modifying it by adding a new column. It _feels_ like we are doing this in place, such as in an iPython session, because we are allowing `pytask` to handle the serialization of the file on disk for us.
 
 ```{python}
-#| export
+#| exports:
+#
 
 def task_add_another_column(
     df: Annotated[pd.DataFrame, demo_catalog["mydata"]] # which object in the catalog to fetch from the catalog with node.load()

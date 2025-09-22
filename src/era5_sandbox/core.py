@@ -4,6 +4,7 @@
 __all__ = ['describe', 'kelvin_to_celsius', 'GoogleDriver', 'ClimateDataFileHandler', 'testAPI', 'main']
 
 # %% ../../notes/00_core.qmd 3
+#| exports: #
 import os
 import cdsapi
 import hydra
@@ -21,6 +22,7 @@ from pyprojroot import here
 from importlib import import_module
 
 # %% ../../notes/00_core.qmd 5
+#| exports: #
 def describe(
     cfg: DictConfig=None,  # Configuration file
     )-> None:
@@ -34,6 +36,7 @@ def describe(
     print(OmegaConf.to_yaml(cfg))
 
 # %% ../../notes/00_core.qmd 6
+#| exporti: #
 def _expand_path(
         path: str   # Path on user's machine
         )->   str:  # Expanded path
@@ -48,6 +51,7 @@ def _expand_path(
     return path
 
 # %% ../../notes/00_core.qmd 7
+#| exporti: #
 def _get_callable(func_path):
     """Dynamically import a callable from a string path."""
     module_name, func_name = func_path.rsplit(".", 1)
@@ -55,16 +59,13 @@ def _get_callable(func_path):
     return getattr(module, func_name)
 
 # %% ../../notes/00_core.qmd 8
+#| exporti: # a directory structure creator
 def _create_directory_structure(
         base_path: str,  # The base directory where the structure will be created
         structure: dict  # A dictionary representing the directory structure
     )->None:
     """
     Recursively creates a directory structure from a dictionary.
-
-    Args:
-        base_path (str): The base directory where the structure will be created.
-        structure (dict): A dictionary representing the directory structure.
     """
     for folder, substructure in structure.items():
         # Create the current directory
@@ -75,20 +76,18 @@ def _create_directory_structure(
         if isinstance(substructure, dict):
             _create_directory_structure(current_path, substructure)
 
-# %% ../../notes/00_core.qmd 9
-def kelvin_to_celsius(kelvin):
+# %% ../../notes/00_core.qmd 10
+#| export: #
+def kelvin_to_celsius(
+    kelvin: float # Temperature in Kelvin
+    ) -> float: # Temperature in Celsius
     """
     Convert temperature from Kelvin to Celsius.
-    
-    Args:
-        kelvin (float): Temperature in Kelvin.
-        
-    Returns:
-        float: Temperature in Celsius.
     """
     return kelvin - 273.15
 
-# %% ../../notes/00_core.qmd 11
+# %% ../../notes/00_core.qmd 12
+#| export: #
 class GoogleDriver:
     """
     A class to handle Google Drive authentication and file management.
@@ -119,10 +118,12 @@ class GoogleDriver:
     def get_drive(self):
         return self.drive
 
-# %% ../../notes/00_core.qmd 21
+# %% ../../notes/00_core.qmd 23
+#| export: #
 from fastcore.basics import patch
 
-# %% ../../notes/00_core.qmd 22
+# %% ../../notes/00_core.qmd 24
+#| export: #
 @patch
 def read_healthsheds(self:GoogleDriver, healthshed_zip_name):
 
@@ -145,7 +146,8 @@ def read_healthsheds(self:GoogleDriver, healthshed_zip_name):
         
         return gdf
 
-# %% ../../notes/00_core.qmd 26
+# %% ../../notes/00_core.qmd 28
+#| export: #
 class ClimateDataFileHandler:
     """
     A class to handle file operations for the Climate Data Store (CDS).
@@ -236,7 +238,8 @@ class ClimateDataFileHandler:
         if self.unzipped_dir is not None:
             self.unzipped_dir.cleanup()
 
-# %% ../../notes/00_core.qmd 35
+# %% ../../notes/00_core.qmd 38
+#| exporti: #
 @patch
 def __enter__(self:ClimateDataFileHandler):
     self.prepare()
@@ -246,7 +249,8 @@ def __enter__(self:ClimateDataFileHandler):
 def __exit__(self:ClimateDataFileHandler, exc_type, exc_val, exc_tb):
     self.cleanup()
 
-# %% ../../notes/00_core.qmd 38
+# %% ../../notes/00_core.qmd 41
+#| exports: #
 def testAPI(
     cfg: DictConfig=None,
     dataset:str="reanalysis-era5-pressure-levels"
@@ -291,7 +295,8 @@ def testAPI(
         print("Error: {}".format(e))
         return False
 
-# %% ../../notes/00_core.qmd 43
+# %% ../../notes/00_core.qmd 46
+#| exports: #
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -300,11 +305,3 @@ def main(cfg: DictConfig) -> None:
 
     # test the api
     testAPI(cfg=cfg)
-
-# %% ../../notes/00_core.qmd 44
-#| eval: false
-try: from nbdev.imports import IN_NOTEBOOK
-except: IN_NOTEBOOK=False
-
-if __name__ == "__main__" and not IN_NOTEBOOK:
-    main()

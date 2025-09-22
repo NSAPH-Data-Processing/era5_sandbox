@@ -1,5 +1,8 @@
 ---
 title: "Aggregate Module: Spatial Aggregation to Healthsheds"
+execute:
+    freeze: auto
+engine: jupyter
 ---
 
 ## aggregate
@@ -7,11 +10,13 @@ title: "Aggregate Module: Spatial Aggregation to Healthsheds"
 > This module aggregates the downloaded data into the respective output dataframes.
 
 ```{python}
-#| default_exp aggregate
+#| default_exp aggregate:
+#
 ```
 
 ```{python}
-#| hide
+#| hide:
+#
 from nbdev.showdoc import *
 ```
 
@@ -29,8 +34,8 @@ The basic process is as follows:
 8. Write out final aggregations to tiff
 
 ```{python}
-#| export
-
+#| exports:
+#
 import tempfile
 import rasterio
 import hydra
@@ -70,12 +75,12 @@ except Exception as e:
 We're going to write a function that aggregates the data for a single exposure from a file. This file should be the single month data we got from the previous step in the pipeline.
 
 ```{python}
-eg_file = here() / "data/input/nepal_2017_11.nc"
+eg_file = here() / "bld/2017_11_nepal.nc"
 ```
 
 ```{python}
-#| export 
-
+#| export: 
+#
 def resample_netcdf(
         fpath: str, # Path to the netCDF file.
         resample: str = "1D", # Resampling frequency (e.g., '1H', '1D')
@@ -104,6 +109,8 @@ def resample_netcdf(
         raise TypeError("agg_func must be a callable function like np.mean, np.max, etc.")
 ```
 
+We pull the aggregation function from the config file:
+
 ```{python}
 var = 'swvl1'
 agg_func = _get_callable(cfg['aggregation']['aggregation'][var]['hourly_to_daily'][0]['function'])
@@ -116,11 +123,11 @@ with ClimateDataFileHandler(eg_file) as handler:
     resampled_data = resample_netcdf(ds_path, agg_func=agg_func)
 ```
 
-I'm going to use a dataclass to represent the tiff data. This will allow us to easily pass around the data and metadata associated with the tiff file. Why? Because I can, lol (I've never used dataclasses and I'm curious about them). ChatGPT thinks this will make the code cleaner and easier to read.
+I'm going to use a dataclass to represent the tiff data. This will allow us to easily pass around the data and metadata associated with the tiff file. Why? I've never used dataclasses and I'm curious about them — ChatGPT thinks this will make the code cleaner and easier to read.
 
 ```{python}
-#| export
-
+#| exports:
+#
 @dataclass
 class RasterFile:
     path: str
@@ -152,8 +159,8 @@ class RasterFile:
 Next, a function to write and read the netCDF to tiff:
 
 ```{python}
-#| export
-
+#| exports:
+#
 def netcdf_to_tiff(
     ds: xr.Dataset, # The aggregated xarray dataset to convert.    
     band: int,      # The day to rasterise; 1 indexed just like human english
@@ -163,12 +170,6 @@ def netcdf_to_tiff(
 
     """
     Convert a netCDF file to a GeoTIFF file.
-    
-    Args:
-        fpath (str): Path to the netCDF file.
-        output_path (str): Path to save the output GeoTIFF file.
-        variable_name (str): Name of the variable to convert.
-        time_index (int): Index of the time dimension to extract.
     """
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -216,39 +217,18 @@ Essentially, this function helps figure out which pixels from a raster image fal
 The result is a list where each item tells you the pixel locations that match a specific polygon. You can then use those pixel locations to pull out data from the raster, like temperatures or rainfall, and calculate statistics (like the average) for each shape. This is a key step when you want to summarize raster data within specific regions, like figuring out the average temperature in each county or how much vegetation is in each park.
 
 ```{python}
-#| export 
-
+#| exports:
+#
 def polygon_to_raster_cells(
-    vectors,
-    raster,
-    nodata=None,
-    affine=None,
-    all_touched=False,
-    verbose=False,
+    vectors, # list of geometries from a shapefile
+    raster, # the raster data as a numpy array
+    nodata=None, # the nodata value of the raster
+    affine=None, # the affine transform of the raster
+    all_touched=False, # whether to include all touched pixels
+    verbose=False, 
     **kwargs,
-):
-    """Returns an index map for each vector geometry to indices in the raster source.
-
-    Parameters
-    ----------
-    vectors: list of geometries
-
-    raster: ndarray
-
-    nodata: float
-
-    affine: Affine instance
-
-    all_touched: bool, optional
-        Whether to include every raster cell touched by a geometry, or only
-        those having a center point within the polygon.
-        defaults to `False`
-
-    Returns
-    -------
-    dict
-        A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
-    """
+) -> list: # A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
+    """Returns an index map for each vector geometry to indices in the raster source."""
 
     cell_map = []
 
@@ -328,8 +308,8 @@ res_poly2cell[:5]
 Last but not least, we aggregate these data to the healthshed level. We can use the `rasterstats` package to do this.
 
 ```{python}
-#| export
-
+#| exports:
+#
 def aggregate_to_healthsheds(
     res_poly2cell: list, # the result of polygon_to_raster_cells    
     raster: RasterFile, # the raster data
@@ -473,20 +453,14 @@ plt.show()
 result.to_parquet(here() / "data/testing/test_aggregation.parquet")
 ```
 
-For QA, we should come up with the following:
-
-- [x] A way to list NAs in the data
-- [ ] A way to visualize the data temporally
-- [ ] A function to convert K to celsius
-
 ```{python}
-#| export
-
+#| exports:
+#
 def aggregate_data(
-        cfg: DictConfig,
-        input_file: str,
-        output_file: str,
-        exposure_variable: str
+        cfg: DictConfig, # the hydra config
+        input_file: str, # the input netcdf file
+        output_file: str, # the output parquet file
+        exposure_variable: str # Which variable in the dataset to aggregate
     ) -> None:
     '''
     Aggregate raster data day-by-day and store all days and statistics as separate columns in a single Parquet file.
@@ -585,7 +559,7 @@ cfg.query['geography'] = "nepal"
 
 variable = "swvl1"
 
-aggregate_data(cfg, here() / "data/input/nepal_2017_11.nc", here() / "data/testing/test_nepal_aggregation.parquet", exposure_variable=variable)
+aggregate_data(cfg, here() / "bld/nepal_2017_11.nc", here() / "data/testing/test_nepal_aggregation.parquet", exposure_variable=variable)
 ```
 
 ```{python}
@@ -604,7 +578,8 @@ parquet_file.plot(column="day_22_daily_mean", legend=True)
 ```
 
 ```{python}
-#| export
+#| exports:
+#
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -626,7 +601,7 @@ def main(cfg: DictConfig) -> None:
 ```
 
 ```{python}
-#| export
+#| exports:
 #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
@@ -636,6 +611,7 @@ if __name__ == "__main__" and not IN_NOTEBOOK:
 ```
 
 ```{python}
-#| hide
+#| hide: 
+#
 import nbdev; nbdev.nbdev_export()
 ```
