@@ -5,7 +5,7 @@ Summary: Sandbox environment for era5 development
 Home-page: https://github.com/TinasheMTapera/era5_sandbox
 Author: Tinashe M. Tapera
 Author-email: tinashemtapera@gmail.com
-License: Apache Software License 2.0
+License: CC-BY-4.0
 Keywords: nbdev jupyter notebook python
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
@@ -16,7 +16,6 @@ Classifier: Programming Language :: Python :: 3.9
 Classifier: Programming Language :: Python :: 3.10
 Classifier: Programming Language :: Python :: 3.11
 Classifier: Programming Language :: Python :: 3.12
-Classifier: License :: OSI Approved :: Apache Software License
 Requires-Python: >=3.7
 Description-Content-Type: text/markdown
 License-File: LICENSE
@@ -26,12 +25,23 @@ Requires-Dist: ipykernel
 Requires-Dist: nbdev
 Requires-Dist: cdsapi
 Requires-Dist: hydra-core
+Requires-Dist: omegaconf
 Requires-Dist: ipykernel
 Requires-Dist: snakemake
 Requires-Dist: geopandas
 Requires-Dist: xarray
+Requires-Dist: shapely
 Requires-Dist: matplotlib
 Requires-Dist: cartopy
+Requires-Dist: rasterstats
+Requires-Dist: rioxarray
+Requires-Dist: pydrive2
+Requires-Dist: google-auth
+Requires-Dist: numpy
+Requires-Dist: tqdm
+Requires-Dist: pytask
+Requires-Dist: pygraphviz
+Requires-Dist: pytask-parallel
 Provides-Extra: dev
 Dynamic: author
 Dynamic: author-email
@@ -47,4 +57,31 @@ Dynamic: requires-dist
 Dynamic: requires-python
 Dynamic: summary
 
-This file will be overwritten by `index.ipynb`
+# ERA5 Exposure Aggregation Pipeline
+
+This repository contains a pipeline for aggregating ERA5 environmental exposures data to a 0.1 degree grid. The pipeline is designed to be run on FASRC. We developed
+this pipeline using `nbdev`, which means that we can create modules and scripts from notebooks.
+Hence, all of the documentation for how the pipeline was developed and validated is
+available in `notes/index.ipynb` and the associated notebooks.
+
+## How to Review a PR
+
+To review a PR on this repository, follow these steps:
+
+0. Obtain an API key for the ERA5 datastore from [here](https://cds.climate.copernicus.eu/how-to-api), and ask Tinashe for access to the Golden Lab `googledriver` API key
+
+1. Clone this repository to your workspace on FASRC
+
+2. Create a conda environment with `conda create -n era5_sandbox python=3.10` and install all of the necessary dependencies for the package with `pip install -e .`
+
+3. Run the `core` module to test your API key and setup the data
+directory structure
+
+`python src/era5_sandbox/core.py`
+
+4. Symlink your local data directory to the original work
+`ln -s [YOUR WORKING DIRECTORY]/data /n/dominici_lab/lab/data_processing/csph-era5_sandbox/data`
+
+5. Dry run by removing a file from data `snakemake --dry-run`
+
+6. Run the pipeline `sbatch snakemake.sbatch`

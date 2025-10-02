@@ -4,6 +4,7 @@
 __all__ = ['gather_exposure_geodataframes', 'main']
 
 # %% ../../notes/03_publish.ipynb 4
+#| exports: #
 import hydra
 import yaml
 import json
@@ -11,19 +12,22 @@ from tqdm import tqdm
 from pyprojroot import here
 
 # %% ../../notes/03_publish.ipynb 7
+#| exports: #
 from pyDataverse.api import NativeApi
 
-# %% ../../notes/03_publish.ipynb 24
+# %% ../../notes/03_publish.ipynb 26
+#| exports: #
 from pyDataverse.api import SearchApi
 
-# %% ../../notes/03_publish.ipynb 30
+# %% ../../notes/03_publish.ipynb 33
+#| exports: #
 import geopandas as gpd
 import pandas as pd
 import re
 import glob
 
-# %% ../../notes/03_publish.ipynb 33
-# 
+# %% ../../notes/03_publish.ipynb 36
+#| exports: # 
 
 def gather_exposure_geodataframes(
     glob_string: str,   # string for the path to search for the pertinent files
@@ -80,17 +84,22 @@ def gather_exposure_geodataframes(
 
     return [pd.concat(merged_df).reset_index(drop=True), initial_gdf[[polygon_id, "geometry"]]]
 
-# %% ../../notes/03_publish.ipynb 37
+# %% ../../notes/03_publish.ipynb 40
+#| exports: #
+
 from pyDataverse.models import Datafile
 import os
 import pathlib
 
-# %% ../../notes/03_publish.ipynb 42
+# %% ../../notes/03_publish.ipynb 45
+#| exports: #
 from hydra import initialize, compose
 from omegaconf import OmegaConf, DictConfig
 from tqdm import tqdm
 
-# %% ../../notes/03_publish.ipynb 44
+# %% ../../notes/03_publish.ipynb 47
+#| exports: #
+
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
 
@@ -166,10 +175,9 @@ def main(cfg: DictConfig) -> None:
         assert resp.json()['status'] == "OK", f"Failed to upload geometry datafile: {resp.text}"
 
     print("All files processed and uploaded successfully.")
-            
 
-# %% ../../notes/03_publish.ipynb 45
-#| eval: false
+# %% ../../notes/03_publish.ipynb 48
+#| export: #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
 
