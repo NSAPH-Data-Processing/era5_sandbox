@@ -1,0 +1,719 @@
+---
+skip_showdoc: true
+---
+
+## Prototyping Spatial Aggregations
+
+We're going to learn how to aggregate the exposure data into daily values. This is useful for analyzing the data over a longer period of time, such as a week or a month, and is part of the larger goal of this project to aggregate the ERA5 dataset for Madagascar.
+
+
+Doing an aggregation of a netcdf file is relatively simple. What we need to do is read in the data, and then use the `xarray` library to group the data by time using a resampler method. We can then use the `mean` function to calculate the average value for each day.
+
+```{python}
+import xarray as xr
+import matplotlib.pyplot as plt
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+from pyprojroot import here
+from hydra import initialize, compose
+from omegaconf import OmegaConf
+```
+
+Let's look at the data that we've already downloaded. In the pipeline. We'll use the xarray library to open it up and inspect it.
+
+```{python}
+# Load the NetCDF file
+fpath = here() / "data/input/2010_1.nc"
+ds = xr.open_dataset(fpath)
+```
+
+This is a netcdf file. It has the following dimensions representing time series, as well as the variables we downloaded at specific locations:
+
+```{python}
+ds
+```
+
+We can see that our variables are accessible with indeces. The reason we have 744 time points is because it is hourly data for the entire month.
+
+Interestingly, we can simply use the `.resample()` method to create mathematically aggregated data.
+
+```{python}
+# Perform multiple aggregations
+daily_mean = ds.resample(valid_time="1D").mean()  # Daily mean
+daily_max = ds.resample(valid_time="1D").max()   # Daily max
+daily_min = ds.resample(valid_time="1D").min()   # Daily min
+
+# Combine the results into a new dataset
+daily_aggregated = xr.Dataset({
+    "t2m_mean": daily_mean["t2m"],
+    "t2m_max": daily_max["t2m"],
+    "t2m_min": daily_min["t2m"],
+    "d2m_mean": daily_mean["d2m"],
+    "d2m_max": daily_max["d2m"],
+    "d2m_min": daily_min["d2m"]
+})
+
+daily_aggregated
+```
+
+Look at how this compares to the original data:
+
+```{python}
+ds
+```
+
+With data of this shape, we can plot the mean temperature over months
+
+```{python}
+# Select a specific grid point (e.g., latitude=-1, longitude=0)
+variable='mean'
+
+# note: we can use the isel method to select the grid point. In this case,
+# we are selecting the bottom-left grid point (latitude=-1, longitude=0) because we're selecting
+# the smallest value for latitude:
+# time=0: Selects the first time point.
+# latitude=-1: Selects the last latitude (bottom-most, as latitude is usually ordered from north to south).
+# longitude=0: Selects the first longitude (left-most).
+t2m_mean_point = daily_aggregated["t2m_" + variable].isel(latitude=-1, longitude=0)
+
+# Plot the time series
+plt.figure(figsize=(10, 6))
+t2m_mean_point.plot(label="Daily Mean t2m")
+plt.title("Daily Aggregated ({}) Temperature at Bottom-Left Grid Point".format(variable))
+plt.xlabel("Time")
+plt.ylabel("Temperature (K)")
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+How does this compared to the disaggregated data?
+
+```{python}
+t2m_point = ds["t2m"].isel(latitude=-1, longitude=0)
+
+# Plot the time series
+plt.figure(figsize=(10, 6))
+t2m_point.plot(label="Daily Mean t2m")
+plt.title("Daily Disaggregated Temperature at Bottom-Left Grid Point")
+plt.xlabel("Time")
+plt.ylabel("Temperature (K)")
+plt.legend()
+plt.grid()
+plt.show()
+```
+
+These temperature plots match beautifully! This means our aggregation over the 31 days works!
+
+Let's look at the aggregation over a map:
+
+```{python}
+# Select the first day of t2m_mean
+variable="mean"
+t2m_mean_day1 = daily_aggregated["t2m_" + variable].isel(valid_time=0)
+
+# Set the absolute min and max for the color bar
+vmin = 270  # Minimum value (e.g., 270 K)
+vmax = 310  # Maximum value (e.g., 310 K)
+
+# Create a plot with Cartopy
+plt.figure(figsize=(10, 6))
+ax = plt.axes(projection=ccrs.PlateCarree())  # Use PlateCarree projection for latitude/longitude data
+
+# Plot the data
+t2m_mean_day1.plot(ax=ax, cmap="coolwarm", transform=ccrs.PlateCarree(), vmin=vmin, vmax=vmax, cbar_kwargs={"label": "Temperature (K)"})
+
+# Add Madagascar's border using Cartopy's built-in features
+ax.add_feature(cfeature.BORDERS, edgecolor="black", linewidth=1)  # Add country borders
+ax.add_feature(cfeature.COASTLINE, edgecolor="black", linewidth=0.8)  # Add coastlines
+
+# Optionally, zoom in on Madagascar
+ax.set_extent([43, 51, -26, -11], crs=ccrs.PlateCarree())  # Longitude and latitude bounds for Madagascar
+
+# Add gridlines
+ax.gridlines(draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
+
+# Add a title
+plt.title("Mean Daily {} Temperature (Day 1)".format(variable))
+plt.show()
+```
+
+Looks great. Now, we need to see if we can do a spatial aggregation:
+
+>A mathematical aggregation like mean() involves summarizing data values (e.g., averaging) across a specific dimension, such as time, without considering spatial relationships. For example, calculating the daily mean temperature from hourly data is purely numerical.  
+In contrast, a spatial aggregation using rasters and polygons involves summarizing data based on spatial boundaries. For example, when aggregating raster data (e.g., temperature) over a polygon (e.g., a country's boundary), the process involves selecting raster cells that fall within the polygon and computing a summary statistic (e.g., mean, sum) for those spatially defined areas. This type of aggregation accounts for geographic context and spatial relationships.
+
+To do this, we'll need to read in the shapefile that defines the shape of the polygon (ie the physical ground) and find the pixels of data that fall within the polygon. We can then use the `xarray` library to group the data by time using a resampler method. We can then use the `mean` function to calculate the average value for each day.
+
+```{python}
+import geopandas as gpd
+
+# we learned how to read in shapefiles in the kenya demo notebook
+zip_url_or_path = here() / "data/testing/gadm41_MDG.gpkg"
+
+shape = gpd.read_file(zip_url_or_path, layer = "ADM_ADM_1")
+```
+
+We are using the layer 1 of this shapefile from GADM.org. This refers to the states in red:
+
+![image.png](attachment:image.png)
+
+When we read in the shapefile, the data in the `geometry` column is a specification of the polygons that represent geographic boundaries.
+
+```{python}
+shape
+```
+
+In a vector image such as a shapefile, the steps between each value are not guaranteed to be equal (unlike on a cartesian plane), so we need to think about how those values "project" onto a known Coordinate Reference System (CRS) that has equal steps.
+
+A quick note about CRS:
+
+> The WGS 84 (World Geodetic System 1984) is a widely used global Coordinate Reference System (CRS). It is the standard CRS for GPS (Global Positioning System) and is commonly used in geospatial applications. WGS 84 defines a geographic coordinate system based on a specific ellipsoid model of the Earth.  
+
+> Key Features of WGS 84  
+Type: Geographic Coordinate System (GCS).  
+Coordinates are represented in latitude, longitude, and optionally altitude.  
+Units: Degrees (for latitude and longitude).  
+Ellipsoid: WGS 84 uses a reference ellipsoid with:  
+Semi-major axis: 6,378,137 meters.  
+Flattening: 1 / 298.257223563.  
+Datum: The WGS 84 datum defines the origin and orientation of the coordinate system.  
+EPSG Code: The EPSG code for WGS 84 is 4326.  
+
+Spatial geometry is complicated and silly, hence [all maps are wrong](https://youtu.be/kIID5FDi2JQ?si=OZASX3i6Aglqwa4u).
+
+Nevertheless, we can see that the shapefile has a CRS of EPSG:4326, which is what we want:
+
+```{python}
+shape.crs
+```
+
+Were this different, we'd have to find some way to adjust these projections. For our netCDF file, however, we don't need to worry about this because the data themselves are created using a rasterized netCDF file, which is a standard format for storing gridded data. The data is already in a grid format, and the pixel values are already aligned with the geographic coordinates of the raster. In spatial geometry, we use degrees to represent the latitude and longitude of the corners of each pixel. This means that the data is already in a format that can be easily manipulated and analyzed using xarray and geopandas, because we refer to where the pixel is located in the world using degrees. It is essentially an absolute reference system.
+
+In the ERA5 dataset, the resolution is said to be 0.25 degrees, which means that each pixel represents a square area of approximately 25 km x 25 km at the equator. So at every unit of 0.25 degrees north-south or east-west, we have a new pixel of data, with a value for temperature or dewpoint or whatever. You can physically see each of these on the plot.
+
+Learn more about ERA5's resolution [here](https://confluence.ecmwf.int/display/CKB/ERA5%3A+What+is+the+spatial+reference).
+
+Now, in order to aggregate data spatially, we're pasting in a utility here for finding the intersecting values between our netcdf data and the polygons represented in our shapefile (ie the states, regions, etc.).
+
+Source: https://github.com/NSAPH-Data-Processing/air_pollution__aqdh/blob/main/utils/faster_zonal_stats.py
+
+```{python}
+import numpy as np
+from tqdm import tqdm
+from math import ceil, floor
+
+from rasterstats.io import Raster
+from rasterstats.utils import boxify_points, rasterize_geom
+```
+
+This function indexes each pixel and maps it to the polygon it falls within. A few notes about this function:
+
+- It uses the `rasterstats.io` library to read in a raster tiff file
+- It uses affine transformations to convert the pixel coordinates to geographic coordinates
+- It needs to know where there is no data in the raster file, so we need to set a `nodata` value
+- `all_touched` is a boolean that determines whether to include all pixels that touch the polygon or just the ones that are fully contained within it; this is a domain specific choice
+
+```{python}
+def polygon_to_raster_cells(
+    vectors,
+    raster,
+    band=1,
+    nodata=None,
+    affine=None,
+    all_touched=False,
+    verbose=False,
+    **kwargs,
+):
+    """Returns an index map for each vector geometry to indices in the raster source.
+
+    Parameters
+    ----------
+    vectors: list of geometries
+
+    raster: ndarray
+
+    nodata: float
+
+    affine: Affine instance
+
+    all_touched: bool, optional
+        Whether to include every raster cell touched by a geometry, or only
+        those having a center point within the polygon.
+        defaults to `False`
+
+    Returns
+    -------
+    dict
+        A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
+    """
+
+    cell_map = []
+
+    with Raster(raster, affine, nodata, band) as rast:
+        # used later to crop raster and find start row and col
+        min_lon, dlon = affine.c, affine.a
+        max_lat, dlat = affine.f, -affine.e
+        H, W = rast.shape
+
+        for geom in tqdm(vectors, disable=(not verbose)):
+            if "Point" in geom.geom_type:
+                geom = boxify_points(geom, rast)
+
+            # find geometry bounds to crop raster
+            # the raster and geometry must be in the same lon/lat coordinate system
+            start_row = max(0, min(H - 1, floor((max_lat - geom.bounds[3]) / dlat)))
+            start_col = min(W - 1, max(0, floor((geom.bounds[0] - min_lon) / dlon)))
+            end_col = max(0, min(W - 1, ceil((geom.bounds[2] - min_lon) / dlon)))
+            end_row = min(H - 1, max(0, ceil((max_lat - geom.bounds[1]) / dlat)))
+            geom_bounds = (
+                min_lon + dlon * start_col,  # left
+                max_lat - dlat * end_row - 1e-12,  # bottom
+                min_lon + dlon * end_col + 1e-12,  # right
+                max_lat - dlat * start_row,  # top
+            )
+
+            # crop raster to area of interest and rasterize
+            fsrc = rast.read(bounds=geom_bounds)
+            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            indices = np.nonzero(rv_array)
+
+            if len(indices[0]) > 0:
+                indices = (indices[0] + start_row, indices[1] + start_col)
+                assert 0 <= indices[0].min() < rast.shape[0]
+                assert 0 <= indices[1].min() < rast.shape[1]
+            else:
+                pass  # stop here for debug
+
+            cell_map.append(indices)
+
+        return cell_map
+```
+
+So to implement this we need to first convert the netcdf to a tiff so that we can rasterize it to each of the polygons in the shapefile. We do this with `rioxarray`
+
+```{python}
+import rioxarray as rxr
+```
+
+First, we pick our variable of interest, then we set the spatial properties to make sure it conforms to the CRS we wanted
+
+```{python}
+temperature = daily_aggregated['t2m_mean']
+```
+
+```{python}
+temp_set = temperature.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
+temp_set = temp_set.rio.write_crs("EPSG:4326")
+```
+
+Write it out to tiff and read it back in (there's no way to do this in memory)
+
+```{python}
+temp_set.rio.to_raster("temp.tif")
+```
+
+Now we can investigate the tiff and see that it has all the properties necessary for the function
+
+```{python}
+import rasterio
+
+src = rasterio.open("temp.tif")
+raster = src.read(1)            # Numpy array
+profile = src.profile           # Metadata
+transform = src.transform
+```
+
+```{python}
+# the number of data points
+src.count
+```
+
+```{python}
+# the affine transformation matrix:
+#   Pixel size (resolution in x and y).
+#   Origin (top-left corner in spatial coordinates).
+#   Rotation (if the raster is not north-up). 
+src.transform
+```
+
+```{python}
+# any missing data locations
+src.nodata
+```
+
+```{python}
+# the number of rows and columns
+print(src.width, src.height)
+```
+
+Fetch the array of data
+
+```{python}
+raster_array = src.read(1)
+```
+
+Function go brrrr
+
+```{python}
+res_poly2cell=polygon_to_raster_cells(
+    vectors = shape.geometry.values, # the geometries of the shapefile of the regions
+    raster=raster_array, # the raster data above
+    band=1, # the value of the day that we're using
+    nodata=src.nodata, # any intersections with no data, may have to be np.nan
+    affine=src.transform, # some math thing need to revise
+    all_touched=True, 
+    verbose=True
+)
+```
+
+The data below maps which grid entries fall into each of the regions in the shapefile (e.g. which pixel is in which state)
+
+```{python}
+res_poly2cell
+```
+
+```{python}
+len(res_poly2cell)
+```
+
+Look familiar?
+
+These are the 6 states in the shapefile. The values in the array are the indexes of the pixels in the netcdf file that fall within the polygon.
+Now, within each of these we can aggregate mathematically eg min max mean etc.
+
+```{python}
+# the values themselves
+raster_array
+```
+
+```{python}
+stats = []
+for indices in res_poly2cell:
+    if len(indices[0]) == 0:
+        # no cells found for this polygon
+        stats.append(np.nan)
+    else:
+        cells = raster[indices]
+        if sum(~np.isnan(cells)) == 0:
+            # no valid cells found for this polygon
+            stats.append(np.nan)
+            continue
+        else:
+            # compute MEAN of valid cells
+            # but this stat can be ANYTHING
+            stats.append(np.nanmean(cells))
+```
+
+```{python}
+stats
+```
+
+Looks like it worked!
+
+```{python}
+import pandas as pd
+
+pd.DataFrame({"l1_region": shape.NAME_1, "mean_31_day_temp": stats})
+```
+
+### Let's try it with Level 3 data
+
+```{python}
+# first get the shape of the polygons
+
+shape = gpd.read_file(zip_url_or_path, layer = "ADM_ADM_3")
+
+# get the new mapping of the pixels to the shapes in the region
+
+res_poly2cell = polygon_to_raster_cells(
+    vectors = shape.geometry.values, # the geometries of the shapefile of the regions
+    raster=raster_array, # the raster data above
+    band=1, # the value of the day that we're using
+    nodata=src.nodata, # any intersections with no data, may have to be np.nan
+    affine=src.transform, # some math thing need to revise
+    all_touched=True, 
+    verbose=True
+)
+```
+
+```{python}
+len(res_poly2cell)
+```
+
+```{python}
+# demonsttrate that because this is a "denser" set of polygons
+# this iwll take longer
+stats = []
+
+for indices in res_poly2cell:
+    if len(indices[0]) == 0:
+        # no cells found for this polygon
+        stats.append(np.nan)
+    else:
+        cells = raster[indices]
+        if sum(~np.isnan(cells)) == 0:
+            # no valid cells found for this polygon
+            stats.append(np.nan)
+            continue
+        else:
+            # compute mean of valid cells
+            stats.append(np.nanmean(cells))
+```
+
+```{python}
+stats
+```
+
+Now we have 110 mean temperatuers for each of the shapefile's regions.
+
+```{python}
+
+df = pd.DataFrame(
+            {"l3_territory": shape.NAME_3, "dummy_date_in_future": 1, "temp_vals": stats}
+        )
+```
+
+```{python}
+df
+```
+
+```{python}
+# now we plot it using the shape.geometry to get the shapefile's location for each region
+gdf = gpd.GeoDataFrame(df, geometry=shape.geometry.values, crs=shape.crs)
+gdf.plot(column="temp_vals", legend=True)
+plt.show()
+```
+
+We can test this out with our healthsheds file
+
+```{python}
+healthsheds = gpd.read_file(here() / "data/testing/mdg_healthsheds2022")
+```
+
+```{python}
+healthsheds
+```
+
+```{python}
+# there are NAs to remove
+healthsheds.dropna(subset = ['geometry'], inplace=True)
+```
+
+```{python}
+len(set(healthsheds.fs_uid))
+```
+
+```{python}
+# get the new mapping of the pixels to the shapes in the region
+
+res_poly2cell = polygon_to_raster_cells(
+    vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
+    raster=raster_array, # the raster data above
+    band=1, # the value of the day that we're using
+    nodata=src.nodata, # any intersections with no data, may have to be np.nan
+    affine=src.transform, # some math thing need to revise
+    all_touched=True, 
+    verbose=True
+)
+
+stats = []
+
+for indices in res_poly2cell:
+    if len(indices[0]) == 0:
+        # no cells found for this polygon
+        stats.append(np.nan)
+    else:
+        cells = raster[indices]
+        if sum(~np.isnan(cells)) == 0:
+            # no valid cells found for this polygon
+            stats.append(np.nan)
+            continue
+        else:
+            # compute mean of valid cells
+            stats.append(np.nanmean(cells))
+```
+
+```{python}
+df = pd.DataFrame(
+            {"healthshed": healthsheds.fs_uid, "dummy_date_in_future": 1, "temp_vals": stats}
+        )
+```
+
+```{python}
+# now we plot it using the shape.geometry to get the shapefile's location for each region
+gdf = gpd.GeoDataFrame(df, geometry=healthsheds.geometry.values, crs=shape.crs)
+gdf.plot(column="temp_vals", legend=True)
+plt.show()
+```
+
+Now that we've demonstrated how this could work, we can substitute the GADM shapefiles for our healthsheds, and put it in a pipeline!!!
+
+## Nepal
+
+We've modified the pipeline to now download Nepal as well. We'll test out an aggregation using the aggregation shapefiles we were provided by Dimeji. We probably want to decide on where to centralize data storage for files like this
+
+```{python}
+try: from era5_sandbox.core import GoogleDriver, _get_callable, describe
+except: from core import GoogleDriver, _get_callable, describe
+
+try: from era5_sandbox.download import download_raw_era5
+except: from download import download_raw_era5
+
+try: from era5_sandbox.aggregate import resample_netcdf, netcdf_to_tiff, polygon_to_raster_cells, aggregate_to_healthsheds
+except: from aggregate import resample_netcdf, netcdf_to_tiff, polygon_to_raster_cells, aggregate_to_healthsheds
+```
+
+```{python}
+from hydra import initialize, compose
+from omegaconf import OmegaConf
+
+# unfortunately, we have to use the initialize function to load the config file
+# this is because the @hydra decorator does not work with Notebooks very well
+# this is a known issue with Hydra: https://gist.github.com/bdsaglam/586704a98336a0cf0a65a6e7c247d248
+# 
+# just use the relative path from the notebook to the config dir
+with initialize(version_base=None, config_path="../../conf"):
+    cfg = compose(config_name='config.yaml')
+
+cfg.development_mode = False
+cfg.query['year'] = 2023
+cfg.query['month'] = 10
+cfg.query['day'] = 1
+cfg.query['time'] = "00:00"
+cfg.query['geography'] = "nepal"
+download_raw_era5(cfg)
+```
+
+Now let's read it in and run the aggregation:
+
+```{python}
+# Load the NetCDF file
+fpath = here() / "data/input/nepal_2023_10.nc"
+ds = xr.open_dataset(fpath)
+```
+
+```{python}
+ds
+```
+
+```{python}
+# Perform multiple aggregations
+daily_mean = ds.resample(valid_time="1D").mean()  # Daily mean
+daily_max = ds.resample(valid_time="1D").max()   # Daily max
+daily_min = ds.resample(valid_time="1D").min()   # Daily min
+
+# Combine the results into a new dataset
+daily_aggregated = xr.Dataset({
+    "t2m_mean": daily_mean["t2m"],
+    "t2m_max": daily_max["t2m"],
+    "t2m_min": daily_min["t2m"],
+    "d2m_mean": daily_mean["d2m"],
+    "d2m_max": daily_max["d2m"],
+    "d2m_min": daily_min["d2m"]
+})
+
+daily_aggregated
+```
+
+```{python}
+# Select the first day of t2m_mean
+variable="mean"
+t2m_mean_day1 = daily_aggregated["t2m_" + variable].isel(valid_time=0)
+
+# Set the absolute min and max for the color bar
+vmin = 270  # Minimum value (e.g., 270 K)
+vmax = 310  # Maximum value (e.g., 310 K)
+
+# Create a plot with Cartopy
+plt.figure(figsize=(10, 6))
+ax = plt.axes(projection=ccrs.PlateCarree())  # Use PlateCarree projection for latitude/longitude data
+
+# Plot the data
+t2m_mean_day1.plot(ax=ax, cmap="coolwarm", transform=ccrs.PlateCarree(), vmin=vmin, vmax=vmax, cbar_kwargs={"label": "Temperature (K)"})
+
+# Add Madagascar's border using Cartopy's built-in features
+ax.add_feature(cfeature.BORDERS, edgecolor="black", linewidth=1)  # Add country borders
+ax.add_feature(cfeature.COASTLINE, edgecolor="black", linewidth=0.8)  # Add coastlines
+
+# Optionally, zoom in on Madagascar
+#ax.set_extent([43, 51, -26, -11], crs=ccrs.PlateCarree())  # Longitude and latitude bounds for Madagascar
+
+# Add gridlines
+ax.gridlines(draw_labels=True, linewidth=0.5, color="gray", alpha=0.5, linestyle="--")
+
+# Add a title
+plt.title("Mean Daily {} Temperature (Day 1)".format(variable))
+plt.show()
+```
+
+We're going to create the aggregations using the function we defined in the aggregate module
+
+```{python}
+resampled_nc = resample_netcdf(fpath)
+
+resampled_tiff = netcdf_to_tiff(
+    ds=resampled_nc,
+    variable="t2m",
+    crs="EPSG:4326"
+)
+```
+
+Now we fetch the shapefile for administrative aggregations using our googledriver class:
+
+```{python}
+driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
+drive = driver.get_drive()
+```
+
+```{python}
+shape = "Nepal_Healthsheds2024.zip"
+```
+
+```{python}
+healthsheds = driver.read_healthsheds(shape)
+```
+
+```{python}
+healthsheds.columns
+```
+
+```{python}
+healthsheds.describe()
+```
+
+```{python}
+len(set(healthsheds['fid'].values))
+```
+
+```{python}
+res_poly2cell=polygon_to_raster_cells(
+    vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
+    raster=resampled_tiff.data, # the raster data above
+    band=1, # the value of the day that we're using
+    nodata=resampled_tiff.nodata, # any intersections with no data, may have to be np.nan
+    affine=resampled_tiff.transform, # some math thing need to revise
+    all_touched=True, 
+    verbose=True
+)
+```
+
+```{python}
+result = aggregate_to_healthsheds(
+    res_poly2cell=res_poly2cell,
+    raster=resampled_tiff,
+    shapes=healthsheds,
+    names_column="fid",
+    aggregation_func=np.nanmean,
+    aggregation_name="mean_temperature"
+)
+result.head()
+```
+
+```{python}
+result.plot(column="mean_temperature", legend=True)
+plt.title("Mean Temperature (K) by Health Shed October 2023")
+plt.show()
+```
+
+This should work by slotting right into the pipeline, only changing the function for the names column

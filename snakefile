@@ -20,10 +20,36 @@ months_cfg = OmegaConf.to_container(cfg.query.month, resolve=True)
 variable_cfg = OmegaConf.to_container(cfg.query.variable, resolve=True)
 geographies_cfg = OmegaConf.to_container(cfg.query.geography, resolve=True)
 
+variables_dict = {
+    "2m_temperature": "t2m",
+    "2m_dewpoint_temperature": "d2m",
+    "volumetric_soil_water_layer_1": "swvl1",
+    "total_precipitation": "tp"
+}
+
+# Map internal variable names to ERA5 codes
+variable_codes = [variables_dict[v] for v in variable_cfg]
+
+intermediate_targets = expand(
+    data_dir / "intermediate/{geography}_environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet",
+    geography=geographies_cfg,
+    variable=variable_cfg,
+    year=years_cfg,
+    month=months_cfg
+)
+
+#convert this to a directory based rule
+upload_targets = expand(
+    data_dir / "output/environmental/exposures_era5/healthshed_daily/{geography}_{variable}_{year}.parquet",
+    geography=geographies_cfg,
+    variable=variable_codes,
+    year=years_cfg
+)
+
 rule all:
     input:
-        expand(data_dir / "intermediate/{geography}_environmental_exposure-era5_healthshed_{variable}_{year}_{month}.parquet", 
-               geography=geographies_cfg, variable=variable_cfg, year=years_cfg, month=months_cfg)
+        # intermediate_targets,
+        upload_targets
 
 rule test_api:
     output:
@@ -53,31 +79,42 @@ rule spatial_aggregate_raw_era5:
     script:
         "src/era5_sandbox/aggregate.py"
 
-rule summarize_na_dashboard:
+rule compile_results_and_upload:
     input:
-        rmd = "notes/prototypes/aggregation_visualizer.Rmd",
+        intermediate_targets
     output:
-        data_dir / "notes/prototypes/figures/{geography}_mean_temperature_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_max_temperature_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_min_temperature_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_mean_dewpoint_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_max_dewpoint_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_min_dewpoint_{year}.png}",
-        data_dir / "notes/prototypes/figures/{geography}_total_precipitation_{year}.png}"
-    shell:
-        """
-        Rscript -e "rmarkdown::render(
-            input = './notes/prototypes/aggregation_visualizer.Rmd',
-            params = list(
-                in_pipeline = TRUE,
-                output_files = list(
-                raw_na_summary = 'data/testing/raw_na_summary.csv',
-                temp_agg = 'data/testing/temperature_agg_long.csv',
-                precip_agg = 'data/testing/precipitation_agg_long.csv',
-                dewpoint_agg = 'data/testing/dewpoint_agg_long.csv'
-                )
-            ),
-            output_file = tempfile(),
-            quiet = FALSE
-            )"
-        """
+        upload_targets
+    message:
+        "[UPLOAD] Combining and uploading results to dataverse"
+    script:
+        "src/era5_sandbox/publish.py"
+        
+
+# rule summarize_na_dashboard:
+#     input:
+#         rmd = "notes/prototypes/aggregation_visualizer.Rmd",
+#     output:
+#         data_dir / "notes/prototypes/figures/{geography}_mean_temperature_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_max_temperature_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_min_temperature_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_mean_dewpoint_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_max_dewpoint_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_min_dewpoint_{year}.png}",
+#         data_dir / "notes/prototypes/figures/{geography}_total_precipitation_{year}.png}"
+#     shell:
+#         """
+#         Rscript -e "rmarkdown::render(
+#             input = './notes/prototypes/aggregation_visualizer.Rmd',
+#             params = list(
+#                 in_pipeline = TRUE,
+#                 output_files = list(
+#                 raw_na_summary = 'data/testing/raw_na_summary.csv',
+#                 temp_agg = 'data/testing/temperature_agg_long.csv',
+#                 precip_agg = 'data/testing/precipitation_agg_long.csv',
+#                 dewpoint_agg = 'data/testing/dewpoint_agg_long.csv'
+#                 )
+#             ),
+#             output_file = tempfile(),
+#             quiet = FALSE
+#             )"
+#         """

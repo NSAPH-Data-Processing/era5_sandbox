@@ -6,8 +6,15 @@ settings.ini
 setup.py
 src/era5_sandbox/__init__.py
 src/era5_sandbox/_modidx.py
+src/era5_sandbox/aggregate.py
+src/era5_sandbox/config.py
 src/era5_sandbox/core.py
 src/era5_sandbox/download.py
+src/era5_sandbox/publish.py
+src/era5_sandbox/pytask_logger.py
+src/era5_sandbox/task_aggregate.py
+src/era5_sandbox/task_data_preparation.py
+src/era5_sandbox/task_download.py
 src/era5_sandbox.egg-info/PKG-INFO
 src/era5_sandbox.egg-info/SOURCES.txt
 src/era5_sandbox.egg-info/dependency_links.txt

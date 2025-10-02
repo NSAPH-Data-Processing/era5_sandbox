@@ -5,6 +5,7 @@ __all__ = ['resample_netcdf', 'RasterFile', 'netcdf_to_tiff', 'polygon_to_raster
            'aggregate_data', 'main']
 
 # %% ../../notes/02_aggregate.ipynb 4
+#| exports: #
 import tempfile
 import rasterio
 import hydra
@@ -31,6 +32,7 @@ try: from era5_sandbox.core import GoogleDriver, _get_callable, describe, Climat
 except: from core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler, kelvin_to_celsius
 
 # %% ../../notes/02_aggregate.ipynb 8
+#| export: #
 def resample_netcdf(
         fpath: str, # Path to the netCDF file.
         resample: str = "1D", # Resampling frequency (e.g., '1H', '1D')
@@ -58,7 +60,8 @@ def resample_netcdf(
     else:
         raise TypeError("agg_func must be a callable function like np.mean, np.max, etc.")
 
-# %% ../../notes/02_aggregate.ipynb 12
+# %% ../../notes/02_aggregate.ipynb 13
+#| exports: #
 @dataclass
 class RasterFile:
     path: str
@@ -86,7 +89,8 @@ class RasterFile:
     def __str__(self):
         return f"RasterFile(path='{self.path}', shape={self.shape()}, crs='{self.crs}')"
 
-# %% ../../notes/02_aggregate.ipynb 14
+# %% ../../notes/02_aggregate.ipynb 15
+#| exports: #
 def netcdf_to_tiff(
     ds: xr.Dataset, # The aggregated xarray dataset to convert.    
     band: int,      # The day to rasterise; 1 indexed just like human english
@@ -96,12 +100,6 @@ def netcdf_to_tiff(
 
     """
     Convert a netCDF file to a GeoTIFF file.
-    
-    Args:
-        fpath (str): Path to the netCDF file.
-        output_path (str): Path to save the output GeoTIFF file.
-        variable_name (str): Name of the variable to convert.
-        time_index (int): Index of the time dimension to extract.
     """
 
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -117,38 +115,18 @@ def netcdf_to_tiff(
 
     return raster_file
 
-# %% ../../notes/02_aggregate.ipynb 19
+# %% ../../notes/02_aggregate.ipynb 20
+#| exports: #
 def polygon_to_raster_cells(
-    vectors,
-    raster,
-    nodata=None,
-    affine=None,
-    all_touched=False,
-    verbose=False,
+    vectors, # list of geometries from a shapefile
+    raster, # the raster data as a numpy array
+    nodata=None, # the nodata value of the raster
+    affine=None, # the affine transform of the raster
+    all_touched=False, # whether to include all touched pixels
+    verbose=False, 
     **kwargs,
-):
-    """Returns an index map for each vector geometry to indices in the raster source.
-
-    Parameters
-    ----------
-    vectors: list of geometries
-
-    raster: ndarray
-
-    nodata: float
-
-    affine: Affine instance
-
-    all_touched: bool, optional
-        Whether to include every raster cell touched by a geometry, or only
-        those having a center point within the polygon.
-        defaults to `False`
-
-    Returns
-    -------
-    dict
-        A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
-    """
+) -> list: # A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
+    """Returns an index map for each vector geometry to indices in the raster source."""
 
     cell_map = []
 
@@ -191,7 +169,8 @@ def polygon_to_raster_cells(
 
         return cell_map
 
-# %% ../../notes/02_aggregate.ipynb 26
+# %% ../../notes/02_aggregate.ipynb 27
+#| exports: #
 def aggregate_to_healthsheds(
     res_poly2cell: list, # the result of polygon_to_raster_cells    
     raster: RasterFile, # the raster data
@@ -230,13 +209,13 @@ def aggregate_to_healthsheds(
     gdf = gpd.GeoDataFrame(df, geometry=shapes.geometry.values, crs=shapes.crs)
     return gdf
 
-
-# %% ../../notes/02_aggregate.ipynb 36
+# %% ../../notes/02_aggregate.ipynb 37
+#| exports: #
 def aggregate_data(
-        cfg: DictConfig,
-        input_file: str,
-        output_file: str,
-        exposure_variable: str
+        cfg: DictConfig, # the hydra config
+        input_file: str, # the input netcdf file
+        output_file: str, # the output parquet file
+        exposure_variable: str # Which variable in the dataset to aggregate
     ) -> None:
     '''
     Aggregate raster data day-by-day and store all days and statistics as separate columns in a single Parquet file.
@@ -317,7 +296,8 @@ def aggregate_data(
     result_df.to_parquet(output_file, compression="snappy")
     # return(result_df)
 
-# %% ../../notes/02_aggregate.ipynb 41
+# %% ../../notes/02_aggregate.ipynb 42
+#| exports: #
 @hydra.main(version_base=None, config_path="../../conf", config_name="config")
 def main(cfg: DictConfig) -> None:
     # Parse command-line arguments
@@ -337,8 +317,8 @@ def main(cfg: DictConfig) -> None:
     
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=variables_dict[aggregation_variable])
 
-# %% ../../notes/02_aggregate.ipynb 42
-#| eval: false
+# %% ../../notes/02_aggregate.ipynb 43
+#| export: #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
 

@@ -1,0 +1,228 @@
+---
+skip_showdoc: true
+---
+
+# Part 2: Aggregation via Fishnet
+
+This script is the first in a two-step raster processing process. In this script a grid-based polygon will be derived from the raster grid of ERA5 data. The goal
+is to create a fishnet that can be used to extract ERA5 data from raster stack including ERA5 hourly data (this file). This will allow for extraction from raster stack 
+without the large computational burden of a loop (as below)
+
+```{python}
+import geopandas as gpd
+import os 
+import glob
+# xarray makes working with labelled multi-dimensional arrays in Python simple, efficient, and fun!
+import xarray
+# The rioxarray package is an extension of xarray designed
+# for working with raster (geospatial) data in Python. 
+# It provides an easy way to read, write, and manipulate GeoTIFF and other raster formats while maintaining spatial metadata.
+import rioxarray
+# for geometric operations on vector data (points, lines, polygons). It allows users to create, manipulate, and analyze geometric shapes in 2D space
+import shapely
+from shapely.geometry import Polygon
+import numpy
+# you need to install gdal here, not osgeo
+# gdal is generally a translator library for raster and vector geospatial data formats
+from osgeo import gdal, ogr
+```
+
+```{python}
+# create a fishnet grid using GDAL
+def make_fishnet(outputGridfn,xmin,xmax,ymin,ymax,rows,cols):
+    # Calculate grid parameters
+    xmin = float(xmin)
+    xmax = float(xmax)
+    ymin = float(ymin)
+    ymax = float(ymax)
+    gridWidth = float((xmax-xmin) / cols)
+    gridHeight = float((ymax-ymin) / rows)
+
+    # Start grid cell envelope
+    ringXleftOrigin = xmin
+    ringXrightOrigin = xmin + gridWidth
+    ringYtopOrigin = ymax
+    ringYbottomOrigin = ymax-gridHeight
+
+    # Create the output shapefile
+    outDriver = ogr.GetDriverByName('ESRI Shapefile')
+    if os.path.exists(outputGridfn):
+        os.remove(outputGridfn)
+    outDataSource = outDriver.CreateDataSource(outputGridfn)
+    outLayer = outDataSource.CreateLayer(outputGridfn, geom_type=ogr.wkbPolygon)
+    # Add fields to the layer
+    featureDefn = outLayer.GetLayerDefn()
+
+    # Create grid cells
+    countcols = 0
+    while countcols < cols:
+        countcols += 1
+
+        # Reset envelope for rows
+        ringYtop = ringYtopOrigin
+        ringYbottom =ringYbottomOrigin
+        countrows = 0
+
+        while countrows < rows:
+            countrows += 1
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            ring.AddPoint(ringXleftOrigin, ringYtop)
+            ring.AddPoint(ringXrightOrigin, ringYtop)
+            ring.AddPoint(ringXrightOrigin, ringYbottom)
+            ring.AddPoint(ringXleftOrigin, ringYbottom)
+            ring.AddPoint(ringXleftOrigin, ringYtop)
+            poly = ogr.Geometry(ogr.wkbPolygon)
+            poly.AddGeometry(ring)
+
+            # Add new geom to layer
+            outFeature = ogr.Feature(featureDefn)
+            outFeature.SetGeometry(poly)
+            outLayer.CreateFeature(outFeature)
+            outFeature = None
+
+            # New envelope for next poly
+            ringYtop = ringYtop - gridHeight
+            ringYbottom = ringYbottom - gridHeight
+
+        # New envelope for next poly
+        ringXleftOrigin = ringXleftOrigin + gridWidth
+        ringXrightOrigin = ringXrightOrigin + gridWidth
+
+    # Save and close DataSources
+    outDataSource = None
+```
+
+```{python}
+from pyprojroot import here
+```
+
+```{python}
+era_dir = here("data/ERA5_out")
+```
+
+```{python}
+temp_file = xarray.open_dataset(os.path.join(era_dir, "2000_01.nc"), decode_coords="all")
+```
+
+```{python}
+
+```
+
+```{python}
+t0='2000-01-01T00:00:00.000000000'
+temp_file['t2m']['valid_time'][0]
+```
+
+```{python}
+list(temp_file['t2m']['valid_time'].data)
+```
+
+```{python}
+temp_file['t2m'][0].shape
+```
+
+```{python}
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import figure
+#from matplotlib.pyplot 
+import cartopy.feature as cfeature
+import cartopy.crs as ccrs
+# Ensure lat/lon are the correct names in your dataset
+
+var=temp_file['t2m'][0]
+
+lon = temp_file.coords.get("longitude")
+lat = temp_file.coords.get("latitude")
+
+plt.figure(figsize=(12, 6))
+ax = plt.axes(projection=ccrs.PlateCarree())  # Set projection for geographic map
+
+# Add map features
+ax.add_feature(cfeature.BORDERS, linestyle=":")
+ax.add_feature(cfeature.COASTLINE)
+
+ax.set_extent([lon.min() - 3, lon.max() + 3, lat.min() - 3, lat.max() + 3], crs=ccrs.PlateCarree())
+
+# Plot raster using lat/lon
+im = ax.pcolormesh(lon, lat, var, transform=ccrs.PlateCarree())
+
+# Add colorbar
+plt.colorbar(im, label=var.name)
+plt.title(f"{var.name} Spatial Distribution")
+
+plt.show()
+```
+
+```{python}
+lat
+```
+
+```{python}
+lon
+```
+
+```{python}
+temp_file['t2m']
+```
+
+```{python}
+era_files = glob.glob(os.path.join(era_dir, '*.nc'))
+```
+
+We read in the netcdf files and stack them in the 4th dimension by year
+
+```{python}
+era_stack = xarray.open_mfdataset(era_files, decode_coords="all")
+```
+
+```{python}
+era_stack
+```
+
+The data above does not have a [coordinate reference system](https://en.wikipedia.org/wiki/Spatial_reference_system), needed to interpret, transform, or align datasets. Hence, we assign the WGS84 standard
+
+```{python}
+era_stack.rio.write_crs("WGS 84", inplace=True)
+```
+
+Here, we are making a shapefile that is a fishnet grid of the raster extent.
+It will essentially be a polygon of lines surrounding each ERA5 cell
+
+```{python}
+era_extent = era_stack.rio.bounds()
+```
+
+```{python}
+xmin = era_extent[0]
+xmax = era_extent[2]
+ymin = era_extent[1]
+ymax = era_extent[3]
+
+height = era_stack.rio.height
+width = era_stack.rio.width
+
+era_coords = [(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin), (xmin, ymin)]
+era_polygon = Polygon(era_coords)
+```
+
+```{python}
+# implement the fishnet function
+make_fishnet(os.path.join(era_dir, 'era_fishnet.shp'), xmin,xmax,ymin,ymax,height,width)
+```
+
+```{python}
+ogr_shp = gpd.read_file(os.path.join(era_dir, 'era_fishnet.shp'))
+print(ogr_shp.crs) # this is none, so we have to set it
+
+# Set the CRS for the created fishnet shape file as the same one from the stacked raster files. 
+new_crs = era_stack.rio.crs.data  # Replace with the desired CRS
+ogr_shp = ogr_shp.set_crs(new_crs)
+```
+
+```{python}
+ogr_shp.to_file(os.path.join(era_dir, 'era_fishnet.shp'))
+```
+
+```{python}
+
+```

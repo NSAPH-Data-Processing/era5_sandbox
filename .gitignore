@@ -5,3 +5,4 @@ logs/*
 sandbox
 slurm*
 data
+bld

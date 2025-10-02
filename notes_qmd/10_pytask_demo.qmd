@@ -1,0 +1,279 @@
+---
+title: "Demo: How to Create Pipelines with `pytask`"
+engine: jupyter
+---
+
+## Data Preparation Demo
+
+> Data preparation task for `pytask` demo
+
+In this notebook, we are demonstrating how to convert our snakemake workflow into a `pytask` workflow. We use the basic tutorial to demonstrate this, but continue
+to use nbdev for development of functions in notebooks.
+
+`pytask` is a task management system that allows you to define tasks and their dependencies, similar to `Snakemake`. It is particularly useful for data science workflows.
+
+There are a number of reasons to use `pytask` over `snakemake`:
+- **Pythonic**: `pytask` is designed to be purely Pythonic by default, allowing you to write tasks and entire pipelines as Python functions.
+- **Flexibility**: `pytask` allows you to define tasks and their dependencies in a more flexible way, using Python functions and decorators, as opposed to orchestrating numerous scripts.
+- **Integration**: `pytask` integrates well with other Python libraries, such as `nbdev` here, or `hydra` configurations if you need, allowing you to use your existing code, notebooks, or configs in your workflows.
+- **Parallelism**: `pytask` supports parallel execution of tasks with `pytask-parallel`, which can speed up your workflows significantly, especially for data processing tasks.
+
+We'll use nbdev to define the task functions, and then export them to the `src` directory. `pytask` is then invoked at the command line to run the tasks.
+
+```{python}
+#| default_exp task_data_preparation:
+#
+```
+
+This demo task is taken from the tutorial at [pytask documentation](https://pytask-dev.readthedocs.io/en/stable/tutorials/write_a_task.html). At minimum, you need your package to contain the following in a config.py file:
+
+```md
+my_project
+│
+├───.pytask
+│
+├───bld
+│   └────...
+│
+├───src
+│   └───my_project
+│       ├────__init__.py
+│       ├────config.py
+│       └────...
+│
+└───pyproject.toml
+```
+
+```python
+#contents of `era5_sandbox.config` module
+from pathlib import Path
+
+
+SRC = Path(__file__).parent.resolve()
+BLD = SRC.joinpath("..", "..", "bld").resolve()
+```
+
+Additionally, your pyproject.toml file should contain the following at minimum:
+
+```toml
+[tool.pytask.ini_options]
+paths = ["src/era5_sandbox"]
+```
+
+The former tells Python where to find the source code and build directory for `pytask` objects and shims, while the latter tells `pytask` where to find the task definitions and dependency DAG.
+
+```{python}
+#| exports:
+#
+import os
+from pathlib import Path
+from typing import Annotated
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+from era5_sandbox.config import BLD
+from era5_sandbox.config import data_catalog, demo_catalog
+
+from pytask import PickleNode
+from pytask import Product
+```
+
+
+### Defining Tasks
+
+To define a task, simply use the `task_` prefix in the function name (or, if you are familiar and comfortable  with decorators, use `@pytask.mark.task`). Be verbose and expressive in your use of type hints to specify the input and output data, so that `pytask` can automatically detect and handle the dependencies between tasks. 
+
+### Defining Tracked Outputs
+
+To define something as a tracked output, you can annotate the input of the task with `Annotated[Path, Product]`, where `Product` is imported from `pytask`. This tells `pytask` that this is a product of the task and should be saved in the build directory.
+
+In this example, we're generating random data into a data frame and saving the object as a pickle in the `bld` directory (`bld` is the default build directory for `pytask`'s intermediate data). To get that directory, we use the `BLD` variable from the `era5_sandbox.config` module as above. This module itself could also be generated using `nbdev` if you want to keep your configuration in notebooks.
+
+Using `nbdev`, we can also include all of the bells and whistles of function documentation.
+
+```{python}
+#| exports:
+#
+
+def task_create_random_data(
+        seed: Annotated[int, 42],                                   # Default seed for reproducibility
+        path_to_data: Annotated[Path, Product] = BLD / "data.pkl" # Path to the object in the build directory
+    ) -> None:
+    "Create a random data set and save it as a pickle file. Return the path to the saved file."
+    rng = np.random.default_rng(seed)
+    beta = 2
+
+    x = rng.normal(loc=5, scale=10, size=1_000)
+    epsilon = rng.standard_normal(1_000)
+
+    y = beta * x + epsilon
+
+    df = pd.DataFrame({"x": x, "y": y})
+
+    # this is a tracked output, so we annotate the return value with `Annotated[Path, Product]`
+    df.to_pickle(path_to_data)
+```
+
+We can test the function directly in the notebook:
+
+```{python}
+task_create_random_data(42)
+```
+
+Once this module and function are exported with `nbdev_export`, the functions are in a python package. We can then use the command line to look at the registered tasks:
+
+```{python}
+#| eval: false
+
+%%sh
+pytask collect
+```
+
+Let's add another task in the same module. This task plots the data we generated. To link the previous task to this one as a dependency, we can list the output of the previous task as an input to this one. This way, `pytask` will know that it needs to run the first task before this one.
+
+```{python}
+#| exports:
+#
+
+def task_plot_data(
+    path_to_data: Annotated[Path, BLD / "data.pkl"], # Path to the data file created by the previous task
+    path_to_plot: Annotated[Path, Product] = BLD / "plot.png"  # Path to the build directory for the plot
+) -> None:
+    """
+    Plot the data from the pickle file and save the plot. Note that this task:
+        1. depends on the data.pkl file created by the previous task,
+        2. does not return any value, but saves a plot to the build directory. So the side effect of the task is what we are interested in here (though this is probably bad practice).
+    """
+
+    df = pd.read_pickle(path_to_data)
+    
+    _, ax = plt.subplots()
+    df.plot(x="x", y="y", ax=ax, kind="scatter")
+
+    plt.savefig(path_to_plot)
+    plt.close()
+```
+
+We now have a DAG of tasks that `pytask` can execute. To see the tasks, we can use the command line to create a pygraphviz graph of the tasks:
+
+```bash
+pytask dag
+```
+
+The DAG is saved as a pdf file, and you can view it using any viewer. Now, to run the pipeline, just invoke `pytask` at the command line:
+
+```bash
+pytask
+```
+
+In Jupyter or iPython, you can interact with the task outputs directly:
+
+```{python}
+#| eval: false
+
+# list all the files in the build directory
+for file in os.listdir(BLD):
+    print(file)
+```
+
+We can use these to build subsequent tasks later.
+
+## More Complex Tasks & The Data Catalog
+
+As we define more complex tasks, we can use the `pytask` data catalog to manage the inputs and outputs of our tasks. The data catalog allows us to imperatively name the data and their formats, making it easier to manage the data flow in our tasks. Importantly, we can define the data pythonically, which allows us to use the full power of Python to manipulate and transform our data. This is particularly more useful than snakemake's approach, which requires you to define the data in a more static way using paths and a separate pseudo-language.
+
+The content of the `era5_sandbox.config` module can be extended to include a data catalog:
+
+```python
+from pathlib import Path
+from pytask import DataCatalog, Product
+
+SRC = Path(__file__).parent.resolve()
+BLD = SRC.joinpath("..", "..", "bld").resolve()
+
+demo_catalog = DataCatalog()
+```
+
+With just this definition, we're now able to refer directly to data by name in our tasks, and `pytask` will handle the paths and formats for us. This allows us to focus on the logic of our tasks rather than the details of data management.
+
+:::{.callout-note}
+This is a major advantage of `pytask` over `snakemake`, as it allows you to define the data in a more flexible and Pythonic way, while still maintaining the benefits of a task management system. It is a similar approach to building pipelines in R with targets, which allows you to define the data in a more flexible way.
+:::
+
+Let's create a task that modifies the data frame by adding a new column. This task will depend on the previous task's output, and we will use the data catalog to define the input and output data.
+
+```{python}
+#| exports:
+#
+
+def task_add_one(
+    path_to_data: Annotated[Path, BLD / "data.pkl"],  # Path to the data file created by the previous task
+    node: Annotated[PickleNode, Product] = demo_catalog["mydata"]
+) -> None:
+    """
+    Add one to the 'y' column of the data frame and save it as a new pickle file.
+    """
+    df = pd.read_pickle(path_to_data)
+    df['z'] = df['y'] + 1
+    
+    node.save(df)
+```
+
+In this function, we've defined that the task relies on the output of the first task being there, the `data.pkl` file. But importantly, we've also defined our product as a `node` from the `PickleNode` module. This will allow `pytask` to handle the serialization and deserialization of the data frame automatically, so we don't have to worry about the details of how the data is stored. We create the datacatalog in our config file, and then tell this task to create a Node in that catalog called `mydata`. Whatever we save with the `node.save()` method will be saved in the build directory, but more importantly _will be indexed and hashed by `pytask`_. This means that if the data changes, `pytask` will know to rerun the task.
+
+To make this even more pythonic, we can modify the format of our task function so that the return type annotator is used as a node in the data catalog. This allows us to define the output of the task as a `PickleNode`, which will automatically handle the serialization and deserialization of the data frame.
+
+:::{.callout-note}
+This is another trick I'm deriving from {targets}. By formatting tasks as pure functions where inputs are parameters and targets are return type annotations, we can define the output of the task as a `PickleNode`, which will automatically handle the serialization and deserialization of the data frame. This again allows us to focus on the logic of our tasks rather than the details of data management.
+:::
+
+So below, we're directly accessing the `data_catalog` to get the `mydata` node, and then modifying it by adding a new column. It _feels_ like we are doing this in place, such as in an iPython session, because we are allowing `pytask` to handle the serialization of the file on disk for us.
+
+```{python}
+#| exports:
+#
+
+def task_add_another_column(
+    df: Annotated[pd.DataFrame, demo_catalog["mydata"]] # which object in the catalog to fetch from the catalog with node.load()
+) -> Annotated[pd.DataFrame, demo_catalog["mydata2"]]:  # which object in the catalog to save the return value to
+    """
+    Add another column to the data frame stored in the PickleNode.
+    """
+
+    # use the datacatalog directly to access the node
+    # this is a bit like accessing the node in an iPython session, but pytask
+    # will handle the serialization and deserialization for us
+    df['w'] = df['z'] * df['y']
+    
+    return df
+```
+
+To test this interactively, we'd have to import the data catalog's object
+
+```{python}
+df = demo_catalog["mydata"].load()  # load the data frame from the PickleNode
+result = task_add_another_column(df)  # call the task function with the loaded data frame
+```
+
+```{python}
+result
+```
+
+Now that we know it will work, we can invoke pytask:
+
+```{python}
+#| eval: false
+%%sh
+pytask
+```
+
+Notice that the outputs are cached and not recomputed unless the inputs change. This is a key feature of `pytask` and other DAGs, allowing you to efficiently manage your data processing tasks without unnecessary recomputation.
+
+## Conclusion
+
+The takeaway here is that with `pytask`, you can define pure functions that take inputs and return outputs, and build a DAG of tasks that can be executed in a flexible and efficient way. This allows you to focus on the logic of your tasks rather than the details of data management, while still maintaining the benefits of a task management system. The key elements are:
+
+- **Task annotation**: You define your tasks by creating pure functions that take inputs and return outputs, and use decorators or naming conventions to mark them as "tasks" in a dag
+- **Input and output annotation**: You define the inputs and outputs of your tasksusing type hints, and allow `pytask` to automatically detect and handle the dependencies between tasks.
+- **Data catalog**: You define your data in a Pythonic object in your config called `data_catalog`. As you iteratively develop your DAG, you add objects to the data catalog, which are called nodes. As long as a node is a pythonic object and has a pickle method, `pytask` will handle the serialization and deserialization of the data for you.

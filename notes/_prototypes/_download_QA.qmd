@@ -1,0 +1,15 @@
+# Investigating The Download Results
+
+There are a couple of things we should do to QA our data downloads. Specifically, we want to come up with a way of ensuring our aggregations are valid and accurate. This will require some simple EDA.
+
+```{python}
+from pyprojroot import here
+import pandas as pd
+import os
+from hydra import initialize, compose
+from omegaconf import OmegaConf, DictConfig
+```
+
+```{python}
+eg_file = here() / "data/input/2010_1.nc"
+```

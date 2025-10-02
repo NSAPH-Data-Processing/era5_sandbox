@@ -1,0 +1,19 @@
+---
+skip_showdoc: true
+---
+
+# Part 3: Joining Fishnet to the Ward geometries
+
+In this file, we will join the fishnet, which is a polygon grid with lines 
+surrounding the grid of the ERA5 raster with the Ward geometries that have
+been queried from the Database of Global Administrative Boundaries
+(gadm.org). In merging the polygon grid with the ward polygon data, 
+we ensure that every ward will be aligned with the relevant
+ERA5 temperature metrics for the area.
+
+Next, we Create extraction points from the union of the wards and fishnet. These 
+are what we can use to extract values from the raster that overlaps with
+with the points aligning to each wards (this file).
+
+Lastly, we Estimate the ward-level exposure to ERA5, accounting for the availability
+of data within the wards (this file)
