@@ -1,7 +1,5 @@
 ---
 title: "Demo: How to Create Pipelines with `pytask`"
-execute:
-    freeze: auto
 engine: jupyter
 ---
 

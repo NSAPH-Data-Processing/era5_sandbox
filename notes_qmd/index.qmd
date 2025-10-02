@@ -1,5 +1,6 @@
 ---
 title: "The ERA5 Spatial Aggregation Pipeline"
+exec_all: true
 ---
 
 ```{python}
@@ -102,6 +103,8 @@ sbatch snakemake.sbatch
 Using `pytask`'s data catalog, you can investigate the downloaded raw data with python, eg.:
 
 ```{python}
+#| exec_doc:
+#
 import xarray as xr
 from era5_sandbox.config import data_catalog
 from era5_sandbox.core import ClimateDataFileHandler
@@ -118,6 +121,8 @@ ds
 And plot it with cartopy, eg.:
 
 ```{python}
+#| exec_doc:
+#
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
@@ -140,6 +145,8 @@ plt.show()
 You can also load the aggregated data:
 
 ```{python}
+#| exec_doc:
+#
 import pandas as pd
 import geopandas as gpd
 from era5_sandbox.config import data_catalog

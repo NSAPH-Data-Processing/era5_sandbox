@@ -1,5 +1,7 @@
-# aggregate
+# Aggregate Module: Spatial Aggregation to Healthsheds
 
+
+## aggregate
 
 > This module aggregates the downloaded data into the respective output
 > dataframes.
@@ -26,6 +28,38 @@ The basic process is as follows:
 7.  Quality check the aggregations
 8.  Write out final aggregations to tiff
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+import tempfile
+import rasterio
+import hydra
+import argparse
+import os
+
+import pandas as pd
+import geopandas as gpd
+import numpy as np
+import xarray as xr
+import matplotlib.pyplot as plt
+
+from dataclasses import dataclass, field
+from typing import Optional, Tuple
+from pyprojroot import here
+from hydra import initialize, compose
+from omegaconf import OmegaConf, DictConfig
+from tqdm import tqdm
+from math import ceil, floor
+from rasterstats.io import Raster
+from rasterstats.utils import boxify_points, rasterize_geom
+
+try: from era5_sandbox.core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler, kelvin_to_celsius
+except: from core import GoogleDriver, _get_callable, describe, ClimateDataFileHandler, kelvin_to_celsius
+```
+
+</details>
+
 ``` python
 try:
     with initialize(version_base=None, config_path="../conf"):
@@ -41,19 +75,19 @@ exposure from a file. This file should be the single month data we got
 from the previous step in the pipeline.
 
 ``` python
-eg_file = here() / "data/input/nepal_2017_11.nc"
+eg_file = here() / "bld/2009_01_nepal.nc"
 ```
 
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L34"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L36"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### resample_netcdf
 
 >  resample_netcdf (fpath:str, resample:str='1D', agg_func:<built-
->                       infunctioncallable>=<function mean at 0x14b121cd4bb0>,
+>                       infunctioncallable>=<function mean at 0x145cb6c3b930>,
 >                       time_dim:str='valid_time', **xr_open_kwargs)
 
 \*Resample a netCDF file to a specified frequency and aggregation
@@ -120,6 +154,8 @@ Returns: xarray.Dataset: Resampled dataset.\*
 </tbody>
 </table>
 
+We pull the aggregation function from the config file:
+
 ``` python
 var = 'swvl1'
 agg_func = _get_callable(cfg['aggregation']['aggregation'][var]['hourly_to_daily'][0]['function'])
@@ -134,26 +170,59 @@ with ClimateDataFileHandler(eg_file) as handler:
 
 I’m going to use a dataclass to represent the tiff data. This will allow
 us to easily pass around the data and metadata associated with the tiff
-file. Why? Because I can, lol (I’ve never used dataclasses and I’m
-curious about them). ChatGPT thinks this will make the code cleaner and
-easier to read.
+file. Why? I’ve never used dataclasses and I’m curious about them —
+ChatGPT thinks this will make the code cleaner and easier to read.
 
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L63"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L66"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### RasterFile
 
 >  RasterFile (path:str, band:int)
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+@dataclass
+class RasterFile:
+    path: str
+    band: int # note that this is 1-indexed
+    data: Optional[np.ndarray] = field(default=None, init=False)
+    transform: Optional[rasterio.Affine] = field(default=None, init=False)
+    crs: Optional[str] = field(default=None, init=False)
+    nodata: Optional[float] = field(default=None, init=False)
+    bounds: Optional[Tuple[float, float, float, float]] = field(default=None, init=False)
+
+    def load(self):
+        """Load raster data and basic metadata."""
+        with rasterio.open(self.path) as src:
+            self.data = src.read(self.band)  # each day gets one rasterfile
+            self.transform = src.transform
+            self.crs = src.crs
+            self.nodata = src.nodata
+            self.bounds = src.bounds
+        return self
+
+    def shape(self) -> Optional[Tuple[int, int]]:
+        """Return the shape of the raster data."""
+        return self.data.shape if self.data is not None else None
+
+    def __str__(self):
+        return f"RasterFile(path='{self.path}', shape={self.shape()}, crs='{self.crs}')"
+```
+
+</details>
+
 Next, a function to write and read the netCDF to tiff:
 
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L90"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L94"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### netcdf_to_tiff
@@ -161,11 +230,7 @@ target="_blank" style="float:right; font-size:smaller">source</a>
 >  netcdf_to_tiff (ds:xarray.core.dataset.Dataset, band:int, variable:str,
 >                      crs:str='EPSG:4326')
 
-\*Convert a netCDF file to a GeoTIFF file.
-
-Args: fpath (str): Path to the netCDF file. output_path (str): Path to
-save the output GeoTIFF file. variable_name (str): Name of the variable
-to convert. time_index (int): Index of the time dimension to extract.\*
+*Convert a netCDF file to a GeoTIFF file.*
 
 <table>
 <colgroup>
@@ -210,6 +275,37 @@ to convert. time_index (int): Index of the time dimension to extract.\*
 </tbody>
 </table>
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+def netcdf_to_tiff(
+    ds: xr.Dataset, # The aggregated xarray dataset to convert.    
+    band: int,      # The day to rasterise; 1 indexed just like human english
+    variable: str, # The variable name to convert.
+    crs: str = "EPSG:4326", # Coordinate reference system (default is WGS84).    
+    ):
+
+    """
+    Convert a netCDF file to a GeoTIFF file.
+    """
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+
+        # Select the variable and time index
+        variable = ds[variable]
+        ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
+        ds_ = ds_.rio.write_crs(crs)
+        # Save as GeoTIFF
+        ds_.rio.to_raster(f"{tmpdirname}/output.tif")
+        # Load the raster file
+        raster_file = RasterFile(path=f"{tmpdirname}/output.tif", band=band).load()
+
+    return raster_file
+```
+
+</details>
+
 Now to test it:
 
 ``` python
@@ -226,34 +322,9 @@ resampled_tiff = netcdf_to_tiff(
 )
 ```
 
-    <xarray.Dataset> Size: 267kB
-    Dimensions:     (valid_time: 30, latitude: 20, longitude: 37)
-    Coordinates:
-        number      int64 8B 0
-      * latitude    (latitude) float64 160B 30.75 30.5 30.25 ... 26.5 26.25 26.0
-      * longitude   (longitude) float64 296B 79.6 79.85 80.1 ... 88.1 88.35 88.6
-      * valid_time  (valid_time) datetime64[ns] 240B 2017-11-01 ... 2017-11-30
-    Data variables:
-        d2m         (valid_time, latitude, longitude) float32 89kB 261.6 ... 288.1
-        t2m         (valid_time, latitude, longitude) float32 89kB 267.3 ... 293.1
-        swvl1       (valid_time, latitude, longitude) float32 89kB 0.2773 ... 0.1922
-    Attributes:
-        GRIB_centre:             ecmf
-        GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
-        GRIB_subCentre:          0
-        Conventions:             CF-1.7
-        institution:             European Centre for Medium-Range Weather Forecasts
-        history:                 2025-05-14T20:49 GRIB to CDM+CF via cfgrib-0.9.1...
-
 ``` python
 resampled_tiff.data.shape, resampled_tiff.transform, resampled_tiff.crs, resampled_tiff.bounds
 ```
-
-    ((20, 37),
-     Affine(0.25, 0.0, 79.475,
-            0.0, -0.25, 30.875),
-     CRS.from_wkt('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9122"]],AXIS["Latitude",NORTH],AXIS["Longitude",EAST],AUTHORITY["EPSG","4326"]]'),
-     BoundingBox(left=79.475, bottom=25.875, right=88.725, top=30.875))
 
 Super cool! The tiff file is created and the data is read back in
 correctly. Now we can move on to the next step, which is to aggregate
@@ -289,7 +360,7 @@ To better understand this, here is a ChatGPT explanation of the code:
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L121"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L120"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### polygon_to_raster_cells
@@ -320,31 +391,31 @@ source.*
 <td>vectors</td>
 <td></td>
 <td></td>
-<td></td>
+<td>list of geometries from a shapefile</td>
 </tr>
 <tr>
 <td>raster</td>
 <td></td>
 <td></td>
-<td></td>
+<td>the raster data as a numpy array</td>
 </tr>
 <tr>
 <td>nodata</td>
 <td>NoneType</td>
 <td>None</td>
-<td></td>
+<td>the nodata value of the raster</td>
 </tr>
 <tr>
 <td>affine</td>
 <td>NoneType</td>
 <td>None</td>
-<td></td>
+<td>the affine transform of the raster</td>
 </tr>
 <tr>
 <td>all_touched</td>
 <td>bool</td>
 <td>False</td>
-<td></td>
+<td>whether to include all touched pixels</td>
 </tr>
 <tr>
 <td>verbose</td>
@@ -360,13 +431,72 @@ source.*
 </tr>
 <tr>
 <td><strong>Returns</strong></td>
-<td><strong>dict</strong></td>
+<td><strong>list</strong></td>
 <td></td>
 <td><strong>A dictionary mapping vector the ids of geometries to
 locations (indices) in the raster source.</strong></td>
 </tr>
 </tbody>
 </table>
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+def polygon_to_raster_cells(
+    vectors, # list of geometries from a shapefile
+    raster, # the raster data as a numpy array
+    nodata=None, # the nodata value of the raster
+    affine=None, # the affine transform of the raster
+    all_touched=False, # whether to include all touched pixels
+    verbose=False, 
+    **kwargs,
+) -> list: # A dictionary mapping vector the ids of geometries to locations (indices) in the raster source.
+    """Returns an index map for each vector geometry to indices in the raster source."""
+
+    cell_map = []
+
+    with Raster(raster, affine, nodata) as rast:
+        # used later to crop raster and find start row and col
+        min_lon, dlon = affine.c, affine.a
+        max_lat, dlat = affine.f, -affine.e
+        H, W = rast.shape
+
+        for geom in tqdm(vectors, disable=(not verbose)):
+            if "Point" in geom.geom_type:
+                geom = boxify_points(geom, rast)
+
+            # find geometry bounds to crop raster
+            # the raster and geometry must be in the same lon/lat coordinate system
+            start_row = max(0, min(H - 1, floor((max_lat - geom.bounds[3]) / dlat)))
+            start_col = min(W - 1, max(0, floor((geom.bounds[0] - min_lon) / dlon)))
+            end_col = max(0, min(W - 1, ceil((geom.bounds[2] - min_lon) / dlon)))
+            end_row = min(H - 1, max(0, ceil((max_lat - geom.bounds[1]) / dlat)))
+            geom_bounds = (
+                min_lon + dlon * start_col,  # left
+                max_lat - dlat * end_row - 1e-12,  # bottom
+                min_lon + dlon * end_col + 1e-12,  # right
+                max_lat - dlat * start_row,  # top
+            )
+
+            # crop raster to area of interest and rasterize
+            fsrc = rast.read(bounds=geom_bounds)
+            rv_array = rasterize_geom(geom, like=fsrc, all_touched=all_touched)
+            indices = np.nonzero(rv_array)
+
+            if len(indices[0]) > 0:
+                indices = (indices[0] + start_row, indices[1] + start_col)
+                assert 0 <= indices[0].min() < rast.shape[0]
+                assert 0 <= indices[1].min() < rast.shape[1]
+            else:
+                pass  # stop here for debug
+
+            cell_map.append(indices)
+
+        return cell_map
+```
+
+</details>
 
 To use this, we must define the polygon and raster data. The polygon
 data is the healthshed shapefile, and the raster data is the tiff file
@@ -399,10 +529,6 @@ res_poly2cell=polygon_to_raster_cells(
 )
 ```
 
-      0%|          | 0/777 [00:00<?, ?it/s]/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/rasterstats/io.py:335: NodataWarning: Setting nodata to -999; specify nodata explicitly
-      warnings.warn(
-    100%|██████████| 777/777 [00:00<00:00, 1161.19it/s]
-
 The data below maps which grid entries fall into each of the regions in
 the shapefile (e.g. which pixel is in which state)
 
@@ -410,19 +536,13 @@ the shapefile (e.g. which pixel is in which state)
 res_poly2cell[:5]
 ```
 
-    [(array([14]), array([32])),
-     (array([13, 13, 14, 14]), array([33, 34, 33, 34])),
-     (array([12, 13, 13, 14]), array([34, 33, 34, 33])),
-     (array([15, 15]), array([33, 34])),
-     (array([15, 15, 16, 16]), array([32, 33, 32, 33]))]
-
 Last but not least, we aggregate these data to the healthshed level. We
 can use the `rasterstats` package to do this.
 
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L195"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L174"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### aggregate_to_healthsheds
@@ -432,7 +552,7 @@ target="_blank" style="float:right; font-size:smaller">source</a>
 >                                names_column:str='fs_uid',
 >                                aggregation_func:<built-
 >                                infunctioncallable>=<function nanmean at
->                                0x14b121c598f0>, aggregation_name:str='mean')
+>                                0x145cb6bbbdf0>, aggregation_name:str='mean')
 
 *Aggregate the raster data to the health sheds.*
 
@@ -497,6 +617,51 @@ target="_blank" style="float:right; font-size:smaller">source</a>
 </tbody>
 </table>
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+def aggregate_to_healthsheds(
+    res_poly2cell: list, # the result of polygon_to_raster_cells    
+    raster: RasterFile, # the raster data
+    shapes: gpd.GeoDataFrame, # the shapes of the health sheds
+    names_column: str = "fs_uid", # the unique identifier column name of the health sheds
+    aggregation_func: callable = np.nanmean, # the aggregation function
+    aggregation_name: str = "mean" # the name of the aggregation function
+    ) -> gpd.GeoDataFrame:
+    """
+    Aggregate the raster data to the health sheds.
+    """
+
+    stats = []
+
+    for indices in res_poly2cell:
+        if len(indices[0]) == 0:
+            # no cells found for this polygon
+            stats.append(np.nan)
+        else:
+            cells = raster.data[indices]
+            if sum(~np.isnan(cells)) == 0:
+                # no valid cells found for this polygon
+                stats.append(np.nan)
+                continue
+            else:
+                # compute MEAN of valid cells
+                # but this stat can be ANYTHING
+                stats.append(aggregation_func(cells))
+
+    # clean up the result into a dataframe
+    stats = pd.Series(stats)
+    shapes[aggregation_name] = stats
+    df = pd.DataFrame(
+            {"healthshed": shapes[names_column], aggregation_name: stats}
+        )
+    gdf = gpd.GeoDataFrame(df, geometry=shapes.geometry.values, crs=shapes.crs)
+    return gdf
+```
+
+</details>
+
 And now we apply it:
 
 ``` python
@@ -511,64 +676,6 @@ result = aggregate_to_healthsheds(
 result.head()
 ```
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-&#10;    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-&#10;    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-
-<table class="dataframe" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr style="text-align: right;">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">healthshed</th>
-<th data-quarto-table-cell-role="th">mean_soil_moisture</th>
-<th data-quarto-table-cell-role="th">geometry</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-quarto-table-cell-role="th">0</td>
-<td>1</td>
-<td>0.331351</td>
-<td>POLYGON ((87.60719 27.37069, 87.60841 27.36969...</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">1</td>
-<td>7</td>
-<td>0.360747</td>
-<td>POLYGON ((88.04438 27.4203, 88.04365 27.41925,...</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">2</td>
-<td>8</td>
-<td>0.332805</td>
-<td>POLYGON ((88.14528 27.67003, 88.14526 27.66966...</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">3</td>
-<td>23</td>
-<td>0.270567</td>
-<td>POLYGON ((88.0766 27.03545, 88.07695 27.03533,...</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">4</td>
-<td>24</td>
-<td>0.212768</td>
-<td>POLYGON ((87.76435 26.92431, 87.76435 26.924, ...</td>
-</tr>
-</tbody>
-</table>
-
-</div>
-
 And plot for QA:
 
 ``` python
@@ -576,8 +683,6 @@ result.plot(column="mean_soil_moisture", legend=True)
 plt.title("Mean Soil Moisture (m^3 m^-3) by Health Shed Nov 2017 day 1")
 plt.show()
 ```
-
-![](02_aggregate_files/figure-commonmark/cell-17-output-1.png)
 
 That looks great! The data is aggregated to the healthshed level, and we
 can see the differences in exposure across the healthsheds. We can also
@@ -593,220 +698,78 @@ this notebook.
 
 ``` python
 import random
-
-variables = ["t2m", "d2m"]
-years = ["20{:02d}".format(m) for m in range(9, 24)]
-months = [str(m) for m in range(1, 13)]
-aggregations = [
-    ("Mean", np.nanmean),
-    ("Max", np.nanmax),
-    ("Min", np.nanmin)
-]
-
-exposure_variable = random.choice(variables)
-year = random.choice(years)
-month = random.choice(months)
-aggregation_str, agg_func = random.choice(aggregations)
-input_file = here() / "data/input/{}_{}.nc".format(year, month)
-
-with initialize(version_base=None, config_path="../conf"):
-    cfg = compose(config_name='config.yaml')
-
-driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
-drive = driver.get_drive()
-healthsheds = driver.read_healthsheds(cfg.GOOGLE_DRIVE_AUTH_JSON.healthsheds_id)
-
-with ClimateDataFileHandler(input_file) as handler:
-    ds_path = handler.get_dataset("instant")
-    resampled_nc_file = resample_netcdf(ds_path, agg_func=agg_func)
-
-days = len(resampled_nc_file.valid_time.values)
-day = random.choice(range(1, days + 1))
-
-resampled_tiff = netcdf_to_tiff(
-    ds=resampled_nc_file,
-    band=day, # the day we're aggregating
-    variable=exposure_variable,
-    crs="EPSG:4326"
-)
-
-res_poly2cell=polygon_to_raster_cells(
-    vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
-    raster=resampled_tiff.data, # the raster data above
-    nodata=resampled_tiff.nodata, # any intersections with no data, may have to be np.nan
-    affine=resampled_tiff.transform, # some math thing need to revise
-    all_touched=True, 
-    verbose=True
-)
-
-result = aggregate_to_healthsheds(
-    res_poly2cell=res_poly2cell,
-    raster=resampled_tiff,
-    shapes=healthsheds,
-    names_column="fs_uid",
-    aggregation_func=agg_func,
-    aggregation_name=exposure_variable
-)
-
-result.plot(column=exposure_variable, legend=True)
-plt.title("{} {} (K) by Health Shed {}".format(aggregation_str, exposure_variable, input_file.stem))
-plt.suptitle("Aggregation: {}, Day: {}".format(aggregation_str, str(day)))
-plt.show()
 ```
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1672.67it/s]
+``` python
+# variables = ["t2m", "d2m"]
+# years = ["20{:02d}".format(m) for m in range(9, 24)]
+# months = [str(m) for m in range(1, 13)]
+# aggregations = [
+#     ("Mean", np.nanmean),
+#     ("Max", np.nanmax),
+#     ("Min", np.nanmin)
+# ]
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-2.png)
+# exposure_variable = random.choice(variables)
+# year = random.choice(years)
+# month = random.choice(months)
+# aggregation_str, agg_func = random.choice(aggregations)
+# input_file = here() / "data/input/{}_{}.nc".format(year, month)
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1664.84it/s]
+# with initialize(version_base=None, config_path="../conf"):
+#     cfg = compose(config_name='config.yaml')
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-4.png)
+# driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
+# drive = driver.get_drive()
+# healthsheds = driver.read_healthsheds(cfg.GOOGLE_DRIVE_AUTH_JSON.healthsheds_id)
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1684.77it/s]
+# with ClimateDataFileHandler(input_file) as handler:
+#     ds_path = handler.get_dataset("instant")
+#     resampled_nc_file = resample_netcdf(ds_path, agg_func=agg_func)
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-6.png)
+# days = len(resampled_nc_file.valid_time.values)
+# day = random.choice(range(1, days + 1))
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1691.20it/s]
+# resampled_tiff = netcdf_to_tiff(
+#     ds=resampled_nc_file,
+#     band=day, # the day we're aggregating
+#     variable=exposure_variable,
+#     crs="EPSG:4326"
+# )
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-8.png)
+# res_poly2cell=polygon_to_raster_cells(
+#     vectors = healthsheds.geometry.values, # the geometries of the shapefile of the regions
+#     raster=resampled_tiff.data, # the raster data above
+#     nodata=resampled_tiff.nodata, # any intersections with no data, may have to be np.nan
+#     affine=resampled_tiff.transform, # some math thing need to revise
+#     all_touched=True, 
+#     verbose=True
+# )
 
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    /n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/xarray/namedarray/core.py:919: RuntimeWarning: All-NaN slice encountered
-      data = func(self.data, axis=axis, **kwargs)
-    100%|██████████| 2766/2766 [00:02<00:00, 1179.36it/s]
+# result = aggregate_to_healthsheds(
+#     res_poly2cell=res_poly2cell,
+#     raster=resampled_tiff,
+#     shapes=healthsheds,
+#     names_column="fs_uid",
+#     aggregation_func=agg_func,
+#     aggregation_name=exposure_variable
+# )
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-10.png)
+# result.plot(column=exposure_variable, legend=True)
+# plt.title("{} {} (K) by Health Shed {}".format(aggregation_str, exposure_variable, input_file.stem))
+# plt.suptitle("Aggregation: {}, Day: {}".format(aggregation_str, str(day)))
+# plt.show()
+```
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1701.19it/s]
+<div>
 
-![](02_aggregate_files/figure-commonmark/cell-18-output-12.png)
+> **Note**
+>
+> **Note:** The above code is commented out to prevent execution during
+> documentation generation. You can uncomment and run it in an
+> appropriate environment to test the aggregation process.
 
-    100%|██████████| 2766/2766 [00:01<00:00, 1705.77it/s]
-
-![](02_aggregate_files/figure-commonmark/cell-18-output-14.png)
-
-    100%|██████████| 2766/2766 [00:01<00:00, 1685.08it/s]
-
-![](02_aggregate_files/figure-commonmark/cell-18-output-16.png)
-
-    5.9 s ± 2.07 s per loop (mean ± std. dev. of 7 runs, 1 loop each)
+</div>
 
 3.2 seconds per aggregation is pretty cool!
 
@@ -814,16 +777,10 @@ plt.show()
 result.to_parquet(here() / "data/testing/test_aggregation.parquet")
 ```
 
-For QA, we should come up with the following:
-
-- ☒ A way to list NAs in the data
-- ☐ A way to visualize the data temporally
-- ☐ A function to convert K to celsius
-
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L235"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L214"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### aggregate_data
@@ -833,6 +790,135 @@ target="_blank" style="float:right; font-size:smaller">source</a>
 
 *Aggregate raster data day-by-day and store all days and statistics as
 separate columns in a single Parquet file.*
+
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong>Type</strong></th>
+<th><strong>Details</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>cfg</td>
+<td>DictConfig</td>
+<td>the hydra config</td>
+</tr>
+<tr>
+<td>input_file</td>
+<td>str</td>
+<td>the input netcdf file</td>
+</tr>
+<tr>
+<td>output_file</td>
+<td>str</td>
+<td>the output parquet file</td>
+</tr>
+<tr>
+<td>exposure_variable</td>
+<td>str</td>
+<td>Which variable in the dataset to aggregate</td>
+</tr>
+<tr>
+<td><strong>Returns</strong></td>
+<td><strong>None</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+def aggregate_data(
+        cfg: DictConfig, # the hydra config
+        input_file: str, # the input netcdf file
+        output_file: str, # the output parquet file
+        exposure_variable: str # Which variable in the dataset to aggregate
+    ) -> None:
+    '''
+    Aggregate raster data day-by-day and store all days and statistics as separate columns in a single Parquet file.
+    '''
+
+    if cfg.development_mode:
+        describe(cfg)
+        return None
+
+    geography = cfg['query'].geography
+    year = cfg['query']['year']
+    month = cfg['query']['month']
+    daily_aggs = cfg['aggregation']['aggregation'][exposure_variable]['hourly_to_daily']
+    healthshed_aggs = cfg['aggregation']['aggregation'][exposure_variable]['daily_to_healthshed']
+
+    # Load healthsheds
+    driver = GoogleDriver(json_key_path=here() / cfg.GOOGLE_DRIVE_AUTH_JSON.path)
+    drive = driver.get_drive()
+    healthsheds = driver.read_healthsheds(cfg.geographies[geography].healthsheds)
+    
+    # Initialize output DataFrame
+    result_df = healthsheds[[cfg.geographies[geography].unique_id, "geometry"]].copy()
+
+    for daily_agg in daily_aggs:
+        print(f"Processing daily aggregation: {daily_agg['name']}...")
+    
+        daily_agg_func = _get_callable(daily_agg['function'])
+
+        with ClimateDataFileHandler(input_file) as handler:
+            if exposure_variable in ["t2m", "d2m", "swvl1"]:
+                ds_path = handler.get_dataset("instant")
+            else:
+                ds_path = handler.get_dataset("accum")
+            resampled_nc_file = resample_netcdf(ds_path, agg_func=daily_agg_func)
+        
+        for healthshed_agg in healthshed_aggs:
+            print(f"Aggregating to healthshed by: {healthshed_agg['name']}...")
+
+            # Get the number of days in the dataset
+            days = len(resampled_nc_file.valid_time.values)
+
+            # Get the aggregation function for healthshed
+            healthshed_agg_func = _get_callable(healthshed_agg['function'])
+            days = len(resampled_nc_file.valid_time.values)
+
+            for day in range(1, days + 1):
+                print(f"Processing day {day}...")
+                
+                day_col = f"day_{day:02d}_daily_{daily_agg['name']}"
+                resampled_tiff = netcdf_to_tiff(
+                    ds=resampled_nc_file,
+                    band=day,
+                    variable=exposure_variable,
+                    crs="EPSG:4326"
+                )
+
+                result_poly2cell = polygon_to_raster_cells(
+                    vectors=healthsheds.geometry.values,
+                    raster=resampled_tiff.data,
+                    nodata=resampled_tiff.nodata,
+                    affine=resampled_tiff.transform,
+                    all_touched=True,
+                    verbose=True
+                )
+
+                res = aggregate_to_healthsheds(
+                    res_poly2cell=result_poly2cell,
+                    raster=resampled_tiff,
+                    shapes=healthsheds,
+                    names_column=cfg.geographies[geography].unique_id,
+                    aggregation_func=healthshed_agg_func,
+                    aggregation_name=exposure_variable
+                )
+
+                result_df[day_col] = res[exposure_variable]
+
+    print(f"Saving final monthly parquet file: {output_file}")
+    result_df.to_parquet(output_file, compression="snappy")
+    # return(result_df)
+```
+
+</details>
 
 ``` python
 try:
@@ -850,376 +936,8 @@ cfg.query['geography'] = "nepal"
 
 variable = "swvl1"
 
-aggregate_data(cfg, here() / "data/input/nepal_2017_11.nc", here() / "data/testing/test_nepal_aggregation.parquet", exposure_variable=variable)
+aggregate_data(cfg, here() / "bld/2017_11_nepal.nc", here() / "data/testing/test_nepal_aggregation.parquet", exposure_variable=variable)
 ```
-
-    Processing daily aggregation: mean...
-    Aggregating to healthshed by: mean...
-    Processing day 1...
-
-    100%|██████████| 777/777 [00:00<00:00, 1320.29it/s]
-
-    Processing day 2...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.20it/s]
-
-    Processing day 3...
-
-    100%|██████████| 777/777 [00:00<00:00, 1340.34it/s]
-
-    Processing day 4...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.33it/s]
-
-    Processing day 5...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.60it/s]
-
-    Processing day 6...
-
-    100%|██████████| 777/777 [00:00<00:00, 1316.73it/s]
-
-    Processing day 7...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.61it/s]
-
-    Processing day 8...
-
-    100%|██████████| 777/777 [00:00<00:00, 1342.36it/s]
-
-    Processing day 9...
-
-    100%|██████████| 777/777 [00:00<00:00, 1332.98it/s]
-
-    Processing day 10...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.13it/s]
-
-    Processing day 11...
-
-    100%|██████████| 777/777 [00:00<00:00, 1337.44it/s]
-
-    Processing day 12...
-
-    100%|██████████| 777/777 [00:00<00:00, 1341.64it/s]
-
-    Processing day 13...
-
-    100%|██████████| 777/777 [00:00<00:00, 1352.69it/s]
-
-    Processing day 14...
-
-    100%|██████████| 777/777 [00:00<00:00, 1320.19it/s]
-
-    Processing day 15...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.35it/s]
-
-    Processing day 16...
-
-    100%|██████████| 777/777 [00:00<00:00, 1342.23it/s]
-
-    Processing day 17...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.31it/s]
-
-    Processing day 18...
-
-    100%|██████████| 777/777 [00:00<00:00, 1350.07it/s]
-
-    Processing day 19...
-
-    100%|██████████| 777/777 [00:00<00:00, 1343.50it/s]
-
-    Processing day 20...
-
-    100%|██████████| 777/777 [00:00<00:00, 1343.47it/s]
-
-    Processing day 21...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.76it/s]
-
-    Processing day 22...
-
-    100%|██████████| 777/777 [00:00<00:00, 1345.87it/s]
-
-    Processing day 23...
-
-    100%|██████████| 777/777 [00:00<00:00, 1313.05it/s]
-
-    Processing day 24...
-
-    100%|██████████| 777/777 [00:00<00:00, 1333.91it/s]
-
-    Processing day 25...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.70it/s]
-
-    Processing day 26...
-
-    100%|██████████| 777/777 [00:00<00:00, 1344.57it/s]
-
-    Processing day 27...
-
-    100%|██████████| 777/777 [00:00<00:00, 1341.49it/s]
-
-    Processing day 28...
-
-    100%|██████████| 777/777 [00:00<00:00, 1346.30it/s]
-
-    Processing day 29...
-
-    100%|██████████| 777/777 [00:00<00:00, 1350.70it/s]
-
-    Processing day 30...
-
-    100%|██████████| 777/777 [00:00<00:00, 1341.89it/s]
-
-    Processing daily aggregation: min...
-    Aggregating to healthshed by: mean...
-    Processing day 1...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.62it/s]
-
-    Processing day 2...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.63it/s]
-
-    Processing day 3...
-
-    100%|██████████| 777/777 [00:00<00:00, 1331.38it/s]
-
-    Processing day 4...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.21it/s]
-
-    Processing day 5...
-
-    100%|██████████| 777/777 [00:00<00:00, 1335.53it/s]
-
-    Processing day 6...
-
-    100%|██████████| 777/777 [00:00<00:00, 1328.71it/s]
-
-    Processing day 7...
-
-    100%|██████████| 777/777 [00:00<00:00, 1334.22it/s]
-
-    Processing day 8...
-
-    100%|██████████| 777/777 [00:00<00:00, 1337.60it/s]
-
-    Processing day 9...
-
-    100%|██████████| 777/777 [00:00<00:00, 1339.99it/s]
-
-    Processing day 10...
-
-    100%|██████████| 777/777 [00:00<00:00, 1347.46it/s]
-
-    Processing day 11...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.94it/s]
-
-    Processing day 12...
-
-    100%|██████████| 777/777 [00:00<00:00, 1364.01it/s]
-
-    Processing day 13...
-
-    100%|██████████| 777/777 [00:00<00:00, 1340.33it/s]
-
-    Processing day 14...
-
-    100%|██████████| 777/777 [00:00<00:00, 1348.86it/s]
-
-    Processing day 15...
-
-    100%|██████████| 777/777 [00:00<00:00, 1317.32it/s]
-
-    Processing day 16...
-
-    100%|██████████| 777/777 [00:00<00:00, 1340.36it/s]
-
-    Processing day 17...
-
-    100%|██████████| 777/777 [00:00<00:00, 1343.05it/s]
-
-    Processing day 18...
-
-    100%|██████████| 777/777 [00:00<00:00, 1353.25it/s]
-
-    Processing day 19...
-
-    100%|██████████| 777/777 [00:00<00:00, 1340.31it/s]
-
-    Processing day 20...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.36it/s]
-
-    Processing day 21...
-
-    100%|██████████| 777/777 [00:00<00:00, 1350.63it/s]
-
-    Processing day 22...
-
-    100%|██████████| 777/777 [00:00<00:00, 1344.67it/s]
-
-    Processing day 23...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.49it/s]
-
-    Processing day 24...
-
-    100%|██████████| 777/777 [00:00<00:00, 1348.88it/s]
-
-    Processing day 25...
-
-    100%|██████████| 777/777 [00:00<00:00, 1347.15it/s]
-
-    Processing day 26...
-
-    100%|██████████| 777/777 [00:00<00:00, 1338.24it/s]
-
-    Processing day 27...
-
-    100%|██████████| 777/777 [00:00<00:00, 1329.62it/s]
-
-    Processing day 28...
-
-    100%|██████████| 777/777 [00:00<00:00, 1123.19it/s]
-
-    Processing day 29...
-
-    100%|██████████| 777/777 [00:00<00:00, 1291.02it/s]
-
-    Processing day 30...
-
-    100%|██████████| 777/777 [00:00<00:00, 1307.35it/s]
-
-    Processing daily aggregation: max...
-    Aggregating to healthshed by: mean...
-    Processing day 1...
-
-    100%|██████████| 777/777 [00:00<00:00, 1308.85it/s]
-
-    Processing day 2...
-
-    100%|██████████| 777/777 [00:00<00:00, 1310.41it/s]
-
-    Processing day 3...
-
-    100%|██████████| 777/777 [00:00<00:00, 1319.41it/s]
-
-    Processing day 4...
-
-    100%|██████████| 777/777 [00:00<00:00, 1316.19it/s]
-
-    Processing day 5...
-
-    100%|██████████| 777/777 [00:00<00:00, 1314.42it/s]
-
-    Processing day 6...
-
-    100%|██████████| 777/777 [00:00<00:00, 1315.80it/s]
-
-    Processing day 7...
-
-    100%|██████████| 777/777 [00:00<00:00, 1311.11it/s]
-
-    Processing day 8...
-
-    100%|██████████| 777/777 [00:00<00:00, 1313.18it/s]
-
-    Processing day 9...
-
-    100%|██████████| 777/777 [00:00<00:00, 1312.84it/s]
-
-    Processing day 10...
-
-    100%|██████████| 777/777 [00:00<00:00, 1303.94it/s]
-
-    Processing day 11...
-
-    100%|██████████| 777/777 [00:00<00:00, 1304.27it/s]
-
-    Processing day 12...
-
-    100%|██████████| 777/777 [00:00<00:00, 1303.86it/s]
-
-    Processing day 13...
-
-    100%|██████████| 777/777 [00:00<00:00, 1268.31it/s]
-
-    Processing day 14...
-
-    100%|██████████| 777/777 [00:00<00:00, 1293.69it/s]
-
-    Processing day 15...
-
-    100%|██████████| 777/777 [00:00<00:00, 1295.31it/s]
-
-    Processing day 16...
-
-    100%|██████████| 777/777 [00:00<00:00, 1297.64it/s]
-
-    Processing day 17...
-
-    100%|██████████| 777/777 [00:00<00:00, 1293.98it/s]
-
-    Processing day 18...
-
-    100%|██████████| 777/777 [00:00<00:00, 1302.08it/s]
-
-    Processing day 19...
-
-    100%|██████████| 777/777 [00:00<00:00, 1305.69it/s]
-
-    Processing day 20...
-
-    100%|██████████| 777/777 [00:00<00:00, 1310.11it/s]
-
-    Processing day 21...
-
-    100%|██████████| 777/777 [00:00<00:00, 1297.10it/s]
-
-    Processing day 22...
-
-    100%|██████████| 777/777 [00:00<00:00, 1302.97it/s]
-
-    Processing day 23...
-
-    100%|██████████| 777/777 [00:00<00:00, 1312.90it/s]
-
-    Processing day 24...
-
-    100%|██████████| 777/777 [00:00<00:00, 1298.07it/s]
-
-    Processing day 25...
-
-    100%|██████████| 777/777 [00:00<00:00, 1311.84it/s]
-
-    Processing day 26...
-
-    100%|██████████| 777/777 [00:00<00:00, 1299.80it/s]
-
-    Processing day 27...
-
-    100%|██████████| 777/777 [00:00<00:00, 1308.52it/s]
-
-    Processing day 28...
-
-    100%|██████████| 777/777 [00:00<00:00, 1302.54it/s]
-
-    Processing day 29...
-
-    100%|██████████| 777/777 [00:00<00:00, 1309.99it/s]
-
-    Processing day 30...
-
-    100%|██████████| 777/777 [00:00<00:00, 1312.36it/s]
-
-    Saving final monthly parquet file: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/data/testing/test_nepal_aggregation.parquet
 
 ``` python
 parquet_file = gpd.read_parquet(here() / "data/testing/test_nepal_aggregation.parquet")
@@ -1229,329 +947,42 @@ parquet_file = gpd.read_parquet(here() / "data/testing/test_nepal_aggregation.pa
 parquet_file
 ```
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-&#10;    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-&#10;    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-
-<table class="dataframe" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr style="text-align: right;">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">fid</th>
-<th data-quarto-table-cell-role="th">geometry</th>
-<th data-quarto-table-cell-role="th">day_01_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_02_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_03_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_04_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_05_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_06_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_07_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_08_daily_mean</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">day_21_daily_max</th>
-<th data-quarto-table-cell-role="th">day_22_daily_max</th>
-<th data-quarto-table-cell-role="th">day_23_daily_max</th>
-<th data-quarto-table-cell-role="th">day_24_daily_max</th>
-<th data-quarto-table-cell-role="th">day_25_daily_max</th>
-<th data-quarto-table-cell-role="th">day_26_daily_max</th>
-<th data-quarto-table-cell-role="th">day_27_daily_max</th>
-<th data-quarto-table-cell-role="th">day_28_daily_max</th>
-<th data-quarto-table-cell-role="th">day_29_daily_max</th>
-<th data-quarto-table-cell-role="th">day_30_daily_max</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-quarto-table-cell-role="th">0</td>
-<td>1</td>
-<td>POLYGON ((87.60719 27.37069, 87.60841 27.36969...</td>
-<td>0.383672</td>
-<td>0.377233</td>
-<td>0.369139</td>
-<td>0.362931</td>
-<td>0.354971</td>
-<td>0.346820</td>
-<td>0.341629</td>
-<td>0.337301</td>
-<td>...</td>
-<td>0.294565</td>
-<td>0.293651</td>
-<td>0.294963</td>
-<td>0.294908</td>
-<td>0.290727</td>
-<td>0.296405</td>
-<td>0.332105</td>
-<td>0.334571</td>
-<td>0.332729</td>
-<td>0.329162</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">1</td>
-<td>7</td>
-<td>POLYGON ((88.04438 27.4203, 88.04365 27.41925,...</td>
-<td>0.381573</td>
-<td>0.380015</td>
-<td>0.371765</td>
-<td>0.363708</td>
-<td>0.354919</td>
-<td>0.347900</td>
-<td>0.342081</td>
-<td>0.340566</td>
-<td>...</td>
-<td>0.302097</td>
-<td>0.303436</td>
-<td>0.304555</td>
-<td>0.313228</td>
-<td>0.312255</td>
-<td>0.329439</td>
-<td>0.358197</td>
-<td>0.366628</td>
-<td>0.359987</td>
-<td>0.351963</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">2</td>
-<td>8</td>
-<td>POLYGON ((88.14528 27.67003, 88.14526 27.66966...</td>
-<td>0.363034</td>
-<td>0.361521</td>
-<td>0.355031</td>
-<td>0.348671</td>
-<td>0.341576</td>
-<td>0.335982</td>
-<td>0.331347</td>
-<td>0.331406</td>
-<td>...</td>
-<td>0.297989</td>
-<td>0.297441</td>
-<td>0.297165</td>
-<td>0.303161</td>
-<td>0.301673</td>
-<td>0.314521</td>
-<td>0.331630</td>
-<td>0.337640</td>
-<td>0.332611</td>
-<td>0.327341</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">3</td>
-<td>23</td>
-<td>POLYGON ((88.0766 27.03545, 88.07695 27.03533,...</td>
-<td>0.352829</td>
-<td>0.344123</td>
-<td>0.335327</td>
-<td>0.326504</td>
-<td>0.317680</td>
-<td>0.309570</td>
-<td>0.302362</td>
-<td>0.295332</td>
-<td>...</td>
-<td>0.240855</td>
-<td>0.241183</td>
-<td>0.243329</td>
-<td>0.242583</td>
-<td>0.240088</td>
-<td>0.238021</td>
-<td>0.268717</td>
-<td>0.272461</td>
-<td>0.268131</td>
-<td>0.259376</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">4</td>
-<td>24</td>
-<td>POLYGON ((87.76435 26.92431, 87.76435 26.924, ...</td>
-<td>0.327445</td>
-<td>0.316594</td>
-<td>0.306994</td>
-<td>0.298528</td>
-<td>0.289753</td>
-<td>0.281589</td>
-<td>0.274974</td>
-<td>0.268731</td>
-<td>...</td>
-<td>0.214412</td>
-<td>0.212532</td>
-<td>0.210186</td>
-<td>0.208751</td>
-<td>0.206306</td>
-<td>0.204233</td>
-<td>0.212965</td>
-<td>0.213644</td>
-<td>0.212993</td>
-<td>0.211268</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-<td>...</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">772</td>
-<td>768</td>
-<td>POLYGON ((84.22202 27.77631, 84.22261 27.77579...</td>
-<td>0.291114</td>
-<td>0.285880</td>
-<td>0.278808</td>
-<td>0.271473</td>
-<td>0.263919</td>
-<td>0.256679</td>
-<td>0.252915</td>
-<td>0.249857</td>
-<td>...</td>
-<td>0.220242</td>
-<td>0.218315</td>
-<td>0.214310</td>
-<td>0.211847</td>
-<td>0.210479</td>
-<td>0.204872</td>
-<td>0.209167</td>
-<td>0.210570</td>
-<td>0.211685</td>
-<td>0.211818</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">773</td>
-<td>769</td>
-<td>POLYGON ((84.2888 27.79734, 84.28906 27.79733,...</td>
-<td>0.280667</td>
-<td>0.275939</td>
-<td>0.269500</td>
-<td>0.262813</td>
-<td>0.255804</td>
-<td>0.248722</td>
-<td>0.245642</td>
-<td>0.243134</td>
-<td>...</td>
-<td>0.212930</td>
-<td>0.211494</td>
-<td>0.207653</td>
-<td>0.205488</td>
-<td>0.203574</td>
-<td>0.197317</td>
-<td>0.202446</td>
-<td>0.204245</td>
-<td>0.205096</td>
-<td>0.204812</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">774</td>
-<td>770</td>
-<td>POLYGON ((84.03688 27.78054, 84.03733 27.78037...</td>
-<td>0.270798</td>
-<td>0.265672</td>
-<td>0.259132</td>
-<td>0.253095</td>
-<td>0.247469</td>
-<td>0.241719</td>
-<td>0.237829</td>
-<td>0.235414</td>
-<td>...</td>
-<td>0.208286</td>
-<td>0.206634</td>
-<td>0.203829</td>
-<td>0.201943</td>
-<td>0.200845</td>
-<td>0.198613</td>
-<td>0.200442</td>
-<td>0.201081</td>
-<td>0.203404</td>
-<td>0.203787</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">775</td>
-<td>771</td>
-<td>POLYGON ((84.15643 27.73728, 84.15631 27.73716...</td>
-<td>0.256707</td>
-<td>0.251776</td>
-<td>0.246144</td>
-<td>0.239937</td>
-<td>0.234515</td>
-<td>0.229369</td>
-<td>0.226260</td>
-<td>0.224577</td>
-<td>...</td>
-<td>0.201497</td>
-<td>0.200210</td>
-<td>0.197316</td>
-<td>0.195745</td>
-<td>0.194815</td>
-<td>0.192438</td>
-<td>0.193253</td>
-<td>0.193823</td>
-<td>0.196438</td>
-<td>0.196811</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">776</td>
-<td>772</td>
-<td>POLYGON ((83.92166 27.72665, 83.92192 27.72664...</td>
-<td>0.255851</td>
-<td>0.251059</td>
-<td>0.245400</td>
-<td>0.240266</td>
-<td>0.235614</td>
-<td>0.230438</td>
-<td>0.227055</td>
-<td>0.225045</td>
-<td>...</td>
-<td>0.201493</td>
-<td>0.200124</td>
-<td>0.197491</td>
-<td>0.196033</td>
-<td>0.195192</td>
-<td>0.193565</td>
-<td>0.194235</td>
-<td>0.194550</td>
-<td>0.197598</td>
-<td>0.197932</td>
-</tr>
-</tbody>
-</table>
-
-<p>777 rows × 92 columns</p>
-</div>
-
 ``` python
 parquet_file.plot(column="day_22_daily_mean", legend=True)
 ```
 
-![](02_aggregate_files/figure-commonmark/cell-24-output-1.png)
-
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L322"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L302"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### main
 
 >  main (cfg:omegaconf.dictconfig.DictConfig)
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+@hydra.main(version_base=None, config_path="../../conf", config_name="config")
+def main(cfg: DictConfig) -> None:
+    # Parse command-line arguments
+    input_file = str(snakemake.input[0])  # First input file
+    output_file = str(snakemake.output[0])
+    geography = str(snakemake.params.geography)
+    aggregation_variable = str(snakemake.params.variable)
+
+    variables_dict = {
+        "2m_temperature": "t2m",
+        "2m_dewpoint_temperature": "d2m",
+        "volumetric_soil_water_layer_1": "swvl1",
+        "total_precipitation": "tp"
+    }
+
+    cfg['query']['geography'] = geography
+    
+    aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=variables_dict[aggregation_variable])
+```
+
+</details>

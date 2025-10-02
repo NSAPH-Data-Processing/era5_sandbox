@@ -1,7 +1,5 @@
 ---
 title: "`pytask` Config: Defining the Pipeline Internals in `pytask`"
-execute:
-    freeze: auto
 engine: jupyter
 ---
 

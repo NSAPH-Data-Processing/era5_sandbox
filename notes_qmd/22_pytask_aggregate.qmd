@@ -1,8 +1,6 @@
 ---
 title: "Aggregation: The `aggregation` Module as a `pytask` Task"
 format: html
-execute:
-    freeze: auto
 engine: jupyter
 ---
 
@@ -372,8 +370,8 @@ Next, we set the time zone for Madagascar since, to resample by day and night,
 we should observe the local time:
 
 ```{python}
-ds_day = ds_day.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
-ds_night = ds_night.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Indian/Antananarivo"))
+ds_day = ds_day.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Asia/Kathmandu"))
+ds_night = ds_night.assign_coords(valid_time=pd.to_datetime(ds["valid_time"].values).tz_localize("UTC").tz_convert("Asia/Kathmandu"))
 ```
 
 Now if we can resample by day...

@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Aggregation Task – era5_sandbox</title>
+<title>Aggregation: The aggregation Module as a pytask Task – era5_sandbox</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -103,12 +103,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <link rel="stylesheet" href="styles.css">
-<meta property="og:title" content="Aggregation Task – era5_sandbox">
+<meta property="og:title" content="Aggregation: The aggregation Module as a pytask Task – era5_sandbox">
 <meta property="og:description" content="Sandbox environment for era5 development">
+<meta property="og:image" content="https://TinasheMTapera.github.io/era5_sandbox/IMG_740012467778-1.jpeg">
 <meta property="og:site_name" content="era5_sandbox">
-<meta name="twitter:title" content="Aggregation Task – era5_sandbox">
+<meta name="twitter:title" content="Aggregation: The aggregation Module as a pytask Task – era5_sandbox">
 <meta name="twitter:description" content="Sandbox environment for era5 development">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://TinasheMTapera.github.io/era5_sandbox/IMG_740012467778-1.jpeg">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 
 <body class="nav-sidebar floating nav-fixed">
@@ -132,7 +134,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./22_pytask_aggregate.html">Aggregation Task</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./22_pytask_aggregate.html">Aggregation: The <code>aggregation</code> Module as a <code>pytask</code> Task</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -147,7 +149,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./index.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">era5_sandbox</span></a>
+ <span class="menu-text">The ERA5 Spatial Aggregation Pipeline</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -156,26 +158,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./core.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">core</span></a>
+  <a href="./00_core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core Module: Internal functions and testing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./download_raw_data.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">download</span></a>
+  <a href="./01_download_raw_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Download Module: Downloading Raw Data from CDSAPI</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./02_aggregate.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">aggregate</span></a>
+ <span class="menu-text">Aggregate Module: Spatial Aggregation to Healthsheds</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./03_publish.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">publish</span></a>
+ <span class="menu-text">Publish: Gather the Aggregated Data and Publish to DataVerse</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -184,32 +186,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_demo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">task_data_preparation</span></a>
+  <a href="./20_pytask_config.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><code>pytask</code> Config: Defining the Pipeline Internals in <code>pytask</code></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_config.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">config</span></a>
+  <a href="./20_pytask_logger.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Logging: A simple logger to inject into <code>pytask</code> jobs</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_logger.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">logger</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./pytask_download.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">task_download</span></a>
+  <a href="./21_pytask_download.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Download: <code>download</code> Module as a <code>pytask</code> Task</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./22_pytask_aggregate.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">Aggregation Task</span></a>
+ <span class="menu-text">Aggregation: The <code>aggregation</code> Module as a <code>pytask</code> Task</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <span class="sidebar-item-text sidebar-link text-start">
+ <span class="menu-text">PyTask Demo</span></span>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10_pytask_demo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Demo: How to Create Pipelines with <code>pytask</code></span></a>
   </div>
 </li>
     </ul>
@@ -224,9 +230,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul>
   <li><a href="#task_aggregate" id="toc-task_aggregate" class="nav-link active" data-scroll-target="#task_aggregate">task_aggregate</a>
   <ul class="collapse">
-  <li><a href="#compute_diurnal_class" id="toc-compute_diurnal_class" class="nav-link" data-scroll-target="#compute_diurnal_class">compute_diurnal_class</a></li>
-  <li><a href="#resample_netcdf_diurnal" id="toc-resample_netcdf_diurnal" class="nav-link" data-scroll-target="#resample_netcdf_diurnal">resample_netcdf_diurnal</a></li>
+  <li><a href="#diurnal-classification-based-on-sun-position" id="toc-diurnal-classification-based-on-sun-position" class="nav-link" data-scroll-target="#diurnal-classification-based-on-sun-position">Diurnal Classification Based on Sun Position</a>
+  <ul class="collapse">
+  <li><a href="#compute_diurnal_class_bins" id="toc-compute_diurnal_class_bins" class="nav-link" data-scroll-target="#compute_diurnal_class_bins">compute_diurnal_class_bins</a></li>
+  <li><a href="#compute_solar_day_night_class_bins" id="toc-compute_solar_day_night_class_bins" class="nav-link" data-scroll-target="#compute_solar_day_night_class_bins">compute_solar_day_night_class_bins</a></li>
   </ul></li>
+  <li><a href="#diurnal-resampling" id="toc-diurnal-resampling" class="nav-link" data-scroll-target="#diurnal-resampling">Diurnal Resampling</a>
+  <ul class="collapse">
+  <li><a href="#testing-polygon-to-raster-cells-healthshed-aggregation" id="toc-testing-polygon-to-raster-cells-healthshed-aggregation" class="nav-link" data-scroll-target="#testing-polygon-to-raster-cells-healthshed-aggregation">Testing Polygon to Raster Cells &amp; Healthshed Aggregation</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#putting-it-all-together-in-a-pytask-task" id="toc-putting-it-all-together-in-a-pytask-task" class="nav-link" data-scroll-target="#putting-it-all-together-in-a-pytask-task">Putting it all together in a <code>pytask</code> task</a></li>
   </ul>
 <div class="toc-actions"><ul><li><a href="https://github.com/TinasheMTapera/era5_sandbox/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></nav>
     </div>
@@ -235,7 +249,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Aggregation Task</h1>
+<h1 class="title">Aggregation: The <code>aggregation</code> Module as a <code>pytask</code> Task</h1>
 </div>
 
 
@@ -258,598 +272,495 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>This task aggregates the downloaded data into spatial and temporal averages. It uses xarray to compute summary statistics over the specified time period and spatial region. The aggregation is done diurnally, so we will fetch the sundown and sunrise times for the region and use them to compute the diurnal averages.</p>
 </blockquote>
 <!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
-<p>To do diurnal aggregation, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the <a href="https://astral.readthedocs.io/en/latest/">astral library</a> to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.</p>
+<section id="diurnal-classification-based-on-sun-position" class="level2">
+<h2 class="anchored" data-anchor-id="diurnal-classification-based-on-sun-position">Diurnal Classification Based on Sun Position</h2>
+<p>To do diurnal classificaiton, we will need to fetch the sundown and sunrise times for the region and use them to compute the diurnal averages. We will use the <a href="https://astral.readthedocs.io/en/latest/">astral library</a> to get the sunrise and sunset times for the specified latitude and longitude. The aggregation will be done using xarray, which allows us to compute the mean over the specified time period and spatial region.</p>
+<p>Here’s our example file:</p>
 <div id="cell-3" class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>eg_file <span class="op">=</span> BLD <span class="op">/</span> <span class="st">"2024_11_nepal.nc"</span></span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>eg_file <span class="op">=</span> data_catalog[<span class="st">'download'</span>][<span class="st">'outputs'</span>][<span class="st">'2009_01_nepal'</span>].load()</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> ClimateDataFileHandler(eg_file) <span class="im">as</span> handler:</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    ds_path <span class="op">=</span> handler.get_dataset(<span class="st">"instant"</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_dataset(ds_path, chunks <span class="op">=</span> {<span class="st">"valid_time"</span>: <span class="dv">24</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-FileNotFoundError                         Traceback (most recent call last)
-Cell In[1], line 2
-      1 eg_file = BLD / "2024_11_nepal.nc"
-----&gt; 2 with ClimateDataFileHandler(eg_file) as handler:
-      3     ds_path = handler.get_dataset("instant")
-      5     ds = xr.open_dataset(ds_path, chunks = {"valid_time": 24})
-
-File /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py:245, in __enter__(self)
-    243 @patch
-    244 def __enter__(self:ClimateDataFileHandler):
---&gt; 245     self.prepare()
-    246     return self
-
-File /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py:195, in ClimateDataFileHandler.prepare(self)
-    192     return
-    194 if not self.original_path.exists():
---&gt; 195     raise FileNotFoundError(f"{self.original_path} does not exist")
-    197 # Detect ZIP by magic number
-    198 # chatgpt implementation here; this is a common way to check for zip files
-    199 with open(self.original_path, "rb") as f:
-
-FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-b845ec10116b&gt;", line 2, in &lt;module&gt;
-    with ClimateDataFileHandler(eg_file) as handler:
-
-  File "/net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py", line 245, in __enter__
-    self.prepare()
-
-  File "/net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/csph-era5_sandbox/src/era5_sandbox/core.py", line 195, in prepare
-    raise FileNotFoundError(f"{self.original_path} does not exist")
-
-FileNotFoundError: /net/rcstorenfs02/ifs/rc_labs/dominici_lab/lab/data_processing/bld/2024_11_nepal.nc does not exist</code></pre>
-</div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_dataset(handler.get_dataset(<span class="st">"instant"</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#ds = xr.open_dataset(handler.get_dataset("accum"))</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>ds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>We can see the astral library in action below:</p>
-<div id="cell-5" class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get the location of a datapoint in the dataset</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>lat, <span class="bu">long</span> <span class="op">=</span> ds.coords[<span class="st">"latitude"</span>].values[<span class="dv">0</span>], ds.coords[<span class="st">"longitude"</span>].values[<span class="dv">0</span>]</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values[<span class="dv">0</span>]</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(time, utc<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 2
-      1 # get the location of a datapoint in the dataset
-----&gt; 2 lat, long = ds.coords["latitude"].values[0], ds.coords["longitude"].values[0]
-      3 time = ds['valid_time'].values[0]
-      4 dt = pd.to_datetime(time, utc=True)
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-78692b4d0476&gt;", line 2, in &lt;module&gt;
-    lat, long = ds.coords["latitude"].values[0], ds.coords["longitude"].values[0]
-                ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
+<div id="cell-5" class="cell" data-exports="null">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> astral <span class="im">import</span> Observer, sun</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> tqdm <span class="im">import</span> tqdm</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> datetime</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pytz <span class="im">import</span> UTC</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div id="cell-6" class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>dt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 dt
-
-NameError: name 'dt' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'dt' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-36673dcb6ee0&gt;", line 1, in &lt;module&gt;
-    dt
-
-NameError: name 'dt' is not defined</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># get the location of a datapoint in the dataset</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>lat, <span class="bu">long</span> <span class="op">=</span> ds.coords[<span class="st">"latitude"</span>].values[<span class="dv">0</span>], ds.coords[<span class="st">"longitude"</span>].values[<span class="dv">0</span>]</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>time <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values[<span class="dv">0</span>]</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(time, utc<span class="op">=</span><span class="va">True</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-7" class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>observer <span class="op">=</span> Observer(latitude<span class="op">=</span>lat, longitude<span class="op">=</span><span class="bu">long</span>, elevation<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>sun_info</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 observer = Observer(latitude=lat, longitude=long, elevation=0)
-      2 sun_info = sun.sun(observer, date=dt)
-      3 sun_info
-
-NameError: name 'lat' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'lat' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-e3038fd43777&gt;", line 1, in &lt;module&gt;
-    observer = Observer(latitude=lat, longitude=long, elevation=0)
-                                 ^^^
-
-NameError: name 'lat' is not defined</code></pre>
-</div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>dt</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div id="cell-8" class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> random</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="co">#fetch a random time from valid_time</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>options <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>random_time <span class="op">=</span> random.choice(options)</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(random_time, utc<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunrise'</span>]:</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is NIGHTTIME"</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> dt <span class="op">&gt;=</span> sun_info[<span class="st">'sunrise'</span>] <span class="kw">and</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunset'</span>]:</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is DAYTIME"</span>)</span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
-<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is NIGHTTIME"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 get_ipython().run_cell_magic('timeit', '', 'import random\n\n#fetch a random time from valid_time\noptions = ds[\'valid_time\'].values\n\nrandom_time = random.choice(options)\ndt = pd.to_datetime(random_time, utc=True)\nsun_info = sun.sun(observer, date=dt)\nif dt &lt; sun_info[\'sunrise\']:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\nelif dt &gt;= sun_info[\'sunrise\'] and dt &lt; sun_info[\'sunset\']:\n    print(f"Randomly selected time: {dt} is DAYTIME")\nelse:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\n')
-
-File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py:2542, in InteractiveShell.run_cell_magic(self, magic_name, line, cell)
-   2540 with self.builtin_trap:
-   2541     args = (magic_arg_s, cell)
--&gt; 2542     result = fn(*args, **kwargs)
-   2544 # The code below prevents the output from being displayed
-   2545 # when using magics with decorator @output_can_be_silenced
-   2546 # when the last Python token in the expression is a ';'.
-   2547 if getattr(fn, magic.MAGIC_OUTPUT_CAN_BE_SILENCED, False):
-
-File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py:1221, in ExecutionMagics.timeit(self, line, cell, local_ns)
-   1219 for index in range(0, 10):
-   1220     number = 10 ** index
--&gt; 1221     time_number = timer.timeit(number)
-   1222     if time_number &gt;= 0.2:
-   1223         break
-
-File ~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py:182, in Timer.timeit(self, number)
-    180 gc.disable()
-    181 try:
---&gt; 182     timing = self.inner(it, self.timer)
-    183 finally:
-    184     if gcold:
-
-File &lt;magic-timeit&gt;:4, in inner(_it, _timer)
-
-NameError: name 'ds' is not defined</code></pre>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>observer <span class="op">=</span> Observer(latitude<span class="op">=</span>lat, longitude<span class="op">=</span><span class="bu">long</span>, elevation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>sun_info</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-55d4fcf3ba69&gt;", line 1, in &lt;module&gt;
-    get_ipython().run_cell_magic('timeit', '', 'import random\n\n#fetch a random time from valid_time\noptions = ds[\'valid_time\'].values\n\nrandom_time = random.choice(options)\ndt = pd.to_datetime(random_time, utc=True)\nsun_info = sun.sun(observer, date=dt)\nif dt &lt; sun_info[\'sunrise\']:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\nelif dt &gt;= sun_info[\'sunrise\'] and dt &lt; sun_info[\'sunset\']:\n    print(f"Randomly selected time: {dt} is DAYTIME")\nelse:\n    print(f"Randomly selected time: {dt} is NIGHTTIME")\n')
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 2542, in run_cell_magic
-    result = fn(*args, **kwargs)
-             ^^^^^^^^^^^^^^^^^^^
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py", line 1221, in timeit
-    time_number = timer.timeit(number)
-                  ^^^^^^^^^^^^^^^^^^^^
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/magics/execution.py", line 182, in timeit
-    timing = self.inner(it, self.timer)
-             ^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-  File "&lt;magic-timeit&gt;", line 4, in inner
-
-NameError: name 'ds' is not defined</code></pre>
+<p>Astral is very fast:</p>
+<div id="cell-10" class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">#fetch a random time from valid_time</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>options <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>random_time <span class="op">=</span> random.choice(options)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>dt <span class="op">=</span> pd.to_datetime(random_time, utc<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunrise'</span>]:</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is pre_dawn"</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="cf">elif</span> dt <span class="op">&gt;=</span> sun_info[<span class="st">'sunrise'</span>] <span class="kw">and</span> dt <span class="op">&lt;</span> sun_info[<span class="st">'sunset'</span>]:</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is day"</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Randomly selected time: </span><span class="sc">{</span>dt<span class="sc">}</span><span class="ss"> is post_dusk"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. The runtime will be limited only by the looping. Let’s put this in a function so that we can use the resampling in <code>xarray</code>.</p>
+<p>The resampling approach will be a single function that can resample in three ways:</p>
+<ul>
+<li>By calendar date, default (1 value per calendar date)</li>
+<li>By diurnal class by calendar date (3 values, pre-dawn, day, post-dusk)</li>
+<li>By solar date (2 values per calendar date, with night classified as “before” or “after”)</li>
+</ul>
+<p>Therefore, we’ll need 2 internal functions; one to do diurnal, and one to do solar date bins.</p>
+<p>Essentially, we are going to create an array-shaped index/mask, (time, latitude, longitude). As a demonstration, this loop goes through the first 24 time points in the dataset, and calculates the sun info for each latitude and longitude, assigning the values to an array:</p>
+<div id="cell-12" class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>times <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values[:<span class="dv">24</span>]</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>lats <span class="op">=</span> ds.coords[<span class="st">'latitude'</span>].values</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>lons <span class="op">=</span> ds.coords[<span class="st">'longitude'</span>].values</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>result <span class="op">=</span> np.full((<span class="bu">len</span>(times), <span class="bu">len</span>(lats), <span class="bu">len</span>(lons)), <span class="st">""</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, dt <span class="kw">in</span> <span class="bu">enumerate</span>(times):</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> j, lat <span class="kw">in</span> <span class="bu">enumerate</span>(lats):</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> k, lon <span class="kw">in</span> <span class="bu">enumerate</span>(lons):</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>            <span class="co"># set the geographical position</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>            observer <span class="op">=</span> Observer(latitude<span class="op">=</span>lat, longitude<span class="op">=</span>lon, elevation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>            <span class="co"># use the time</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>            dt <span class="op">=</span> pd.to_datetime(dt, utc<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>            <span class="co"># where/when is the sun at this time for this position</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>            sun_info <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt)</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>            result[i, j, k] <span class="op">=</span> sun_info</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>This tells us that we can use the valid time for the specific location of each data point in the query and know based on the sun whether it was daytime or nighttime. Let’s put this in a function</p>
+<p>So we know that in the first hour, the sun goes up and comes down at slightly different times based on latitude and longitude. Take the first hour, for example:</p>
+<div id="cell-14" class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(result.shape)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>hour_1 <span class="op">=</span> <span class="dv">0</span> <span class="co"># 0th index of the results</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>min_lat <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>min_lon <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>max_lat <span class="op">=</span> <span class="dv">48</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>max_lon <span class="op">=</span> <span class="dv">90</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"Even though the reading came from the first HOUR of data UTC, the sun info at the minimum latitude/longitude is: </span><span class="sc">{</span>result[hour_1, min_lat, min_lon]<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="ss">f"this is different from the sun info at the maximum latitude/longitude is: </span><span class="sc">{</span>result[hour_1, max_lat, max_lon]<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <hr>
-<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L20" target="_blank" style="float:right; font-size:smaller">source</a></p>
-<section id="compute_diurnal_class" class="level3">
-<h3 class="anchored" data-anchor-id="compute_diurnal_class">compute_diurnal_class</h3>
+<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L41" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="compute_diurnal_class_bins" class="level3">
+<h3 class="anchored" data-anchor-id="compute_diurnal_class_bins">compute_diurnal_class_bins</h3>
 <blockquote class="blockquote">
-<pre><code> compute_diurnal_class (ds:xarray.core.dataset.Dataset)</code></pre>
+<pre><code> compute_diurnal_class_bins (ds:xarray.core.dataset.Dataset)</code></pre>
 </blockquote>
-<p><em>Compute the diurnal value for each data point in the dataset. This function iterates over each data point in the dataset, calculates the sunrise and sunset times for the given time, latitude and longitude, and returns whether or not that data point is daytime or nighttime.</em></p>
-<div id="cell-11" class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>compute_diurnal_class(ds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 compute_diurnal_class(ds)
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-5beb4ec0e7fe&gt;", line 1, in &lt;module&gt;
-    compute_diurnal_class(ds)
-                          ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
-<p>We can then add this value to the dataset as a new variable, which we can use to compute the diurnal averages.</p>
-<div id="cell-13" class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>diurnal_vals <span class="op">=</span> compute_diurnal_class(ds)</span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>ds <span class="op">=</span> ds.assign_coords(diurnal_class<span class="op">=</span>(<span class="st">"valid_time"</span>, diurnal_vals))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 diurnal_vals = compute_diurnal_class(ds)
-      2 ds = ds.assign_coords(diurnal_class=("valid_time", diurnal_vals))
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-5f19459e1541&gt;", line 1, in &lt;module&gt;
-    diurnal_vals = compute_diurnal_class(ds)
-                                         ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
-<p>Now, to see if it will aggregate:</p>
-<div id="cell-15" class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>ds.coords[<span class="st">"date"</span>] <span class="op">=</span> ds[<span class="st">"valid_time"</span>].dt.floor(<span class="st">"D"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 ds.coords["date"] = ds["valid_time"].dt.floor("D")
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-3781120f40aa&gt;", line 1, in &lt;module&gt;
-    ds.coords["date"] = ds["valid_time"].dt.floor("D")
-                        ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
+<p><em>Compute the diurnal value for each data point in the dataset. This function iterates over each data point in the dataset, calculates the sunrise and sunset times for the given time, latitude and longitude, and returns whether or not that data point is before dawn, during the day, or after dusk.</em></p>
 <div id="cell-16" class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ds[<span class="st">'diurnal_class'</span>].dims)</span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(ds[<span class="st">'date'</span>].dims)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 print(ds['diurnal_class'].dims)
-      2 print(ds['date'].dims)
-
-NameError: name 'ds' is not defined</code></pre>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ex<span class="op">=</span>compute_diurnal_class_bins(ds)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-31c2df2957c7&gt;", line 1, in &lt;module&gt;
-    print(ds['diurnal_class'].dims)
-          ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
-<div id="cell-17" class="cell">
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>ds[<span class="st">"d2m"</span>].isel(valid_time<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>ds[<span class="st">"d2m"</span>].values.shape</span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>np.isnan(ds[<span class="st">"d2m"</span>].values).<span class="bu">sum</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 ds["d2m"].isel(valid_time=0)
-      2 ds["d2m"].values.shape
-      3 np.isnan(ds["d2m"].values).sum()
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-cc954680246c&gt;", line 1, in &lt;module&gt;
-    ds["d2m"].isel(valid_time=0)
-    ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
+<p>So, for our 720 time points, we should find that if we take the <code>set()</code> of all the classifications within that slice, there should be a few of them with 2 classes. In other words, at any given hour, almost all of the readings are “day”, because it is daytime across all of Madagascar, <em>but</em> at certain timepoints, the sun is rising or setting in the northern part of the country and so some portion of the slice is classified differently:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="./IMG_740012467778-1.jpeg" class="img-fluid figure-img"></p>
+<figcaption>illustrated</figcaption>
+</figure>
 </div>
 <div id="cell-18" class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>aggregated <span class="op">=</span> ds.groupby([<span class="st">"date"</span>, <span class="st">"diurnal_class"</span>]).<span class="bu">reduce</span>(np.nanmean, dim<span class="op">=</span><span class="st">"valid_time"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
-
-NameError: name 'ds' is not defined</code></pre>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">720</span>):</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="bu">set</span>(ex[x].flatten()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-e53df069b0eb&gt;", line 1, in &lt;module&gt;
-    aggregated = ds.groupby(["date", "diurnal_class"]).reduce(np.nanmean, dim="valid_time")
-                 ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
-<div id="cell-19" class="cell">
-<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a>aggregated[<span class="st">'d2m'</span>].values</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 aggregated['d2m'].values
-
-NameError: name 'aggregated' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'aggregated' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-7a11f6759c31&gt;", line 1, in &lt;module&gt;
-    aggregated['d2m'].values
-    ^^^^^^^^^^
-
-NameError: name 'aggregated' is not defined</code></pre>
-</div>
-</div>
-<p>That appears to work! So we can implement it in a function, similar to the one we used in the original download hydra pipeline.</p>
+<p>This works! Now we can do a similar, but slightly more complicated function to define “night” and “day”, where “night” includes all of the values after the sun goes down.</p>
 <hr>
-<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L49" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<p><a href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/task_aggregate.py#L83" target="_blank" style="float:right; font-size:smaller">source</a></p>
 </section>
-<section id="resample_netcdf_diurnal" class="level3">
-<h3 class="anchored" data-anchor-id="resample_netcdf_diurnal">resample_netcdf_diurnal</h3>
+<section id="compute_solar_day_night_class_bins" class="level3">
+<h3 class="anchored" data-anchor-id="compute_solar_day_night_class_bins">compute_solar_day_night_class_bins</h3>
 <blockquote class="blockquote">
-<pre><code> resample_netcdf_diurnal (fpath:str, diurnal_col:str='diurnal_class',
-                          agg_func:&lt;built-infunctioncallable&gt;=&lt;function
-                          mean at 0x1506c0b30870&gt;,
-                          time_dim:str='valid_time',
-                          chunks:dict|None=None)</code></pre>
+<pre><code> compute_solar_day_night_class_bins (ds:xarray.core.dataset.Dataset,
+                                     night_direction:Literal['before','aft
+                                     er'])</code></pre>
 </blockquote>
-<p>*Resample a netCDF file to a specified frequency and aggregation method.</p>
-<p>Args: fpath (str): Path to the netCDF file. diurnal_col (str): Name of the column for diurnal classification. agg_func (callable): Aggregation function (e.g., np.mean, np.sum).</p>
-<p>Returns: xarray.Dataset: Resampled dataset.*</p>
-<table class="caption-top table">
-<colgroup>
-<col style="width: 6%">
-<col style="width: 25%">
-<col style="width: 34%">
-<col style="width: 34%">
-</colgroup>
-<thead>
-<tr class="header">
-<th></th>
-<th><strong>Type</strong></th>
-<th><strong>Default</strong></th>
-<th><strong>Details</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr class="odd">
-<td>fpath</td>
-<td>str</td>
-<td></td>
-<td>Path to the netCDF file.</td>
-</tr>
-<tr class="even">
-<td>diurnal_col</td>
-<td>str</td>
-<td>diurnal_class</td>
-<td>Name of the column for diurnal classification.</td>
-</tr>
-<tr class="odd">
-<td>agg_func</td>
-<td>callable</td>
-<td>mean</td>
-<td>Aggregation function (e.g., np.mean, np.sum).</td>
-</tr>
-<tr class="even">
-<td>time_dim</td>
-<td>str</td>
-<td>valid_time</td>
-<td>Name of the time dimension in the dataset.</td>
-</tr>
-<tr class="odd">
-<td>chunks</td>
-<td>dict | None</td>
-<td>None</td>
-<td>keywords for python’s xarray module, e.g chunking</td>
-</tr>
-<tr class="even">
-<td><strong>Returns</strong></td>
-<td><strong>Dataset</strong></td>
-<td></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-<p>Chunking is necessary for the data size while testing, so we will use it in the function. We can then use this function to compute the diurnal averages for the dataset.</p>
+<p><em>Compute the diurnal value for each data point in the dataset. This function iterates over each data point in the dataset, calculates the sunrise and sunset times for the given time, latitude and longitude, and returns whether or not that data point is daytime or nighttime. The definition of “nighttime” can be set to be all the darkness before the sun came up (before), or all the darkness after it went down (after).</em></p>
+<div id="cell-21" class="cell" data-exports="null">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> compute_solar_day_night_class_bins(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>        ds: xr.Dataset,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        night_direction: Literal[<span class="st">"before"</span>, <span class="st">"after"</span>],</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    )<span class="op">-&gt;</span> <span class="bu">list</span>:</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">    Compute the diurnal value for each data point in the dataset.</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">    This function iterates over each data point in the dataset,</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co">    calculates the sunrise and sunset times for the given time, latitude and longitude,</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co">    and returns whether or not that data point is daytime or nighttime.</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="co">    The definition of "nighttime" can be set to be all the darkness before the sun</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">    came up (before), or all the darkness after it went down (after).</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="co">    """</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    times <span class="op">=</span> ds[<span class="st">'valid_time'</span>].values</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    lats <span class="op">=</span> ds.coords[<span class="st">'latitude'</span>].values</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    lons <span class="op">=</span> ds.coords[<span class="st">'longitude'</span>].values</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> np.full((<span class="bu">len</span>(times), <span class="bu">len</span>(lats), <span class="bu">len</span>(lons)), <span class="st">""</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>    datetimes <span class="op">=</span> np.full((<span class="bu">len</span>(times), <span class="bu">len</span>(lats), <span class="bu">len</span>(lons)), <span class="st">""</span>, dtype<span class="op">=</span><span class="bu">object</span>)</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> i, dt <span class="kw">in</span> <span class="bu">enumerate</span>(tqdm(times, desc<span class="op">=</span><span class="st">"Classifying data points by sun position"</span>)):</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>        <span class="co"># use the time</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>        dt <span class="op">=</span> pd.to_datetime(dt, utc<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> j, lat <span class="kw">in</span> <span class="bu">enumerate</span>(lats):</span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> k, lon <span class="kw">in</span> <span class="bu">enumerate</span>(lons):</span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>                </span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>                <span class="co"># set the geographical position</span></span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>                observer <span class="op">=</span> Observer(latitude<span class="op">=</span>lat, longitude<span class="op">=</span>lon, elevation<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> night_direction <span class="op">==</span> <span class="st">"before"</span>:</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># Night is from previous sunset to today's sunrise</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>                    sun_today <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt.date())</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>                    sun_prev <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>(dt <span class="op">-</span> pd.Timedelta(days<span class="op">=</span><span class="dv">1</span>)).date())</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>                    night_start <span class="op">=</span> sun_prev[<span class="st">"sunset"</span>].astimezone(pd.Timestamp.utcnow().tz)</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a>                    night_end <span class="op">=</span> sun_today[<span class="st">"sunrise"</span>].astimezone(pd.Timestamp.utcnow().tz)</span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from yesterday's nighttime</span></span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> night_start <span class="op">&lt;=</span> dt <span class="op">&lt;</span> night_end:</span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"night"</span></span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date counts as today</span></span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> dt.date()</span>
+<span id="cb13-43"><a href="#cb13-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-44"><a href="#cb13-44" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from daytime</span></span>
+<span id="cb13-45"><a href="#cb13-45" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">elif</span> sun_today[<span class="st">"sunrise"</span>] <span class="op">&lt;=</span> dt <span class="op">&lt;</span> sun_today[<span class="st">"sunset"</span>]:</span>
+<span id="cb13-46"><a href="#cb13-46" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"day"</span></span>
+<span id="cb13-47"><a href="#cb13-47" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date counts as today</span></span>
+<span id="cb13-48"><a href="#cb13-48" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> dt.date()</span>
+<span id="cb13-49"><a href="#cb13-49" aria-hidden="true" tabindex="-1"></a>                    </span>
+<span id="cb13-50"><a href="#cb13-50" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from today's nighttime, but counts as tomorrow's night</span></span>
+<span id="cb13-51"><a href="#cb13-51" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">else</span>:</span>
+<span id="cb13-52"><a href="#cb13-52" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"night"</span></span>
+<span id="cb13-53"><a href="#cb13-53" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date is tomorrow</span></span>
+<span id="cb13-54"><a href="#cb13-54" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> (dt <span class="op">+</span> pd.Timedelta(days<span class="op">=</span><span class="dv">1</span>)).date()</span>
+<span id="cb13-55"><a href="#cb13-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-56"><a href="#cb13-56" aria-hidden="true" tabindex="-1"></a>                <span class="cf">elif</span> night_direction <span class="op">==</span> <span class="st">"after"</span>:</span>
+<span id="cb13-57"><a href="#cb13-57" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># Night is from today's sunset to next sunrise</span></span>
+<span id="cb13-58"><a href="#cb13-58" aria-hidden="true" tabindex="-1"></a>                    sun_today <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>dt.date())</span>
+<span id="cb13-59"><a href="#cb13-59" aria-hidden="true" tabindex="-1"></a>                    sun_next <span class="op">=</span> sun.sun(observer, date<span class="op">=</span>(dt <span class="op">+</span> pd.Timedelta(days<span class="op">=</span><span class="dv">1</span>)).date())</span>
+<span id="cb13-60"><a href="#cb13-60" aria-hidden="true" tabindex="-1"></a>                    night_start <span class="op">=</span> sun_today[<span class="st">"sunset"</span>].astimezone(pd.Timestamp.utcnow().tz)</span>
+<span id="cb13-61"><a href="#cb13-61" aria-hidden="true" tabindex="-1"></a>                    night_end <span class="op">=</span> sun_next[<span class="st">"sunrise"</span>].astimezone(pd.Timestamp.utcnow().tz)</span>
+<span id="cb13-62"><a href="#cb13-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-63"><a href="#cb13-63" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from daytime</span></span>
+<span id="cb13-64"><a href="#cb13-64" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">if</span> sun_today[<span class="st">"sunrise"</span>] <span class="op">&lt;=</span> dt <span class="op">&lt;</span> sun_today[<span class="st">"sunset"</span>]:</span>
+<span id="cb13-65"><a href="#cb13-65" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"day"</span></span>
+<span id="cb13-66"><a href="#cb13-66" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date counts as today</span></span>
+<span id="cb13-67"><a href="#cb13-67" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> dt.date()</span>
+<span id="cb13-68"><a href="#cb13-68" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from tonight</span></span>
+<span id="cb13-69"><a href="#cb13-69" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">elif</span> night_start <span class="op">&lt;=</span> dt <span class="op">&lt;</span> night_end:</span>
+<span id="cb13-70"><a href="#cb13-70" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"night"</span></span>
+<span id="cb13-71"><a href="#cb13-71" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date counts as today</span></span>
+<span id="cb13-72"><a href="#cb13-72" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> dt.date()</span>
+<span id="cb13-73"><a href="#cb13-73" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-74"><a href="#cb13-74" aria-hidden="true" tabindex="-1"></a>                    <span class="co"># the reading is from yesterday night</span></span>
+<span id="cb13-75"><a href="#cb13-75" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">else</span>:</span>
+<span id="cb13-76"><a href="#cb13-76" aria-hidden="true" tabindex="-1"></a>                        <span class="co"># the date counts as yesterday</span></span>
+<span id="cb13-77"><a href="#cb13-77" aria-hidden="true" tabindex="-1"></a>                        result[i, j, k] <span class="op">=</span> <span class="st">"day"</span></span>
+<span id="cb13-78"><a href="#cb13-78" aria-hidden="true" tabindex="-1"></a>                        datetimes[i, j, k] <span class="op">=</span> (dt <span class="op">-</span> pd.Timedelta(days<span class="op">=</span><span class="dv">1</span>)).date()</span>
+<span id="cb13-79"><a href="#cb13-79" aria-hidden="true" tabindex="-1"></a>                <span class="cf">else</span>:</span>
+<span id="cb13-80"><a href="#cb13-80" aria-hidden="true" tabindex="-1"></a>                    <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f"Invalid night_direction: </span><span class="sc">{</span>night_direction<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb13-81"><a href="#cb13-81" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-82"><a href="#cb13-82" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result, datetimes</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div id="cell-22" class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>ex_class, ex_dt <span class="op">=</span> compute_solar_day_night_class_bins(ds, <span class="st">"before"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
 <div id="cell-23" class="cell">
-<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>resampled_nc <span class="op">=</span> resample_netcdf_diurnal(ds_path, chunks<span class="op">=</span>{<span class="st">"valid_time"</span>: <span class="dv">24</span>})</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
-
-NameError: name 'ds_path' is not defined</code></pre>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ex_class</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds_path' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-30eefd249bc7&gt;", line 1, in &lt;module&gt;
-    resampled_nc = resample_netcdf_diurnal(ds_path, chunks={"valid_time": 24})
-                                           ^^^^^^^
-
-NameError: name 'ds_path' is not defined</code></pre>
-</div>
-</div>
-<p>Awesome, now we know how to do the diurnal aggregation, and can implement it in the task the same way we did in the hydra snakemake pipeline.</p>
-<p>Next, we use the same approach to compute the spatial averages. We will use the <code>xarray</code> library to compute the mean over the specified spatial region. Fortunately, most of this work is already done for us in the previous pipeline, so we can reuse the code to compute the spatial averages.</p>
+<p>As before, we should see that most slices are homogenous, meaning most of the time, all the readings are from the day, but some slices should have day and night values:</p>
 <div id="cell-25" class="cell">
-<div class="sourceCode cell-code" id="cb42"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.aggregate <span class="im">import</span> netcdf_to_tiff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> slice_ <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">720</span>):</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="bu">set</span>(ex_class[slice_].flatten()))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div id="cell-26" class="cell">
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>variable <span class="op">=</span> <span class="st">"swvl1"</span>  <span class="co"># Example variable name</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>crs <span class="op">=</span> <span class="st">"EPSG:4326"</span>  <span class="co"># Example CRS</span></span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>variable <span class="op">=</span> ds[variable]</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>ds_ <span class="op">=</span> variable.rio.set_spatial_dims(x_dim<span class="op">=</span><span class="st">"longitude"</span>, y_dim<span class="op">=</span><span class="st">"latitude"</span>)</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>ds_ <span class="op">=</span> ds.rio.write_crs(crs)</span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Save as GeoTIFF</span></span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>ds_.rio.to_raster(<span class="ss">f"output.tif"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 5
-      1 variable = "swvl1"  # Example variable name
-      2 crs = "EPSG:4326"  # Example CRS
-----&gt; 5 variable = ds[variable]
-      6 ds_ = variable.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude")
-      7 ds_ = ds.rio.write_crs(crs)
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-ea7bef151342&gt;", line 5, in &lt;module&gt;
-    variable = ds[variable]
-               ^^
-
-NameError: name 'ds' is not defined</code></pre>
-</div>
-</div>
+<p>The returned array can serve as new “variable indexes” for the dataset:</p>
 <div id="cell-27" class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>resampled_tiff <span class="op">=</span> netcdf_to_tiff(</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>    ds<span class="op">=</span>resampled_nc,</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    band<span class="op">=</span><span class="dv">1</span>,</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    variable<span class="op">=</span><span class="st">"swvl1"</span>,</span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    crs<span class="op">=</span><span class="st">"EPSG:4326"</span></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 2
-      1 resampled_tiff = netcdf_to_tiff(
-----&gt; 2     ds=resampled_nc,
-      3     band=1,
-      4     variable="swvl1",
-      5     crs="EPSG:4326"
-      6 )
-
-NameError: name 'resampled_nc' is not defined</code></pre>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ds_masked <span class="op">=</span> ds.copy()</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>ds_masked[<span class="st">'solar_class'</span>] <span class="op">=</span> ((<span class="st">'valid_time'</span>, <span class="st">'latitude'</span>, <span class="st">'longitude'</span>), ex_class)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>ds_masked[<span class="st">"solar_date"</span>] <span class="op">=</span> ((<span class="st">"valid_time"</span>, <span class="st">"latitude"</span>, <span class="st">"longitude"</span>), ex_dt)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'resampled_nc' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-b31b1a53ee92&gt;", line 2, in &lt;module&gt;
-    ds=resampled_nc,
-       ^^^^^^^^^^^^
-
-NameError: name 'resampled_nc' is not defined</code></pre>
-</div>
-</div>
-<div id="cell-28" class="cell">
-<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a>ex_netcdf <span class="op">=</span> resample_netcdf_diurnal(ds_path)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stdout">
-<pre><code>---------------------------------------------------------------------------
-NameError                                 Traceback (most recent call last)
-Cell In[1], line 1
-----&gt; 1 ex_netcdf = resample_netcdf_diurnal(ds_path)
-
-NameError: name 'ds_path' is not defined</code></pre>
-</div>
-<div class="cell-output cell-output-error">
-<pre><code>NameError: name 'ds_path' is not defined
-Traceback (most recent call last):
-
-  File "/n/home03/ttapera/.conda/envs/era5_sandbox/lib/python3.11/site-packages/IPython/core/interactiveshell.py", line 3549, in run_code
-    exec(code_obj, self.user_global_ns, self.user_ns)
-
-  File "&lt;ipython-input-1-82c3dae6b138&gt;", line 1, in &lt;module&gt;
-    ex_netcdf = resample_netcdf_diurnal(ds_path)
-                                        ^^^^^^^
-
-NameError: name 'ds_path' is not defined</code></pre>
-</div>
-</div>
-
-
 </section>
+</section>
+<section id="diurnal-resampling" class="level2">
+<h2 class="anchored" data-anchor-id="diurnal-resampling">Diurnal Resampling</h2>
+<p>Now, to see if it will resample by both solar day and diurnal class. Let’s try by masking and making copies with NaN in the masked values:</p>
+<div id="cell-29" class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ds_day <span class="op">=</span> ds_masked.where(ds_masked[<span class="st">"solar_class"</span>] <span class="op">==</span> <span class="st">"day"</span>).drop_vars([<span class="st">"solar_class"</span>, <span class="st">"solar_date"</span>])</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>ds_night <span class="op">=</span> ds_masked.where(ds_masked[<span class="st">"solar_class"</span>] <span class="op">==</span> <span class="st">"night"</span>).drop_vars([<span class="st">"solar_class"</span>, <span class="st">"solar_date"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Next, we set the time zone for Madagascar since, to resample by day and night, we should observe the local time:</p>
+<div id="cell-31" class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>ds_day <span class="op">=</span> ds_day.assign_coords(valid_time<span class="op">=</span>pd.to_datetime(ds[<span class="st">"valid_time"</span>].values).tz_localize(<span class="st">"UTC"</span>).tz_convert(<span class="st">"Asia/Kathmandu"</span>))</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ds_night <span class="op">=</span> ds_night.assign_coords(valid_time<span class="op">=</span>pd.to_datetime(ds[<span class="st">"valid_time"</span>].values).tz_localize(<span class="st">"UTC"</span>).tz_convert(<span class="st">"Asia/Kathmandu"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Now if we can resample by day…</p>
+<div id="cell-33" class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ds_day_rs <span class="op">=</span> ds_day.resample(valid_time<span class="op">=</span><span class="st">"1D"</span>).<span class="bu">reduce</span>(np.nanmean)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>ds_night_rs <span class="op">=</span> ds_night.resample(valid_time<span class="op">=</span><span class="st">"1D"</span>).<span class="bu">reduce</span>(np.nanmean)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>ds_day_rs</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Can we successfully convert this to a tiff?</p>
+<div id="cell-35" class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.aggregate <span class="im">import</span> netcdf_to_tiff</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-36" class="cell">
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>raster_day <span class="op">=</span> netcdf_to_tiff(ds_day_rs, band<span class="op">=</span><span class="dv">1</span>, variable<span class="op">=</span><span class="st">"d2m"</span>)</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>raster_night <span class="op">=</span> netcdf_to_tiff(ds_night_rs, band<span class="op">=</span><span class="dv">1</span>, variable<span class="op">=</span><span class="st">"d2m"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Looks great! These two rasters represent one calendar day of daytime and nighttime values.</p>
+<section id="testing-polygon-to-raster-cells-healthshed-aggregation" class="level3">
+<h3 class="anchored" data-anchor-id="testing-polygon-to-raster-cells-healthshed-aggregation">Testing Polygon to Raster Cells &amp; Healthshed Aggregation</h3>
+<p>The penultimate step of the aggregate pipeline in the original version is assigning each datapoint to the respective healthshed. The <code>vectors</code> argument comes from the healthshed, and represents each geographic polygon on the ground that we want to aggregate data to.</p>
+<div id="cell-38" class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> hydra <span class="im">import</span> initialize, compose</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-39" class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> initialize(version_base<span class="op">=</span><span class="va">None</span>, config_path<span class="op">=</span><span class="st">"../conf"</span>):</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>        cfg <span class="op">=</span> compose(config_name<span class="op">=</span><span class="st">'config.yaml'</span>)</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f"Error initializing Hydra: </span><span class="sc">{</span>e<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> initialize(version_base<span class="op">=</span><span class="va">None</span>, config_path<span class="op">=</span><span class="st">"conf"</span>):</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>        cfg <span class="op">=</span> compose(config_name<span class="op">=</span><span class="st">'config.yaml'</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>driver <span class="op">=</span> GoogleDriver(json_key_path<span class="op">=</span>here() <span class="op">/</span> cfg.GOOGLE_DRIVE_AUTH_JSON.path)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>drive <span class="op">=</span> driver.get_drive()</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>healthsheds <span class="op">=</span> driver.read_healthsheds(<span class="st">"Nepal_Healthsheds2024.zip"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-40" class="cell">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>res_poly2cell<span class="op">=</span>polygon_to_raster_cells(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    vectors <span class="op">=</span> healthsheds.geometry.values, <span class="co"># the geometries of the shapefile of the regions</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    raster<span class="op">=</span>raster_day.data, <span class="co"># the raster data above</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    nodata<span class="op">=</span>np.nan, <span class="co"># any intersections with no data, may have to be np.nan</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    affine<span class="op">=</span>raster_day.transform, <span class="co"># some math thing need to revise</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    all_touched<span class="op">=</span><span class="va">True</span>, </span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    verbose<span class="op">=</span><span class="va">True</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This works fine. Finally, we aggregate to healthsheds:</p>
+<div id="cell-42" class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.aggregate <span class="im">import</span> aggregate_to_healthsheds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-43" class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>result_day <span class="op">=</span> aggregate_to_healthsheds(</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    res_poly2cell<span class="op">=</span>res_poly2cell,</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    raster<span class="op">=</span>raster_day,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    shapes<span class="op">=</span>healthsheds,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    names_column<span class="op">=</span><span class="st">"fid"</span>,</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>    aggregation_func<span class="op">=</span>np.nanmean,</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    aggregation_name<span class="op">=</span><span class="st">"mean_dewpoint_day"</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>result_night <span class="op">=</span> aggregate_to_healthsheds(</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    res_poly2cell<span class="op">=</span>res_poly2cell,</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    raster<span class="op">=</span>raster_night,</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    shapes<span class="op">=</span>healthsheds,</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    names_column<span class="op">=</span><span class="st">"fid"</span>,</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    aggregation_func<span class="op">=</span>np.nanmean,</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>    aggregation_name<span class="op">=</span><span class="st">"mean_dewpoint_night"</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Below shows the result of aggregating the daytime dewpoint temperature to the healthshed level:</p>
+<div id="cell-45" class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>result_day</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div id="cell-46" class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>result_night</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>So from one input, we will have two outputs, one for daytime and one for nighttime, and this will have to loop over the bands (ie each day in the month).</p>
+</section>
+</section>
+</section>
+<section id="putting-it-all-together-in-a-pytask-task" class="level1">
+<h1>Putting it all together in a <code>pytask</code> task</h1>
+<p>Below we define our <code>pytask</code> task to aggregate data to the healthshed level.</p>
+<div id="cell-48" class="cell" data-exports="null">
+<details open="" class="code-fold">
+<summary>Exported source</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>job_rows <span class="op">=</span> data_catalog[<span class="st">'aggregate'</span>][<span class="st">'jobs'</span>][<span class="st">'jobs_df'</span>].load()</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>aggregation_funcs <span class="op">=</span> {</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"mean"</span>: np.nanmean,</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"sum"</span>: np.nansum,</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">"max"</span>: np.nanmax,</span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"min"</span>: np.nanmin</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i, job <span class="kw">in</span> job_rows.iterrows():</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="co">#print(f"Job {i+1}: variable={job['variables']}, time={job['time']}, aggregation={job['aggregation_name']}")</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># parse the row into function parameters</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>    input_file <span class="op">=</span> data_catalog[<span class="st">'download'</span>][<span class="st">'outputs'</span>][job[<span class="st">'input'</span>]]</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>    solar_classification <span class="op">=</span> job[<span class="st">'solar_classification'</span>]</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    variable <span class="op">=</span> job[<span class="st">'variables_short'</span>]</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    time <span class="op">=</span> job[<span class="st">'time'</span>]</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>    aggregation_func <span class="op">=</span> aggregation_funcs[job[<span class="st">'aggregation_name'</span>]]</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>    aggregation_name <span class="op">=</span> job[<span class="st">'aggregation_name'</span>]</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>    climate_handler_var <span class="op">=</span> job[<span class="st">'climate_handler_var'</span>]</span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>    local_tz <span class="op">=</span> job[<span class="st">'local_tz'</span>]</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a>    shapefile <span class="op">=</span> job[<span class="st">'shapefile'</span>]</span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>    hshd_unique_id <span class="op">=</span> job[<span class="st">'hshd_unique_id'</span>]</span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>    output_file <span class="op">=</span> job[<span class="st">'input'</span>] <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> job[<span class="st">'time'</span>] <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> job[<span class="st">'variables_short'</span>] <span class="op">+</span> <span class="st">"_"</span> <span class="op">+</span> job[<span class="st">'aggregation_name'</span>] <span class="op">+</span> <span class="st">".parquet"</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">@task</span>(<span class="bu">id</span><span class="op">=</span>output_file, name<span class="op">=</span><span class="ss">f"Aggregate </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>, after<span class="op">=</span><span class="st">"task_download_raw_data"</span>)</span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> task_aggregate_data_diurnal(</span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>            input_file: Path <span class="op">=</span> data_catalog[<span class="st">'download'</span>][<span class="st">'outputs'</span>][job[<span class="st">'input'</span>]], <span class="co"># input data Path from the download task</span></span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>            aggregation_func: <span class="bu">callable</span> <span class="op">=</span> aggregation_func, <span class="co"># the aggregation function</span></span>
+<span id="cb30-33"><a href="#cb30-33" aria-hidden="true" tabindex="-1"></a>            aggregation_name: <span class="bu">str</span> <span class="op">=</span> aggregation_name, <span class="co"># the name of the aggregation function</span></span>
+<span id="cb30-34"><a href="#cb30-34" aria-hidden="true" tabindex="-1"></a>            time: Literal[<span class="st">"day"</span>, <span class="st">"night"</span>] <span class="op">=</span> time, <span class="co"># whether to aggregate by day or night</span></span>
+<span id="cb30-35"><a href="#cb30-35" aria-hidden="true" tabindex="-1"></a>            night_direction: Literal[<span class="st">"before"</span>, <span class="st">"after"</span>] <span class="op">=</span> solar_classification, <span class="co"># how to define night</span></span>
+<span id="cb30-36"><a href="#cb30-36" aria-hidden="true" tabindex="-1"></a>            variable: <span class="bu">str</span> <span class="op">=</span> variable, <span class="co"># the variable to aggregate,</span></span>
+<span id="cb30-37"><a href="#cb30-37" aria-hidden="true" tabindex="-1"></a>            climate_handler_var: Literal[<span class="st">"instant"</span>, <span class="st">"accum"</span>] <span class="op">=</span> climate_handler_var, <span class="co"># whether the variable is instant or accum,</span></span>
+<span id="cb30-38"><a href="#cb30-38" aria-hidden="true" tabindex="-1"></a>            local_tz: <span class="bu">str</span> <span class="op">=</span> local_tz, <span class="co"># the local timezone for resampling</span></span>
+<span id="cb30-39"><a href="#cb30-39" aria-hidden="true" tabindex="-1"></a>            shapefile: <span class="bu">str</span> <span class="op">=</span> shapefile, <span class="co"># the shapefile for the healthsheds,</span></span>
+<span id="cb30-40"><a href="#cb30-40" aria-hidden="true" tabindex="-1"></a>            hshd_unique_id: <span class="bu">str</span> <span class="op">=</span> hshd_unique_id, <span class="co"># the unique id column in the shapefile,</span></span>
+<span id="cb30-41"><a href="#cb30-41" aria-hidden="true" tabindex="-1"></a>            output_file: <span class="bu">str</span> <span class="op">=</span> output_file <span class="co"># the output file name</span></span>
+<span id="cb30-42"><a href="#cb30-42" aria-hidden="true" tabindex="-1"></a>        ) <span class="op">-&gt;</span> Annotated[Path, data_catalog[<span class="st">'aggregate'</span>][<span class="st">'outputs'</span>][output_file]]:</span>
+<span id="cb30-43"><a href="#cb30-43" aria-hidden="true" tabindex="-1"></a>        <span class="co">"""</span></span>
+<span id="cb30-44"><a href="#cb30-44" aria-hidden="true" tabindex="-1"></a><span class="co">        Task to aggregate data from a CDSAPI Query to the healthshed</span></span>
+<span id="cb30-45"><a href="#cb30-45" aria-hidden="true" tabindex="-1"></a><span class="co">        level. Returns path to parquet file with aggregated data.</span></span>
+<span id="cb30-46"><a href="#cb30-46" aria-hidden="true" tabindex="-1"></a><span class="co">        """</span></span>
+<span id="cb30-47"><a href="#cb30-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-48"><a href="#cb30-48" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> setup_logger(output_file)</span>
+<span id="cb30-49"><a href="#cb30-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-50"><a href="#cb30-50" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="ss">f"Aggregating: </span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb30-51"><a href="#cb30-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-52"><a href="#cb30-52" aria-hidden="true" tabindex="-1"></a>        <span class="co"># check if the string path exists</span></span>
+<span id="cb30-53"><a href="#cb30-53" aria-hidden="true" tabindex="-1"></a>        <span class="co"># if os.path.exists(output_file):</span></span>
+<span id="cb30-54"><a href="#cb30-54" aria-hidden="true" tabindex="-1"></a>        <span class="co">#     logger.info(f"File {output_file} already exists. Skipping aggregation.")</span></span>
+<span id="cb30-55"><a href="#cb30-55" aria-hidden="true" tabindex="-1"></a>        <span class="co">#     return output_file</span></span>
+<span id="cb30-56"><a href="#cb30-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-57"><a href="#cb30-57" aria-hidden="true" tabindex="-1"></a>        <span class="co"># get input data</span></span>
+<span id="cb30-58"><a href="#cb30-58" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Reading input data..."</span>)</span>
+<span id="cb30-59"><a href="#cb30-59" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> ClimateDataFileHandler(input_file) <span class="im">as</span> handler:</span>
+<span id="cb30-60"><a href="#cb30-60" aria-hidden="true" tabindex="-1"></a>            ds <span class="op">=</span> xr.open_dataset(handler.get_dataset(<span class="st">'instant'</span>))</span>
+<span id="cb30-61"><a href="#cb30-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-62"><a href="#cb30-62" aria-hidden="true" tabindex="-1"></a>        <span class="co">#get the healthshed shapefile</span></span>
+<span id="cb30-63"><a href="#cb30-63" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="ss">f"Reading healthshed shapefile from yaml </span><span class="sc">{</span>here()<span class="sc">}</span><span class="ss">..."</span>)</span>
+<span id="cb30-64"><a href="#cb30-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> <span class="bu">open</span>(here() <span class="op">/</span> <span class="st">"conf"</span> <span class="op">/</span> <span class="st">"config.yaml"</span>) <span class="im">as</span> f:</span>
+<span id="cb30-65"><a href="#cb30-65" aria-hidden="true" tabindex="-1"></a>            healthshed_config <span class="op">=</span> yaml.safe_load(f)</span>
+<span id="cb30-66"><a href="#cb30-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-67"><a href="#cb30-67" aria-hidden="true" tabindex="-1"></a>            key_path <span class="op">=</span> here() <span class="op">/</span> healthshed_config[<span class="st">'GOOGLE_DRIVE_AUTH_JSON'</span>][<span class="st">'path'</span>]</span>
+<span id="cb30-68"><a href="#cb30-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-69"><a href="#cb30-69" aria-hidden="true" tabindex="-1"></a>            driver <span class="op">=</span> GoogleDriver(json_key_path<span class="op">=</span>key_path)</span>
+<span id="cb30-70"><a href="#cb30-70" aria-hidden="true" tabindex="-1"></a>            drive <span class="op">=</span> driver.get_drive()</span>
+<span id="cb30-71"><a href="#cb30-71" aria-hidden="true" tabindex="-1"></a>            healthsheds <span class="op">=</span> driver.read_healthsheds(shapefile)</span>
+<span id="cb30-72"><a href="#cb30-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-73"><a href="#cb30-73" aria-hidden="true" tabindex="-1"></a>        <span class="co"># compute the diurnal classification bins</span></span>
+<span id="cb30-74"><a href="#cb30-74" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Computing diurnal classification bins..."</span>)</span>
+<span id="cb30-75"><a href="#cb30-75" aria-hidden="true" tabindex="-1"></a>        class_bins, class_dts <span class="op">=</span> compute_solar_day_night_class_bins(ds, night_direction)</span>
+<span id="cb30-76"><a href="#cb30-76" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-77"><a href="#cb30-77" aria-hidden="true" tabindex="-1"></a>        ds_masked <span class="op">=</span> ds.copy()</span>
+<span id="cb30-78"><a href="#cb30-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-79"><a href="#cb30-79" aria-hidden="true" tabindex="-1"></a>        <span class="co"># assign classifications</span></span>
+<span id="cb30-80"><a href="#cb30-80" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Assigning classification bins to dataset..."</span>)</span>
+<span id="cb30-81"><a href="#cb30-81" aria-hidden="true" tabindex="-1"></a>        ds[<span class="st">'solar_class'</span>] <span class="op">=</span> ((<span class="st">'valid_time'</span>, <span class="st">'latitude'</span>, <span class="st">'longitude'</span>), class_bins)</span>
+<span id="cb30-82"><a href="#cb30-82" aria-hidden="true" tabindex="-1"></a>        ds[<span class="st">"solar_date"</span>] <span class="op">=</span> ((<span class="st">"valid_time"</span>, <span class="st">"latitude"</span>, <span class="st">"longitude"</span>), class_dts)</span>
+<span id="cb30-83"><a href="#cb30-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-84"><a href="#cb30-84" aria-hidden="true" tabindex="-1"></a>        <span class="co"># mask the dataset to the requested time</span></span>
+<span id="cb30-85"><a href="#cb30-85" aria-hidden="true" tabindex="-1"></a>        mask <span class="op">=</span> ds[<span class="st">"solar_class"</span>] <span class="op">==</span> time</span>
+<span id="cb30-86"><a href="#cb30-86" aria-hidden="true" tabindex="-1"></a>        ds_masked <span class="op">=</span> ds_masked.where(mask)</span>
+<span id="cb30-87"><a href="#cb30-87" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-88"><a href="#cb30-88" aria-hidden="true" tabindex="-1"></a>        <span class="co"># set the local timezone</span></span>
+<span id="cb30-89"><a href="#cb30-89" aria-hidden="true" tabindex="-1"></a>        ds_masked <span class="op">=</span> ds_masked.assign_coords(valid_time<span class="op">=</span>pd.to_datetime(ds[<span class="st">"valid_time"</span>].values).tz_localize(<span class="st">"UTC"</span>).tz_convert(local_tz))</span>
+<span id="cb30-90"><a href="#cb30-90" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-91"><a href="#cb30-91" aria-hidden="true" tabindex="-1"></a>        <span class="co"># resample by local date</span></span>
+<span id="cb30-92"><a href="#cb30-92" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Resampling by local date..."</span>)</span>
+<span id="cb30-93"><a href="#cb30-93" aria-hidden="true" tabindex="-1"></a>        ds_rs <span class="op">=</span> ds_masked.resample(valid_time<span class="op">=</span><span class="st">"1D"</span>).<span class="bu">reduce</span>(aggregation_func)</span>
+<span id="cb30-94"><a href="#cb30-94" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-95"><a href="#cb30-95" aria-hidden="true" tabindex="-1"></a>        <span class="co"># convert to tiff</span></span>
+<span id="cb30-96"><a href="#cb30-96" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Rasterizing resampled data..."</span>)</span>
+<span id="cb30-97"><a href="#cb30-97" aria-hidden="true" tabindex="-1"></a>        n_bands <span class="op">=</span> ds_rs.dims[<span class="st">'valid_time'</span>]</span>
+<span id="cb30-98"><a href="#cb30-98" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-99"><a href="#cb30-99" aria-hidden="true" tabindex="-1"></a>        <span class="co"># polygon to raster cells for the first band</span></span>
+<span id="cb30-100"><a href="#cb30-100" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Converting polygons to raster cells..."</span>)</span>
+<span id="cb30-101"><a href="#cb30-101" aria-hidden="true" tabindex="-1"></a>        raster <span class="op">=</span> netcdf_to_tiff(ds_rs, band<span class="op">=</span><span class="dv">1</span>, variable<span class="op">=</span>variable)</span>
+<span id="cb30-102"><a href="#cb30-102" aria-hidden="true" tabindex="-1"></a>        res_poly2cell<span class="op">=</span>polygon_to_raster_cells(</span>
+<span id="cb30-103"><a href="#cb30-103" aria-hidden="true" tabindex="-1"></a>            vectors <span class="op">=</span> healthsheds.geometry.values, <span class="co"># the geometries of the shapefile of the regions</span></span>
+<span id="cb30-104"><a href="#cb30-104" aria-hidden="true" tabindex="-1"></a>            raster<span class="op">=</span>raster.data, <span class="co"># the raster data above</span></span>
+<span id="cb30-105"><a href="#cb30-105" aria-hidden="true" tabindex="-1"></a>            nodata<span class="op">=</span>np.nan, <span class="co"># any intersections with no data, may have to be np.nan</span></span>
+<span id="cb30-106"><a href="#cb30-106" aria-hidden="true" tabindex="-1"></a>            affine<span class="op">=</span>raster.transform, <span class="co"># some math thing need to revise</span></span>
+<span id="cb30-107"><a href="#cb30-107" aria-hidden="true" tabindex="-1"></a>            all_touched<span class="op">=</span><span class="va">True</span>, </span>
+<span id="cb30-108"><a href="#cb30-108" aria-hidden="true" tabindex="-1"></a>            verbose<span class="op">=</span><span class="va">True</span></span>
+<span id="cb30-109"><a href="#cb30-109" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb30-110"><a href="#cb30-110" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-111"><a href="#cb30-111" aria-hidden="true" tabindex="-1"></a>        result_df <span class="op">=</span> healthsheds[[hshd_unique_id, <span class="st">"geometry"</span>]].copy()</span>
+<span id="cb30-112"><a href="#cb30-112" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-113"><a href="#cb30-113" aria-hidden="true" tabindex="-1"></a>        <span class="co"># loop over bands and aggregate to healthsheds</span></span>
+<span id="cb30-114"><a href="#cb30-114" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> band <span class="kw">in</span> tqdm(<span class="bu">range</span>(<span class="dv">1</span>, n_bands <span class="op">+</span> <span class="dv">1</span>)):</span>
+<span id="cb30-115"><a href="#cb30-115" aria-hidden="true" tabindex="-1"></a>            logger.info(<span class="ss">f"Processing band </span><span class="sc">{</span>band<span class="sc">}</span><span class="ss"> of </span><span class="sc">{</span>n_bands<span class="sc">}</span><span class="ss">..."</span>)</span>
+<span id="cb30-116"><a href="#cb30-116" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb30-117"><a href="#cb30-117" aria-hidden="true" tabindex="-1"></a>            day <span class="op">=</span> band  <span class="co"># band is 1-indexed</span></span>
+<span id="cb30-118"><a href="#cb30-118" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-119"><a href="#cb30-119" aria-hidden="true" tabindex="-1"></a>            day_col <span class="op">=</span> <span class="ss">f"day_</span><span class="sc">{</span>day<span class="sc">:02d}</span><span class="ss">"</span></span>
+<span id="cb30-120"><a href="#cb30-120" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-121"><a href="#cb30-121" aria-hidden="true" tabindex="-1"></a>            <span class="co"># calculate raster for this band</span></span>
+<span id="cb30-122"><a href="#cb30-122" aria-hidden="true" tabindex="-1"></a>            raster <span class="op">=</span> netcdf_to_tiff(ds_rs, band<span class="op">=</span>band, variable<span class="op">=</span>variable)</span>
+<span id="cb30-123"><a href="#cb30-123" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-124"><a href="#cb30-124" aria-hidden="true" tabindex="-1"></a>            <span class="co"># aggregate to healthsheds</span></span>
+<span id="cb30-125"><a href="#cb30-125" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> aggregate_to_healthsheds(</span>
+<span id="cb30-126"><a href="#cb30-126" aria-hidden="true" tabindex="-1"></a>                res_poly2cell<span class="op">=</span>res_poly2cell,</span>
+<span id="cb30-127"><a href="#cb30-127" aria-hidden="true" tabindex="-1"></a>                raster<span class="op">=</span>raster,</span>
+<span id="cb30-128"><a href="#cb30-128" aria-hidden="true" tabindex="-1"></a>                shapes<span class="op">=</span>healthsheds,</span>
+<span id="cb30-129"><a href="#cb30-129" aria-hidden="true" tabindex="-1"></a>                names_column<span class="op">=</span>hshd_unique_id,</span>
+<span id="cb30-130"><a href="#cb30-130" aria-hidden="true" tabindex="-1"></a>                aggregation_func<span class="op">=</span>aggregation_func,</span>
+<span id="cb30-131"><a href="#cb30-131" aria-hidden="true" tabindex="-1"></a>                aggregation_name<span class="op">=</span>variable</span>
+<span id="cb30-132"><a href="#cb30-132" aria-hidden="true" tabindex="-1"></a>            )</span>
+<span id="cb30-133"><a href="#cb30-133" aria-hidden="true" tabindex="-1"></a>            </span>
+<span id="cb30-134"><a href="#cb30-134" aria-hidden="true" tabindex="-1"></a>            <span class="co"># add band to result dataframe</span></span>
+<span id="cb30-135"><a href="#cb30-135" aria-hidden="true" tabindex="-1"></a>            result_df[day_col] <span class="op">=</span> result[variable]</span>
+<span id="cb30-136"><a href="#cb30-136" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-137"><a href="#cb30-137" aria-hidden="true" tabindex="-1"></a>        <span class="co"># save to parquet</span></span>
+<span id="cb30-138"><a href="#cb30-138" aria-hidden="true" tabindex="-1"></a>        result_df.to_parquet(<span class="ss">f"</span><span class="sc">{</span>BLD<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span>
+<span id="cb30-139"><a href="#cb30-139" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-140"><a href="#cb30-140" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">"Aggregation complete."</span>)</span>
+<span id="cb30-141"><a href="#cb30-141" aria-hidden="true" tabindex="-1"></a>        </span>
+<span id="cb30-142"><a href="#cb30-142" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Path(<span class="ss">f"</span><span class="sc">{</span>BLD<span class="sc">}</span><span class="ss">/</span><span class="sc">{</span>output_file<span class="sc">}</span><span class="ss">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>That should wrap it up! To test, we can run a single job:</p>
+<div id="cell-50" class="cell">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># runs the last defined job only</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>task_aggregate_data_diurnal()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Or we can run the task in <code>pytask</code>:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pytask</span> build <span class="at">-k</span> <span class="st">"nepal and 2009"</span> <span class="at">--dry-run</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+
+
 </section>
 
 </main> <!-- /main -->

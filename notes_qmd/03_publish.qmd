@@ -1,7 +1,5 @@
 ---
 title: "Publish: Gather the Aggregated Data and Publish to DataVerse"
-execute:
-    freeze: auto
 engine: jupyter
 ---
 

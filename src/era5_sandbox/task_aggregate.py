@@ -286,7 +286,10 @@ for i, job in job_rows.iterrows():
 
             day_col = f"day_{day:02d}"
 
+            # calculate raster for this band
             raster = netcdf_to_tiff(ds_rs, band=band, variable=variable)
+
+            # aggregate to healthsheds
             result = aggregate_to_healthsheds(
                 res_poly2cell=res_poly2cell,
                 raster=raster,
@@ -296,6 +299,7 @@ for i, job in job_rows.iterrows():
                 aggregation_name=variable
             )
             
+            # add band to result dataframe
             result_df[day_col] = result[variable]
 
         # save to parquet

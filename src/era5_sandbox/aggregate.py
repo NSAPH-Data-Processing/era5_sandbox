@@ -318,7 +318,7 @@ def main(cfg: DictConfig) -> None:
     aggregate_data(cfg, input_file=input_file, output_file=output_file, exposure_variable=variables_dict[aggregation_variable])
 
 # %% ../../notes/02_aggregate.ipynb 43
-#| exports: #| eval: false
+#| export: #| eval: false
 try: from nbdev.imports import IN_NOTEBOOK
 except: IN_NOTEBOOK=False
 

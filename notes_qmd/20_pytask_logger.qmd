@@ -1,7 +1,5 @@
 ---
 title: "Logging: A simple logger to inject into `pytask` jobs"
-execute:
-  freeze: auto
 engine: jupyter
 ---
 

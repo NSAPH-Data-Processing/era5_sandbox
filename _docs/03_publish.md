@@ -1,5 +1,7 @@
-# publish
+# Publish: Gather the Aggregated Data and Publish to DataVerse
 
+
+## publish
 
 > This is the `publish` module for the ERA5 dataset pipeline. It defines
 > a functions that make use of the `pyDataverse` library and API to
@@ -9,6 +11,19 @@
 
 First, we’ll test out the API by pinging the Harvard DataVerse
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+import hydra
+import yaml
+import json
+from tqdm import tqdm
+from pyprojroot import here
+```
+
+</details>
+
 ``` python
 api_token_file = here() / "sandbox/dataverse_api_key.yml"
 with open(api_token_file, "r") as f:
@@ -17,6 +32,15 @@ with open(api_token_file, "r") as f:
 
 Now, following the [docs]() for the dataverse tutorial, load a NativeAPI
 up:
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+from pyDataverse.api import NativeApi
+```
+
+</details>
 
 The NativeAPI is a catchall API object to be able to do general stuff:
 
@@ -29,8 +53,6 @@ resp=api.get_info_version()
 ``` python
 resp.json()
 ```
-
-    {'status': 'OK', 'data': {'version': '6.7', 'build': 'iqss-2'}}
 
 Looks good! Now that we know that it works, we can think more about how
 to publish data there.
@@ -45,6 +67,9 @@ object:
 
 ``` python
 from pyDataverse.models import Dataset
+```
+
+``` python
 ds = Dataset()
 ```
 
@@ -55,15 +80,15 @@ anything yet:
 ds.get()
 ```
 
-    {}
-
 We can populate the object from the dummy data on the github repo:
 
 ``` python
 from pyDataverse.utils import read_file
 from urllib.request import urlretrieve
 import tempfile
+```
 
+``` python
 # url for dummy data
 url = "https://raw.githubusercontent.com/gdcc/pyDataverse/refs/heads/main/tests/data/user-guide/dataset.json"
 
@@ -79,8 +104,6 @@ We have to validate the JSON correctly:
 ds.validate_json()
 ```
 
-    True
-
 Modifying it is easy:
 
 ``` python
@@ -88,58 +111,39 @@ ds.set({"title": "Youth from Austria 2005"})
 ds.get()
 ```
 
-    {'citation_displayName': 'Citation Metadata',
-     'title': 'Youth from Austria 2005',
-     'author': [{'authorName': 'LastAuthor1, FirstAuthor1',
-       'authorAffiliation': 'AuthorAffiliation1'}],
-     'datasetContact': [{'datasetContactEmail': 'ContactEmail1@mailinator.com',
-       'datasetContactName': 'LastContact1, FirstContact1'}],
-     'dsDescription': [{'dsDescriptionValue': 'DescriptionText'}],
-     'subject': ['Medicine, Health and Life Sciences']}
-
 Now, to create the dataset we use the API:
 
 ``` python
+# this is only run in interactive sessions for demo purposes
 resp = api.create_dataset(":root", ds.json())
 ```
-
-    Dataset with pid 'doi:10.7910/DVN/MMQDMT' created.
 
 If you caught the `resp` object, it contains the PID for the newly
 created dataset.
 
 However, if you didn’t you can use the SearchAPI to find it:
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
 ``` python
 from pyDataverse.api import SearchApi
+```
 
+</details>
+
+``` python
 search_api = SearchApi(config['base_url'], config['api_token'])
+```
+
+``` python
+#
+
 resp = search_api.search("Youth from Austria", data_type="dataset")
 results = resp.json()['data']['items']
 result = [x for x in results if "Youth from Austria" in x['name']][0]
 result
 ```
-
-    {'name': 'Youth from Austria 2005',
-     'type': 'dataset',
-     'url': 'https://doi.org/10.7910/DVN/MMQDMT',
-     'global_id': 'doi:10.7910/DVN/MMQDMT',
-     'description': 'DescriptionText',
-     'publisher': 'Harvard Dataverse',
-     'citationHtml': 'LastAuthor1, FirstAuthor1, 2025, "Youth from Austria 2005", <a href="https://doi.org/10.7910/DVN/MMQDMT" target="_blank">https://doi.org/10.7910/DVN/MMQDMT</a>, Harvard Dataverse, DRAFT VERSION',
-     'identifier_of_dataverse': 'harvard',
-     'name_of_dataverse': 'Harvard Dataverse',
-     'citation': 'LastAuthor1, FirstAuthor1, 2025, "Youth from Austria 2005", https://doi.org/10.7910/DVN/MMQDMT, Harvard Dataverse, DRAFT VERSION',
-     'publicationStatuses': ['Unpublished', 'Draft'],
-     'storageIdentifier': 's3://10.7910/DVN/MMQDMT',
-     'subjects': ['Medicine, Health and Life Sciences'],
-     'fileCount': 0,
-     'versionId': 499475,
-     'versionState': 'DRAFT',
-     'createdAt': '2025-07-31T18:28:24Z',
-     'updatedAt': '2025-07-31T18:28:24Z',
-     'contacts': [{'name': 'LastContact1, FirstContact1', 'affiliation': ''}],
-     'authors': ['LastAuthor1, FirstAuthor1']}
 
 ``` python
 pid = result['global_id']
@@ -156,258 +160,6 @@ resp = api.delete_dataset(pid)
 resp.json()
 ```
 
-    KeyboardInterrupt: 
-    [31m---------------------------------------------------------------------------[39m
-    [31mKeyboardInterrupt[39m                         Traceback (most recent call last)
-    [36mCell[39m[36m [39m[32mIn[17][39m[32m, line 4[39m
-    [32m      1[39m uploaded_ds = api.get_dataset(pid)
-    [32m      2[39m uploaded_ds.json()[[33m'[39m[33mdata[39m[33m'[39m]
-    [32m----> [39m[32m4[39m resp = [43mapi[49m[43m.[49m[43mdelete_dataset[49m[43m([49m[43mpid[49m[43m)[49m
-    [32m      5[39m resp.json()
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/pyDataverse/api.py:1782[39m, in [36mNativeApi.delete_dataset[39m[34m(self, identifier, is_pid, auth)[39m
-    [32m   1780[39m [38;5;28;01melse[39;00m:
-    [32m   1781[39m     url = [33m"[39m[38;5;132;01m{0}[39;00m[33m/datasets/[39m[38;5;132;01m{1}[39;00m[33m"[39m.format([38;5;28mself[39m.base_url_api_native, identifier)
-    [32m-> [39m[32m1782[39m resp = [38;5;28;43mself[39;49m[43m.[49m[43mdelete_request[49m[43m([49m[43murl[49m[43m,[49m[43m [49m[43mauth[49m[43m=[49m[43mauth[49m[43m)[49m
-    [32m   1784[39m [38;5;28;01mif[39;00m resp.status_code == [32m404[39m:
-    [32m   1785[39m     error_msg = resp.json()[[33m"[39m[33mmessage[39m[33m"[39m]
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/pyDataverse/api.py:384[39m, in [36mApi.delete_request[39m[34m(self, url, auth, params)[39m
-    [32m    381[39m headers[[33m"[39m[33mUser-Agent[39m[33m"[39m] = [33m"[39m[33mpydataverse[39m[33m"[39m
-    [32m    383[39m [38;5;28;01mif[39;00m [38;5;28mself[39m.client [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
-    [32m--> [39m[32m384[39m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43m_sync_request[49m[43m([49m
-    [32m    385[39m [43m        [49m[43mmethod[49m[43m=[49m[43mhttpx[49m[43m.[49m[43mdelete[49m[43m,[49m
-    [32m    386[39m [43m        [49m[43murl[49m[43m=[49m[43murl[49m[43m,[49m
-    [32m    387[39m [43m        [49m[43mheaders[49m[43m=[49m[43mheaders[49m[43m,[49m
-    [32m    388[39m [43m        [49m[43mparams[49m[43m=[49m[43mparams[49m[43m,[49m
-    [32m    389[39m [43m    [49m[43m)[49m
-    [32m    390[39m [38;5;28;01melse[39;00m:
-    [32m    391[39m     [38;5;28;01mreturn[39;00m [38;5;28mself[39m._async_request(
-    [32m    392[39m         method=[38;5;28mself[39m.client.delete,
-    [32m    393[39m         url=url,
-    [32m    394[39m         headers=headers,
-    [32m    395[39m         params=params,
-    [32m    396[39m     )
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/pyDataverse/api.py:449[39m, in [36mApi._sync_request[39m[34m(self, method, **kwargs)[39m
-    [32m    446[39m kwargs = [38;5;28mself[39m._filter_kwargs(kwargs)
-    [32m    448[39m [38;5;28;01mtry[39;00m:
-    [32m--> [39m[32m449[39m     resp: httpx.Response = [43mmethod[49m[43m([49m
-    [32m    450[39m [43m        [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m,[49m[43m [49m[43mauth[49m[43m=[49m[38;5;28;43mself[39;49m[43m.[49m[43mauth[49m[43m,[49m[43m [49m[43mfollow_redirects[49m[43m=[49m[38;5;28;43;01mTrue[39;49;00m[43m,[49m[43m [49m[43mtimeout[49m[43m=[49m[38;5;28;43;01mNone[39;49;00m
-    [32m    451[39m [43m    [49m[43m)[49m
-    [32m    452[39m     [38;5;28;01mif[39;00m resp.status_code == [32m401[39m:
-    [32m    453[39m         [38;5;28;01mtry[39;00m:
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_api.py:465[39m, in [36mdelete[39m[34m(url, params, headers, cookies, auth, proxy, proxies, follow_redirects, cert, verify, timeout, trust_env)[39m
-    [32m    442[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mdelete[39m(
-    [32m    443[39m     url: URL | [38;5;28mstr[39m,
-    [32m    444[39m     *,
-    [32m   (...)[39m[32m    455[39m     trust_env: [38;5;28mbool[39m = [38;5;28;01mTrue[39;00m,
-    [32m    456[39m ) -> Response:
-    [32m    457[39m [38;5;250m    [39m[33;03m"""[39;00m
-    [32m    458[39m [33;03m    Sends a `DELETE` request.[39;00m
-    [32m    459[39m 
-    [32m   (...)[39m[32m    463[39m [33;03m    on this function, as `DELETE` requests should not include a request body.[39;00m
-    [32m    464[39m [33;03m    """[39;00m
-    [32m--> [39m[32m465[39m     [38;5;28;01mreturn[39;00m [43mrequest[49m[43m([49m
-    [32m    466[39m [43m        [49m[33;43m"[39;49m[33;43mDELETE[39;49m[33;43m"[39;49m[43m,[49m
-    [32m    467[39m [43m        [49m[43murl[49m[43m,[49m
-    [32m    468[39m [43m        [49m[43mparams[49m[43m=[49m[43mparams[49m[43m,[49m
-    [32m    469[39m [43m        [49m[43mheaders[49m[43m=[49m[43mheaders[49m[43m,[49m
-    [32m    470[39m [43m        [49m[43mcookies[49m[43m=[49m[43mcookies[49m[43m,[49m
-    [32m    471[39m [43m        [49m[43mauth[49m[43m=[49m[43mauth[49m[43m,[49m
-    [32m    472[39m [43m        [49m[43mproxy[49m[43m=[49m[43mproxy[49m[43m,[49m
-    [32m    473[39m [43m        [49m[43mproxies[49m[43m=[49m[43mproxies[49m[43m,[49m
-    [32m    474[39m [43m        [49m[43mfollow_redirects[49m[43m=[49m[43mfollow_redirects[49m[43m,[49m
-    [32m    475[39m [43m        [49m[43mcert[49m[43m=[49m[43mcert[49m[43m,[49m
-    [32m    476[39m [43m        [49m[43mverify[49m[43m=[49m[43mverify[49m[43m,[49m
-    [32m    477[39m [43m        [49m[43mtimeout[49m[43m=[49m[43mtimeout[49m[43m,[49m
-    [32m    478[39m [43m        [49m[43mtrust_env[49m[43m=[49m[43mtrust_env[49m[43m,[49m
-    [32m    479[39m [43m    [49m[43m)[49m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_api.py:118[39m, in [36mrequest[39m[34m(method, url, params, content, data, files, json, headers, cookies, auth, proxy, proxies, timeout, follow_redirects, verify, cert, trust_env)[39m
-    [32m     58[39m [38;5;250m[39m[33;03m"""[39;00m
-    [32m     59[39m [33;03mSends an HTTP request.[39;00m
-    [32m     60[39m 
-    [32m   (...)[39m[32m    107[39m [33;03m```[39;00m
-    [32m    108[39m [33;03m"""[39;00m
-    [32m    109[39m [38;5;28;01mwith[39;00m Client(
-    [32m    110[39m     cookies=cookies,
-    [32m    111[39m     proxy=proxy,
-    [32m   (...)[39m[32m    116[39m     trust_env=trust_env,
-    [32m    117[39m ) [38;5;28;01mas[39;00m client:
-    [32m--> [39m[32m118[39m     [38;5;28;01mreturn[39;00m [43mclient[49m[43m.[49m[43mrequest[49m[43m([49m
-    [32m    119[39m [43m        [49m[43mmethod[49m[43m=[49m[43mmethod[49m[43m,[49m
-    [32m    120[39m [43m        [49m[43murl[49m[43m=[49m[43murl[49m[43m,[49m
-    [32m    121[39m [43m        [49m[43mcontent[49m[43m=[49m[43mcontent[49m[43m,[49m
-    [32m    122[39m [43m        [49m[43mdata[49m[43m=[49m[43mdata[49m[43m,[49m
-    [32m    123[39m [43m        [49m[43mfiles[49m[43m=[49m[43mfiles[49m[43m,[49m
-    [32m    124[39m [43m        [49m[43mjson[49m[43m=[49m[43mjson[49m[43m,[49m
-    [32m    125[39m [43m        [49m[43mparams[49m[43m=[49m[43mparams[49m[43m,[49m
-    [32m    126[39m [43m        [49m[43mheaders[49m[43m=[49m[43mheaders[49m[43m,[49m
-    [32m    127[39m [43m        [49m[43mauth[49m[43m=[49m[43mauth[49m[43m,[49m
-    [32m    128[39m [43m        [49m[43mfollow_redirects[49m[43m=[49m[43mfollow_redirects[49m[43m,[49m
-    [32m    129[39m [43m    [49m[43m)[49m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_client.py:837[39m, in [36mClient.request[39m[34m(self, method, url, content, data, files, json, params, headers, cookies, auth, follow_redirects, timeout, extensions)[39m
-    [32m    822[39m     warnings.warn(message, [38;5;167;01mDeprecationWarning[39;00m)
-    [32m    824[39m request = [38;5;28mself[39m.build_request(
-    [32m    825[39m     method=method,
-    [32m    826[39m     url=url,
-    [32m   (...)[39m[32m    835[39m     extensions=extensions,
-    [32m    836[39m )
-    [32m--> [39m[32m837[39m [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43msend[49m[43m([49m[43mrequest[49m[43m,[49m[43m [49m[43mauth[49m[43m=[49m[43mauth[49m[43m,[49m[43m [49m[43mfollow_redirects[49m[43m=[49m[43mfollow_redirects[49m[43m)[49m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_client.py:926[39m, in [36mClient.send[39m[34m(self, request, stream, auth, follow_redirects)[39m
-    [32m    922[39m [38;5;28mself[39m._set_timeout(request)
-    [32m    924[39m auth = [38;5;28mself[39m._build_request_auth(request, auth)
-    [32m--> [39m[32m926[39m response = [38;5;28;43mself[39;49m[43m.[49m[43m_send_handling_auth[49m[43m([49m
-    [32m    927[39m [43m    [49m[43mrequest[49m[43m,[49m
-    [32m    928[39m [43m    [49m[43mauth[49m[43m=[49m[43mauth[49m[43m,[49m
-    [32m    929[39m [43m    [49m[43mfollow_redirects[49m[43m=[49m[43mfollow_redirects[49m[43m,[49m
-    [32m    930[39m [43m    [49m[43mhistory[49m[43m=[49m[43m[[49m[43m][49m[43m,[49m
-    [32m    931[39m [43m[49m[43m)[49m
-    [32m    932[39m [38;5;28;01mtry[39;00m:
-    [32m    933[39m     [38;5;28;01mif[39;00m [38;5;129;01mnot[39;00m stream:
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_client.py:954[39m, in [36mClient._send_handling_auth[39m[34m(self, request, auth, follow_redirects, history)[39m
-    [32m    951[39m request = [38;5;28mnext[39m(auth_flow)
-    [32m    953[39m [38;5;28;01mwhile[39;00m [38;5;28;01mTrue[39;00m:
-    [32m--> [39m[32m954[39m     response = [38;5;28;43mself[39;49m[43m.[49m[43m_send_handling_redirects[49m[43m([49m
-    [32m    955[39m [43m        [49m[43mrequest[49m[43m,[49m
-    [32m    956[39m [43m        [49m[43mfollow_redirects[49m[43m=[49m[43mfollow_redirects[49m[43m,[49m
-    [32m    957[39m [43m        [49m[43mhistory[49m[43m=[49m[43mhistory[49m[43m,[49m
-    [32m    958[39m [43m    [49m[43m)[49m
-    [32m    959[39m     [38;5;28;01mtry[39;00m:
-    [32m    960[39m         [38;5;28;01mtry[39;00m:
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_client.py:991[39m, in [36mClient._send_handling_redirects[39m[34m(self, request, follow_redirects, history)[39m
-    [32m    988[39m [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m [38;5;28mself[39m._event_hooks[[33m"[39m[33mrequest[39m[33m"[39m]:
-    [32m    989[39m     hook(request)
-    [32m--> [39m[32m991[39m response = [38;5;28;43mself[39;49m[43m.[49m[43m_send_single_request[49m[43m([49m[43mrequest[49m[43m)[49m
-    [32m    992[39m [38;5;28;01mtry[39;00m:
-    [32m    993[39m     [38;5;28;01mfor[39;00m hook [38;5;129;01min[39;00m [38;5;28mself[39m._event_hooks[[33m"[39m[33mresponse[39m[33m"[39m]:
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_client.py:1027[39m, in [36mClient._send_single_request[39m[34m(self, request)[39m
-    [32m   1022[39m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m(
-    [32m   1023[39m         [33m"[39m[33mAttempted to send an async request with a sync Client instance.[39m[33m"[39m
-    [32m   1024[39m     )
-    [32m   1026[39m [38;5;28;01mwith[39;00m request_context(request=request):
-    [32m-> [39m[32m1027[39m     response = [43mtransport[49m[43m.[49m[43mhandle_request[49m[43m([49m[43mrequest[49m[43m)[49m
-    [32m   1029[39m [38;5;28;01massert[39;00m [38;5;28misinstance[39m(response.stream, SyncByteStream)
-    [32m   1031[39m response.request = request
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpx/_transports/default.py:236[39m, in [36mHTTPTransport.handle_request[39m[34m(self, request)[39m
-    [32m    223[39m req = httpcore.Request(
-    [32m    224[39m     method=request.method,
-    [32m    225[39m     url=httpcore.URL(
-    [32m   (...)[39m[32m    233[39m     extensions=request.extensions,
-    [32m    234[39m )
-    [32m    235[39m [38;5;28;01mwith[39;00m map_httpcore_exceptions():
-    [32m--> [39m[32m236[39m     resp = [38;5;28;43mself[39;49m[43m.[49m[43m_pool[49m[43m.[49m[43mhandle_request[49m[43m([49m[43mreq[49m[43m)[49m
-    [32m    238[39m [38;5;28;01massert[39;00m [38;5;28misinstance[39m(resp.stream, typing.Iterable)
-    [32m    240[39m [38;5;28;01mreturn[39;00m Response(
-    [32m    241[39m     status_code=resp.status,
-    [32m    242[39m     headers=resp.headers,
-    [32m    243[39m     stream=ResponseStream(resp.stream),
-    [32m    244[39m     extensions=resp.extensions,
-    [32m    245[39m )
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py:256[39m, in [36mConnectionPool.handle_request[39m[34m(self, request)[39m
-    [32m    253[39m         closing = [38;5;28mself[39m._assign_requests_to_connections()
-    [32m    255[39m     [38;5;28mself[39m._close_connections(closing)
-    [32m--> [39m[32m256[39m     [38;5;28;01mraise[39;00m exc [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;28;01mNone[39;00m
-    [32m    258[39m [38;5;66;03m# Return the response. Note that in this case we still have to manage[39;00m
-    [32m    259[39m [38;5;66;03m# the point at which the response is closed.[39;00m
-    [32m    260[39m [38;5;28;01massert[39;00m [38;5;28misinstance[39m(response.stream, typing.Iterable)
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/connection_pool.py:236[39m, in [36mConnectionPool.handle_request[39m[34m(self, request)[39m
-    [32m    232[39m connection = pool_request.wait_for_connection(timeout=timeout)
-    [32m    234[39m [38;5;28;01mtry[39;00m:
-    [32m    235[39m     [38;5;66;03m# Send the request on the assigned connection.[39;00m
-    [32m--> [39m[32m236[39m     response = [43mconnection[49m[43m.[49m[43mhandle_request[49m[43m([49m
-    [32m    237[39m [43m        [49m[43mpool_request[49m[43m.[49m[43mrequest[49m
-    [32m    238[39m [43m    [49m[43m)[49m
-    [32m    239[39m [38;5;28;01mexcept[39;00m ConnectionNotAvailable:
-    [32m    240[39m     [38;5;66;03m# In some cases a connection may initially be available to[39;00m
-    [32m    241[39m     [38;5;66;03m# handle a request, but then become unavailable.[39;00m
-    [32m    242[39m     [38;5;66;03m#[39;00m
-    [32m    243[39m     [38;5;66;03m# In this case we clear the connection and try again.[39;00m
-    [32m    244[39m     pool_request.clear_connection()
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/connection.py:103[39m, in [36mHTTPConnection.handle_request[39m[34m(self, request)[39m
-    [32m    100[39m     [38;5;28mself[39m._connect_failed = [38;5;28;01mTrue[39;00m
-    [32m    101[39m     [38;5;28;01mraise[39;00m exc
-    [32m--> [39m[32m103[39m [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43m_connection[49m[43m.[49m[43mhandle_request[49m[43m([49m[43mrequest[49m[43m)[49m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/http11.py:136[39m, in [36mHTTP11Connection.handle_request[39m[34m(self, request)[39m
-    [32m    134[39m     [38;5;28;01mwith[39;00m Trace([33m"[39m[33mresponse_closed[39m[33m"[39m, logger, request) [38;5;28;01mas[39;00m trace:
-    [32m    135[39m         [38;5;28mself[39m._response_closed()
-    [32m--> [39m[32m136[39m [38;5;28;01mraise[39;00m exc
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/http11.py:106[39m, in [36mHTTP11Connection.handle_request[39m[34m(self, request)[39m
-    [32m     95[39m     [38;5;28;01mpass[39;00m
-    [32m     97[39m [38;5;28;01mwith[39;00m Trace(
-    [32m     98[39m     [33m"[39m[33mreceive_response_headers[39m[33m"[39m, logger, request, kwargs
-    [32m     99[39m ) [38;5;28;01mas[39;00m trace:
-    [32m    100[39m     (
-    [32m    101[39m         http_version,
-    [32m    102[39m         status,
-    [32m    103[39m         reason_phrase,
-    [32m    104[39m         headers,
-    [32m    105[39m         trailing_data,
-    [32m--> [39m[32m106[39m     ) = [38;5;28;43mself[39;49m[43m.[49m[43m_receive_response_headers[49m[43m([49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
-    [32m    107[39m     trace.return_value = (
-    [32m    108[39m         http_version,
-    [32m    109[39m         status,
-    [32m    110[39m         reason_phrase,
-    [32m    111[39m         headers,
-    [32m    112[39m     )
-    [32m    114[39m network_stream = [38;5;28mself[39m._network_stream
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/http11.py:177[39m, in [36mHTTP11Connection._receive_response_headers[39m[34m(self, request)[39m
-    [32m    174[39m timeout = timeouts.get([33m"[39m[33mread[39m[33m"[39m, [38;5;28;01mNone[39;00m)
-    [32m    176[39m [38;5;28;01mwhile[39;00m [38;5;28;01mTrue[39;00m:
-    [32m--> [39m[32m177[39m     event = [38;5;28;43mself[39;49m[43m.[49m[43m_receive_event[49m[43m([49m[43mtimeout[49m[43m=[49m[43mtimeout[49m[43m)[49m
-    [32m    178[39m     [38;5;28;01mif[39;00m [38;5;28misinstance[39m(event, h11.Response):
-    [32m    179[39m         [38;5;28;01mbreak[39;00m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_sync/http11.py:217[39m, in [36mHTTP11Connection._receive_event[39m[34m(self, timeout)[39m
-    [32m    214[39m     event = [38;5;28mself[39m._h11_state.next_event()
-    [32m    216[39m [38;5;28;01mif[39;00m event [38;5;129;01mis[39;00m h11.NEED_DATA:
-    [32m--> [39m[32m217[39m     data = [38;5;28;43mself[39;49m[43m.[49m[43m_network_stream[49m[43m.[49m[43mread[49m[43m([49m
-    [32m    218[39m [43m        [49m[38;5;28;43mself[39;49m[43m.[49m[43mREAD_NUM_BYTES[49m[43m,[49m[43m [49m[43mtimeout[49m[43m=[49m[43mtimeout[49m
-    [32m    219[39m [43m    [49m[43m)[49m
-    [32m    221[39m     [38;5;66;03m# If we feed this case through h11 we'll raise an exception like:[39;00m
-    [32m    222[39m     [38;5;66;03m#[39;00m
-    [32m    223[39m     [38;5;66;03m#     httpcore.RemoteProtocolError: can't handle event type[39;00m
-    [32m   (...)[39m[32m    227[39m     [38;5;66;03m# perspective. Instead we handle this case distinctly and treat[39;00m
-    [32m    228[39m     [38;5;66;03m# it as a ConnectError.[39;00m
-    [32m    229[39m     [38;5;28;01mif[39;00m data == [33mb[39m[33m"[39m[33m"[39m [38;5;129;01mand[39;00m [38;5;28mself[39m._h11_state.their_state == h11.SEND_RESPONSE:
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/site-packages/httpcore/_backends/sync.py:128[39m, in [36mSyncStream.read[39m[34m(self, max_bytes, timeout)[39m
-    [32m    126[39m [38;5;28;01mwith[39;00m map_exceptions(exc_map):
-    [32m    127[39m     [38;5;28mself[39m._sock.settimeout(timeout)
-    [32m--> [39m[32m128[39m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43m_sock[49m[43m.[49m[43mrecv[49m[43m([49m[43mmax_bytes[49m[43m)[49m
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/ssl.py:1295[39m, in [36mSSLSocket.recv[39m[34m(self, buflen, flags)[39m
-    [32m   1291[39m     [38;5;28;01mif[39;00m flags != [32m0[39m:
-    [32m   1292[39m         [38;5;28;01mraise[39;00m [38;5;167;01mValueError[39;00m(
-    [32m   1293[39m             [33m"[39m[33mnon-zero flags not allowed in calls to recv() on [39m[38;5;132;01m%s[39;00m[33m"[39m %
-    [32m   1294[39m             [38;5;28mself[39m.[34m__class__[39m)
-    [32m-> [39m[32m1295[39m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43mread[49m[43m([49m[43mbuflen[49m[43m)[49m
-    [32m   1296[39m [38;5;28;01melse[39;00m:
-    [32m   1297[39m     [38;5;28;01mreturn[39;00m [38;5;28msuper[39m().recv(buflen, flags)
-
-    [36mFile [39m[32m~/.conda/envs/era5_sandbox/lib/python3.11/ssl.py:1168[39m, in [36mSSLSocket.read[39m[34m(self, len, buffer)[39m
-    [32m   1166[39m         [38;5;28;01mreturn[39;00m [38;5;28mself[39m._sslobj.read([38;5;28mlen[39m, buffer)
-    [32m   1167[39m     [38;5;28;01melse[39;00m:
-    [32m-> [39m[32m1168[39m         [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43m_sslobj[49m[43m.[49m[43mread[49m[43m([49m[38;5;28;43mlen[39;49m[43m)[49m
-    [32m   1169[39m [38;5;28;01mexcept[39;00m SSLError [38;5;28;01mas[39;00m x:
-    [32m   1170[39m     [38;5;28;01mif[39;00m x.args[[32m0[39m] == SSL_ERROR_EOF [38;5;129;01mand[39;00m [38;5;28mself[39m.suppress_ragged_eofs:
-
-    [31mKeyboardInterrupt[39m: 
-
 With that understanding, we can develop a quick module to do the
 following:
 
@@ -418,249 +170,22 @@ following:
 
 Let’s take an example file to use as a model for LEGO compatibility
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
 ``` python
-ex = gpd.read_parquet(here() / "data" / "testing" / "madagascar_environmental_exposure-era5_healthshed_2m_dewpoint_temperature_2009_6.parquet")
-ex.describe()
+import geopandas as gpd
+import pandas as pd
+import re
+import glob
 ```
 
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-&#10;    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-&#10;    .dataframe thead th {
-        text-align: right;
-    }
-</style>
+</details>
 
-<table class="dataframe" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr style="text-align: right;">
-<th data-quarto-table-cell-role="th"></th>
-<th data-quarto-table-cell-role="th">day_01_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_02_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_03_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_04_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_05_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_06_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_07_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_08_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_09_daily_mean</th>
-<th data-quarto-table-cell-role="th">day_10_daily_mean</th>
-<th data-quarto-table-cell-role="th">...</th>
-<th data-quarto-table-cell-role="th">day_21_daily_max</th>
-<th data-quarto-table-cell-role="th">day_22_daily_max</th>
-<th data-quarto-table-cell-role="th">day_23_daily_max</th>
-<th data-quarto-table-cell-role="th">day_24_daily_max</th>
-<th data-quarto-table-cell-role="th">day_25_daily_max</th>
-<th data-quarto-table-cell-role="th">day_26_daily_max</th>
-<th data-quarto-table-cell-role="th">day_27_daily_max</th>
-<th data-quarto-table-cell-role="th">day_28_daily_max</th>
-<th data-quarto-table-cell-role="th">day_29_daily_max</th>
-<th data-quarto-table-cell-role="th">day_30_daily_max</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-quarto-table-cell-role="th">count</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>...</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-<td>2766.000000</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">mean</td>
-<td>290.101105</td>
-<td>290.251129</td>
-<td>290.299927</td>
-<td>290.669952</td>
-<td>290.294189</td>
-<td>289.835541</td>
-<td>289.162964</td>
-<td>288.179321</td>
-<td>287.109406</td>
-<td>287.835236</td>
-<td>...</td>
-<td>288.465210</td>
-<td>289.768005</td>
-<td>290.134491</td>
-<td>290.183838</td>
-<td>289.658630</td>
-<td>288.893921</td>
-<td>288.319275</td>
-<td>287.971619</td>
-<td>287.961121</td>
-<td>284.683014</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">std</td>
-<td>3.746835</td>
-<td>3.516243</td>
-<td>3.244272</td>
-<td>2.700433</td>
-<td>2.922641</td>
-<td>3.155868</td>
-<td>2.765681</td>
-<td>3.065981</td>
-<td>3.427631</td>
-<td>2.879560</td>
-<td>...</td>
-<td>3.016459</td>
-<td>3.004185</td>
-<td>2.842475</td>
-<td>3.137010</td>
-<td>3.071827</td>
-<td>3.578434</td>
-<td>3.335460</td>
-<td>3.472515</td>
-<td>4.297029</td>
-<td>4.488029</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">min</td>
-<td>282.279327</td>
-<td>283.185089</td>
-<td>283.726196</td>
-<td>284.917725</td>
-<td>284.198273</td>
-<td>282.932312</td>
-<td>283.175507</td>
-<td>281.274048</td>
-<td>279.423431</td>
-<td>282.543793</td>
-<td>...</td>
-<td>281.077148</td>
-<td>282.664795</td>
-<td>283.084229</td>
-<td>283.270264</td>
-<td>283.417969</td>
-<td>282.003174</td>
-<td>280.433594</td>
-<td>281.191406</td>
-<td>280.080566</td>
-<td>277.250977</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">25%</td>
-<td>286.597130</td>
-<td>287.106430</td>
-<td>287.825439</td>
-<td>288.353699</td>
-<td>287.752289</td>
-<td>287.107872</td>
-<td>286.748573</td>
-<td>285.718079</td>
-<td>284.398026</td>
-<td>285.039490</td>
-<td>...</td>
-<td>286.215302</td>
-<td>287.150391</td>
-<td>287.687744</td>
-<td>287.582214</td>
-<td>287.120544</td>
-<td>285.636597</td>
-<td>285.718857</td>
-<td>284.739990</td>
-<td>284.020073</td>
-<td>281.114044</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">50%</td>
-<td>290.789474</td>
-<td>290.788528</td>
-<td>290.232422</td>
-<td>290.638428</td>
-<td>290.559021</td>
-<td>290.241394</td>
-<td>289.157364</td>
-<td>288.221802</td>
-<td>287.098816</td>
-<td>288.132477</td>
-<td>...</td>
-<td>288.559937</td>
-<td>290.283844</td>
-<td>290.668625</td>
-<td>290.602966</td>
-<td>289.662033</td>
-<td>289.353104</td>
-<td>287.772232</td>
-<td>288.051758</td>
-<td>288.368774</td>
-<td>283.901611</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">75%</td>
-<td>293.350601</td>
-<td>293.341553</td>
-<td>293.279350</td>
-<td>293.184204</td>
-<td>292.985542</td>
-<td>292.658203</td>
-<td>291.717346</td>
-<td>290.950699</td>
-<td>290.250725</td>
-<td>290.077141</td>
-<td>...</td>
-<td>291.194336</td>
-<td>292.494934</td>
-<td>292.651917</td>
-<td>293.070877</td>
-<td>292.559906</td>
-<td>292.236084</td>
-<td>291.029053</td>
-<td>290.982109</td>
-<td>291.481934</td>
-<td>288.649673</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">max</td>
-<td>295.952759</td>
-<td>296.164429</td>
-<td>296.283569</td>
-<td>296.434967</td>
-<td>296.162384</td>
-<td>296.076172</td>
-<td>295.498718</td>
-<td>294.170776</td>
-<td>293.808472</td>
-<td>293.877411</td>
-<td>...</td>
-<td>294.056519</td>
-<td>294.639008</td>
-<td>295.159424</td>
-<td>295.899170</td>
-<td>295.123169</td>
-<td>295.179199</td>
-<td>295.344360</td>
-<td>294.466919</td>
-<td>295.652588</td>
-<td>294.524658</td>
-</tr>
-</tbody>
-</table>
-
-<p>8 rows × 90 columns</p>
-</div>
+``` python
+ex = gpd.read_parquet(here() / "bld/2009_06_madagascar_day_swvl1_mean.parquet")
+ex.describe()
+```
 
 We know that the LEGO data model should look like this:
 
@@ -684,7 +209,7 @@ the library:
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/publish.py#L28"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/publish.py#L32"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### gather_exposure_geodataframes
@@ -732,117 +257,74 @@ them*
 </tbody>
 </table>
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+def gather_exposure_geodataframes(
+    glob_string: str,   # string for the path to search for the pertinent files
+    polygon_id: str,    # the string signifying the healthshed ID of the polygon
+    exposure: str       # the exposure name
+    )-> list:
+    "Read in a list of geo dataframes from the same time frame and merge them"
+
+    # first get the initial one so we have the polygon ID and geometry
+    frames = glob.glob(str(glob_string))
+    initial_gdf=gpd.read_parquet(frames[0])
+    merged_df = []
+  
+    for f in tqdm(frames, desc="Processing files"):
+        # read in as a regular dataframe by ignoring geometry
+        df = gpd.read_parquet(f).drop(["geometry"], axis=1) 
+        
+        # get the year and month
+        # Extract year and month
+        search_str = rf'_{exposure}_(\d{{4}})_(\d{{1,2}})\.parquet$'
+        match = re.search(search_str, f)
+
+        if match:
+            year = int(match.group(1))
+            month = int(match.group(2))
+            #print(f"Year: {year}, Month: {month}")
+        else:
+            raise ValueError(f"Could not extract year and month from filename: {search_str} {f}")
+            
+        df['exposure'] = exposure
+        df['month'] = month
+        df['year'] = year
+
+        # Step 1: Melt all day columns (leave 'month' and 'year' as identifiers)
+        df_long = df.melt(id_vars=[polygon_id, "exposure", "year", "month"], var_name="day_stat", value_name="value")
+
+        # Step 2: Extract day and stat type from column names
+        # Example column: "day_01_daily_mean"
+        df_long[["day", "stat"]] = df_long["day_stat"].str.extract(r"day_(\d{2})_daily_(mean|max|min|total)")
+
+        # Optional: convert 'day' and month to integer
+        df_long["day"] = df_long["day"].astype(int)
+        df_long["month"] = df_long["month"].astype(int)
+
+        # Drop the original combined column
+        df_long = df_long.drop(columns="day_stat")
+
+        # Reorder columns
+        df_long = df_long[[polygon_id, "exposure", "year", "month", "day", "stat", "value"]]
+
+        df_long = df_long.sort_values(by=["year", "month", "day"])
+        df_clean = df_long.pivot(index=[polygon_id, "exposure", "year", "month", "day"], columns="stat", values="value").reset_index()
+        merged_df.append(df_clean)
+
+    return [pd.concat(merged_df).reset_index(drop=True), initial_gdf[[polygon_id, "geometry"]]]
+```
+
+</details>
+
 ``` python
 frames = here() / "data" / "testing" / "*madagascar*"
 
 merged = gather_exposure_geodataframes(frames, "fs_uid", "2m_dewpoint_temperature")
 merged[0].describe()
 ```
-
-    Processing files:   0%|          | 0/3 [00:00<?, ?it/s]Processing files: 100%|██████████| 3/3 [00:01<00:00,  1.53it/s]
-
-<div>
-<style scoped>
-    .dataframe tbody tr th:only-of-type {
-        vertical-align: middle;
-    }
-&#10;    .dataframe tbody tr th {
-        vertical-align: top;
-    }
-&#10;    .dataframe thead th {
-        text-align: right;
-    }
-</style>
-
-<table class="dataframe" data-quarto-postprocess="true" data-border="1">
-<thead>
-<tr style="text-align: right;">
-<th data-quarto-table-cell-role="th">stat</th>
-<th data-quarto-table-cell-role="th">year</th>
-<th data-quarto-table-cell-role="th">month</th>
-<th data-quarto-table-cell-role="th">day</th>
-<th data-quarto-table-cell-role="th">max</th>
-<th data-quarto-table-cell-role="th">mean</th>
-<th data-quarto-table-cell-role="th">min</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td data-quarto-table-cell-role="th">count</td>
-<td>254472.0</td>
-<td>254472.000000</td>
-<td>254472.000000</td>
-<td>254472.000000</td>
-<td>254472.000000</td>
-<td>254472.000000</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">mean</td>
-<td>2009.0</td>
-<td>5.663043</td>
-<td>15.836957</td>
-<td>292.115845</td>
-<td>290.383850</td>
-<td>288.571930</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">std</td>
-<td>0.0</td>
-<td>3.701585</td>
-<td>8.854244</td>
-<td>3.794787</td>
-<td>4.128042</td>
-<td>4.721353</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">min</td>
-<td>2009.0</td>
-<td>1.000000</td>
-<td>1.000000</td>
-<td>277.250977</td>
-<td>273.298462</td>
-<td>268.284668</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">25%</td>
-<td>2009.0</td>
-<td>1.000000</td>
-<td>8.000000</td>
-<td>289.436615</td>
-<td>287.414513</td>
-<td>285.107178</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">50%</td>
-<td>2009.0</td>
-<td>6.000000</td>
-<td>16.000000</td>
-<td>292.382812</td>
-<td>290.696609</td>
-<td>288.960571</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">75%</td>
-<td>2009.0</td>
-<td>10.000000</td>
-<td>23.250000</td>
-<td>294.812210</td>
-<td>293.349281</td>
-<td>292.088867</td>
-</tr>
-<tr>
-<td data-quarto-table-cell-role="th">max</td>
-<td>2009.0</td>
-<td>10.000000</td>
-<td>31.000000</td>
-<td>300.528076</td>
-<td>299.109772</td>
-<td>298.311462</td>
-</tr>
-</tbody>
-</table>
-
-</div>
 
 This returns one file with all of the geometries and one file with the
 statistics and exposures.
@@ -859,6 +341,17 @@ result = [x for x in results if "ERA5" in x['name']][0]
 era5_pid = result['global_id']
 result
 ```
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+from pyDataverse.models import Datafile
+import os
+import pathlib
+```
+
+</details>
 
 We’ll upload directly from file. In the case of ERA5 vs. LEGO, we store
 the file on disk as LEGO hierarchy, but to upload it to dataverse using
@@ -896,6 +389,17 @@ gather data for.
 We should get some functionality to gather the groups of these files
 automatically, based on the hydra config:
 
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+from hydra import initialize, compose
+from omegaconf import OmegaConf, DictConfig
+from tqdm import tqdm
+```
+
+</details>
+
 ``` python
 target_dir = here() / "data" / "intermediate"
 
@@ -916,9 +420,92 @@ cfg.development_mode = False
 ------------------------------------------------------------------------
 
 <a
-href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L322"
+href="https://github.com/TinasheMTapera/era5_sandbox/blob/main/era5_sandbox/aggregate.py#L302"
 target="_blank" style="float:right; font-size:smaller">source</a>
 
 ### main
 
 >  main (cfg:omegaconf.dictconfig.DictConfig)
+
+<details open class="code-fold">
+<summary>Exported source</summary>
+
+``` python
+@hydra.main(version_base=None, config_path="../../conf", config_name="config")
+def main(cfg: DictConfig) -> None:
+
+    variables_dict = {
+        "2m_temperature": "t2m",
+        "2m_dewpoint_temperature": "d2m",
+        "volumetric_soil_water_layer_1": "swvl1",
+        "total_precipitation": "tp"
+    }
+
+    print(OmegaConf.to_yaml(cfg))
+
+    #prep dataverse
+    api_token_file = here() / "sandbox/dataverse_api_key.yml"
+    with open(api_token_file, "r") as f:
+        apiconfig = yaml.load(f, Loader=yaml.BaseLoader)
+    api = NativeApi(apiconfig['base_url'], apiconfig['api_token'])
+    search_api = SearchApi(apiconfig['base_url'], apiconfig['api_token'])
+    resp = search_api.search("ERA5", data_type="dataset")
+
+    results = resp.json()['data']['items']
+
+    result = [x for x in results if "ERA5" in x['name']][0]
+    era5_pid = result['global_id']
+
+    for geography in cfg.geographies:
+        for year in cfg.query['year']:
+            for variable, v in variables_dict.items():
+                
+                print(f"Processing {geography} for {variable} in {year}")
+                glob_string = here() / "data" / "intermediate" / f"*{geography}*{variable}*{year}*"
+                print(f"Glob: {glob_string}")
+                polygon_id = cfg.geographies[geography]['unique_id']
+                print(f"polygon_id: {polygon_id}")
+                merged = gather_exposure_geodataframes(glob_string, polygon_id, variable)
+                print(merged[0].head())
+                print(merged[1].head())
+
+                output_dir = here() / "data" / "output" 
+                
+                f_out = f"environmental/exposures_era5/healthshed_daily/{geography}_{v}_{year}.parquet"
+                os.makedirs(output_dir / os.path.dirname(f_out), exist_ok=True)
+                output_path = output_dir / f_out
+
+                print(f"Writing to {output_path}")
+                merged[0].to_parquet(output_path, index=False)
+                
+
+                print(f"Uploading {f_out.replace('/', '-')} to Dataverse...")
+                # upload to dataverse
+                datafile = Datafile()
+                datafile.set({
+                    "pid": era5_pid,
+                    "filename": str(output_path),
+                    "label": f_out.replace("/", "-")
+                })
+
+                resp = api.upload_datafile(era5_pid, output_path, datafile.json())
+                assert resp.json()['status'] == "OK", f"Failed to upload datafile: {resp.text}"
+        
+        # also save the geometry for the region 
+        merged[1].to_parquet(output_path.parent / f"{geography}_geometry.parquet", index=False)
+
+        # and upload it to dataverse
+        datafile = Datafile()
+        datafile.set({
+            "pid": era5_pid,
+            "filename": str(output_path.parent / f"{geography}_geometry.parquet"),
+            "label": f"{geography}_geometry.parquet"
+        })
+
+        resp = api.upload_datafile(era5_pid, output_path.parent / f"{geography}_geometry.parquet", datafile.json())
+        assert resp.json()['status'] == "OK", f"Failed to upload geometry datafile: {resp.text}"
+
+    print("All files processed and uploaded successfully.")
+```
+
+</details>

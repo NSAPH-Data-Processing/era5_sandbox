@@ -1,7 +1,5 @@
 ---
 title: "Download: `download` Module as a `pytask` Task"
-execute:
-  freeze: auto
 engine: jupyter
 ---
 

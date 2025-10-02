@@ -6,9 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="description" content="Sandbox environment for era5 development">
 
-<title>era5_sandbox</title>
+<title>The ERA5 Spatial Aggregation Pipeline – era5_sandbox</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -58,7 +57,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script><script src="site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="site_libs/quarto-nav/headroom.min.js"></script>
 <script src="site_libs/clipboard/clipboard.min.js"></script>
 <script src="site_libs/quarto-search/autocomplete.umd.js"></script>
@@ -101,15 +100,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     "search-label": "Search"
   }
 }</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha512-c3Nl8+7g4LMSTdrm621y7kf9v3SDPnhxLNhcjFJbKECVnmZHTdo+IRO05sNLTH/D3vA6u1X32ehoLC7WFVdheg==" crossorigin="anonymous"></script>
+
+<script type="application/javascript">define('jquery', [],function() {return window.jQuery;})</script>
 
 
 <link rel="stylesheet" href="styles.css">
-<meta property="og:title" content="era5_sandbox">
+<meta property="og:title" content="The ERA5 Spatial Aggregation Pipeline – era5_sandbox">
 <meta property="og:description" content="Sandbox environment for era5 development">
+<meta property="og:image" content="https://TinasheMTapera.github.io/era5_sandbox/index_files/figure-html/cell-4-output-1.png">
 <meta property="og:site_name" content="era5_sandbox">
-<meta name="twitter:title" content="era5_sandbox">
+<meta property="og:image:height" content="1280">
+<meta property="og:image:width" content="1794">
+<meta name="twitter:title" content="The ERA5 Spatial Aggregation Pipeline – era5_sandbox">
 <meta name="twitter:description" content="Sandbox environment for era5 development">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://TinasheMTapera.github.io/era5_sandbox/index_files/figure-html/cell-4-output-1.png">
+<meta name="twitter:image-height" content="1280">
+<meta name="twitter:image-width" content="1794">
+<meta name="twitter:card" content="summary_large_image">
 </head>
 
 <body class="nav-sidebar floating nav-fixed">
@@ -133,7 +141,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">era5_sandbox</a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html">The ERA5 Spatial Aggregation Pipeline</a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
     </div>
@@ -148,7 +156,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./index.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text">era5_sandbox</span></a>
+ <span class="menu-text">The ERA5 Spatial Aggregation Pipeline</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -157,26 +165,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./core.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">core</span></a>
+  <a href="./00_core.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Core Module: Internal functions and testing</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./download_raw_data.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">download</span></a>
+  <a href="./01_download_raw_data.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Download Module: Downloading Raw Data from CDSAPI</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./02_aggregate.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">aggregate</span></a>
+ <span class="menu-text">Aggregate Module: Spatial Aggregation to Healthsheds</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./03_publish.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">publish</span></a>
+ <span class="menu-text">Publish: Gather the Aggregated Data and Publish to DataVerse</span></a>
   </div>
 </li>
         <li class="sidebar-item sidebar-item-section">
@@ -185,32 +193,36 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_demo.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">task_data_preparation</span></a>
+  <a href="./20_pytask_config.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><code>pytask</code> Config: Defining the Pipeline Internals in <code>pytask</code></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_config.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">config</span></a>
+  <a href="./20_pytask_logger.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Logging: A simple logger to inject into <code>pytask</code> jobs</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./pytask_logger.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">logger</span></a>
-  </div>
-</li>
-        <li class="sidebar-item">
-  <div class="sidebar-item-container"> 
-  <a href="./pytask_download.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">task_download</span></a>
+  <a href="./21_pytask_download.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Download: <code>download</code> Module as a <code>pytask</code> Task</span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="./22_pytask_aggregate.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Aggregation Task</span></a>
+ <span class="menu-text">Aggregation: The <code>aggregation</code> Module as a <code>pytask</code> Task</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <span class="sidebar-item-text sidebar-link text-start">
+ <span class="menu-text">PyTask Demo</span></span>
+  </li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./10_pytask_demo.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">Demo: How to Create Pipelines with <code>pytask</code></span></a>
   </div>
 </li>
     </ul>
@@ -223,32 +235,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#developer-guide" id="toc-developer-guide" class="nav-link active" data-scroll-target="#developer-guide">Developer Guide</a>
+  <li><a href="#era5_sandbox" id="toc-era5_sandbox" class="nav-link active" data-scroll-target="#era5_sandbox">era5_sandbox</a></li>
+  <li><a href="#developer-guide" id="toc-developer-guide" class="nav-link" data-scroll-target="#developer-guide">Developer Guide</a>
   <ul class="collapse">
   <li><a href="#install-era5_sandbox-in-development-mode" id="toc-install-era5_sandbox-in-development-mode" class="nav-link" data-scroll-target="#install-era5_sandbox-in-development-mode">Install era5_sandbox in Development mode</a></li>
+  <li><a href="#how-to-run-the-pipeline" id="toc-how-to-run-the-pipeline" class="nav-link" data-scroll-target="#how-to-run-the-pipeline">How to Run the Pipeline</a></li>
+  <li><a href="#what-does-the-pipeline-produce" id="toc-what-does-the-pipeline-produce" class="nav-link" data-scroll-target="#what-does-the-pipeline-produce">What Does the Pipeline Produce?</a></li>
   </ul></li>
-  <li><a href="#usage" id="toc-usage" class="nav-link" data-scroll-target="#usage">Usage</a>
-  <ul class="collapse">
-  <li><a href="#installation" id="toc-installation" class="nav-link" data-scroll-target="#installation">Installation</a></li>
-  <li><a href="#documentation" id="toc-documentation" class="nav-link" data-scroll-target="#documentation">Documentation</a></li>
-  </ul></li>
-  <li><a href="#how-to-use" id="toc-how-to-use" class="nav-link" data-scroll-target="#how-to-use">How to use</a></li>
   </ul>
-<div class="toc-actions"><ul><li><a href="https://github.com/TinasheMTapera/era5_sandbox/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.html.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
+<div class="toc-actions"><ul><li><a href="https://github.com/TinasheMTapera/era5_sandbox/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="index.md"><i class="bi bi-file-code"></i>CommonMark</a></li></ul></div></nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">era5_sandbox</h1>
+<h1 class="title">The ERA5 Spatial Aggregation Pipeline</h1>
 </div>
 
-<div>
-  <div class="description">
-    Sandbox environment for era5 development
-  </div>
-</div>
 
 
 <div class="quarto-title-meta">
@@ -264,14 +268,26 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
-<p>Here we are developing functions and code for the Madagascar ERA5 dataset project. The goal is for exposure data to be made available at the daily resolution when possible. Finer resolutions shouldn’t ever be needed for our purposes, and it should then be relatively easy to aggregate at coarser resolutions, such as weekly or monthly.</p>
+<div id="cell-2" class="cell" data-hide="null">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.core <span class="im">import</span> <span class="op">*</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="era5_sandbox" class="level2">
+<h2 class="anchored" data-anchor-id="era5_sandbox">era5_sandbox</h2>
+<blockquote class="blockquote">
+<p>Sandbox environment for era5 development</p>
+</blockquote>
+<p>This package documents the development and implementation of functions and code for the Madagascar ERA5 dataset project. The goal is for exposure data to be made available at the daily resolution when possible. Finer resolutions shouldn’t ever be needed for our purposes, and it should then be relatively easy to aggregate at coarser resolutions, such as weekly or monthly. Additionally, we’ve extended this work to Nepal as well.</p>
 <p>Variables should generally be made available from 2010 onward, as that’s where our clinic data starts.</p>
 <p>All data are ideally made available at the “healthshed” geographical level. Healthsheds are defined as geographical areas where people who live all go to the same clinic. There are a total of ~2700 public clinics in Madagascar, hence ~2700 healthsheds, with each healthshed containing ~10000 people on average.</p>
 <p>Preliminary list of environmental variables</p>
 <ul class="task-list">
-<li><p><label><input type="checkbox">2-m air temperature from ERA5: daily min, max, mean</label></p></li>
-<li><p><label><input type="checkbox">2-m air dew point temperature from ERA5: daily min, max, mean</label></p></li>
-<li><p><label><input type="checkbox">Precipitation: daily total (ERA5)</label></p></li>
+<li><p><label><input type="checkbox" checked="">2-m air temperature from ERA5: daily min, max, mean</label></p></li>
+<li><p><label><input type="checkbox" checked="">2-m air dew point temperature from ERA5: daily min, max, mean</label></p></li>
+<li><p><label><input type="checkbox" checked="">Precipitation: daily total (ERA5)</label></p></li>
+<li><p><label><input type="checkbox" checked="">Soil moisture: daily average (ERA5)</label></p></li>
+</ul>
+<p>Variables from other sources:</p>
+<ul class="task-list">
 <li><p><label><input type="checkbox">Sea surface temperature: daily average and maximum in the nearest neighbor for each healthshed.</label></p></li>
 <li><p><label><input type="checkbox">Precipitation: daily total (CHIRPS)</label></p></li>
 <li><p><label><input type="checkbox">Chlorophyll-A (Giacomo)</label></p></li>
@@ -283,76 +299,895 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li><p><label><input type="checkbox">Linking/segmenting healthsheds into climate zones and other</label></p></li>
 <li><p><label><input type="checkbox">Relative humidity: daily average (lower priority)</label></p></li>
 </ul>
+<p>Those from the ERA5 dataset will be housed here, but we may likely develop a separate repository for the other datasets.</p>
+</section>
 <section id="developer-guide" class="level2">
 <h2 class="anchored" data-anchor-id="developer-guide">Developer Guide</h2>
-<p>If you are new to using <code>nbdev</code> here are some useful pointers to get you started.</p>
+<p>This package is built and maintained with <code>nbdev</code>. If you are new to using <code>nbdev</code> here are some useful pointers to get you started.</p>
 <section id="install-era5_sandbox-in-development-mode" class="level3">
 <h3 class="anchored" data-anchor-id="install-era5_sandbox-in-development-mode">Install era5_sandbox in Development mode</h3>
-<div class="sourceCode" id="cb1"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure era5_sandbox package is installed in development mode</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> pip install <span class="at">-e</span> .</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># To make changes, go to the "notes" directory and edit the notebooks as necessary.</span></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Each notebook refers to a module in the era5_sandbox package. Cells are exported to the module</span></span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># when the notebook is saved and you run the following command:</span></span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nbdev_export</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># make sure era5_sandbox package is installed in development mode</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> pip install <span class="at">-e</span> .</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<p>To make changes, go to the “notes” directory and edit the notebooks as necessary. Each notebook refers to a module in the era5_sandbox package. Cells are exported to the module when the notebook is saved and you run the following command:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nbdev_export</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <p>For e.g., to change functionality of the <a href="https://TinasheMTapera.github.io/era5_sandbox/core.html#testapi"><code>testAPI()</code></a> function in the testAPI Hydra rule, you would edit the <a href="https://TinasheMTapera.github.io/era5_sandbox/core.html#testapi"><code>testAPI</code></a> notebook in the <code>notes</code> directory <code>notes/testAPI.ipynb</code>, and then save that notebook and run <code>nbdev_export</code> to update the <code>core</code> module in the package.</p>
 </section>
+<section id="how-to-run-the-pipeline" class="level3">
+<h3 class="anchored" data-anchor-id="how-to-run-the-pipeline">How to Run the Pipeline</h3>
+<p>The pipeline downloads ERA5 variables for a given date range and geographical bounding box. You can learn how each of these steps was by following the notebooks in <code>notes</code> in numerical order.</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>The pipeline has two implementations: one using <code>snakemake</code> and <code>hydra</code>, and another using <code>pytask</code>. The <code>pytask</code> implementation is the more recent one, and is recommended for future use. The <code>snakemake</code> implementation is left here for reference to legacy code.</p>
+</div>
+</div>
+<section id="using-pytask" class="level4">
+<h4 class="anchored" data-anchor-id="using-pytask">Using <code>pytask</code></h4>
+<p>To run the pipeline, the <code>pytask</code> config at <code>note/20_pytask_config.qmd</code> should be reviewed and updated if necessary. The pipeline can then be run with the following command:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> sbatch pytask.sbatch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
-<section id="usage" class="level2">
-<h2 class="anchored" data-anchor-id="usage">Usage</h2>
-<section id="installation" class="level3">
-<h3 class="anchored" data-anchor-id="installation">Installation</h3>
-<p>Install latest from the GitHub <a href="https://github.com/NSAPH-Data-Processing/era5_sandbox">repository</a>:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> pip install git+https://github.com/NSAPH-Data-Processing/era5_sandbox</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>or clone and install in development mode:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> git clone https://github.com/NSAPH-Data-Processing/era5_sandbox</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> pip install <span class="at">-e</span> .</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</section>
-<section id="documentation" class="level3">
-<h3 class="anchored" data-anchor-id="documentation">Documentation</h3>
-<p>🚧Documentation is in development 🚧</p>
-</section>
-</section>
-<section id="how-to-use" class="level2">
-<h2 class="anchored" data-anchor-id="how-to-use">How to use</h2>
-<p>The pipeline currently downloads ERA5 temperature and dew point temperature data for a given date range and geographical bounding box. You can learn each of these steps by following the notebooks in <code>notes</code> in numerical order.</p>
+<section id="using-snakemake-and-hydra" class="level4">
+<h4 class="anchored" data-anchor-id="using-snakemake-and-hydra">Using <code>snakemake</code> and <code>hydra</code></h4>
 <p>To run the pipeline, the config at <code>config/config.yaml</code> should be updated with the desired date range and geographical bounding box. The pipeline can then be run with the following command:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> snakemake.sbatch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<p>You can investigate the downloaded raw data with python, eg.:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cartopy.crs <span class="im">as</span> ccrs</span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cartopy.feature <span class="im">as</span> cfeature</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">### the path to any of the downloaded files</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>file_path <span class="op">=</span> <span class="st">"/n/dominici_lab/lab/data_processing/csph-era5_sandbox/data/input/2010_01.nc"</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>data <span class="op">=</span> xr.open_dataset(file_path)</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>temperature <span class="op">=</span> data[<span class="st">"t2m"</span>]</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Select a specific time step</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>temperature_at_time <span class="op">=</span> temperature.isel(valid_time<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the data on a map</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plt.axes(projection<span class="op">=</span>ccrs.PlateCarree())</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>temperature_at_time.plot(ax<span class="op">=</span>ax, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, transform<span class="op">=</span>ccrs.PlateCarree(), cbar_kwargs<span class="op">=</span>{<span class="st">"label"</span>: <span class="st">"Temperature (K)"</span>})</span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>ax.coastlines()</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>ax.add_feature(cfeature.BORDERS, linestyle<span class="op">=</span><span class="st">":"</span>)</span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Temperature at Time Step 0"</span>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div id="cell-14" class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span><span class="op">+</span><span class="dv">1</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode sh code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">sbatch</span> snakemake.sbatch</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
+</section>
+<section id="what-does-the-pipeline-produce" class="level3">
+<h3 class="anchored" data-anchor-id="what-does-the-pipeline-produce">What Does the Pipeline Produce?</h3>
+<p>Using <code>pytask</code>’s data catalog, you can investigate the downloaded raw data with python, eg.:</p>
+<div id="cell-4" class="cell" data-exec_doc="null">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> xarray <span class="im">as</span> xr</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.config <span class="im">import</span> data_catalog</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.core <span class="im">import</span> ClimateDataFileHandler</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>ex_nc <span class="op">=</span> <span class="bu">list</span>(data_catalog[<span class="st">'download'</span>][<span class="st">'outputs'</span>]._entries).pop()</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>ex_nc_path <span class="op">=</span> data_catalog[<span class="st">'download'</span>][<span class="st">'outputs'</span>][ex_nc].load()</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> ClimateDataFileHandler(ex_nc_path) <span class="im">as</span> handler:</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    ds <span class="op">=</span> xr.open_dataset(handler.get_dataset(<span class="st">"instant"</span>))</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>ds</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display">
-<pre><code>2</code></pre>
+<div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<defs>
+<symbol id="icon-database" viewbox="0 0 32 32">
+<path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
+<path d="M16 17c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+<path d="M16 26c-8.837 0-16-2.239-16-5v6c0 2.761 7.163 5 16 5s16-2.239 16-5v-6c0 2.761-7.163 5-16 5z"></path>
+</symbol>
+<symbol id="icon-file-text2" viewbox="0 0 32 32">
+<path d="M28.681 7.159c-0.694-0.947-1.662-2.053-2.724-3.116s-2.169-2.030-3.116-2.724c-1.612-1.182-2.393-1.319-2.841-1.319h-15.5c-1.378 0-2.5 1.121-2.5 2.5v27c0 1.378 1.122 2.5 2.5 2.5h23c1.378 0 2.5-1.122 2.5-2.5v-19.5c0-0.448-0.137-1.23-1.319-2.841zM24.543 5.457c0.959 0.959 1.712 1.825 2.268 2.543h-4.811v-4.811c0.718 0.556 1.584 1.309 2.543 2.268zM28 29.5c0 0.271-0.229 0.5-0.5 0.5h-23c-0.271 0-0.5-0.229-0.5-0.5v-27c0-0.271 0.229-0.5 0.5-0.5 0 0 15.499-0 15.5 0v7c0 0.552 0.448 1 1 1h7v19.5z"></path>
+<path d="M23 26h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 22h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+<path d="M23 18h-14c-0.552 0-1-0.448-1-1s0.448-1 1-1h14c0.552 0 1 0.448 1 1s-0.448 1-1 1z"></path>
+</symbol>
+</defs>
+</svg>
+<style>/* CSS stylesheet for displaying xarray objects in jupyterlab.
+ *
+ */
+
+:root {
+  --xr-font-color0: var(--jp-content-font-color0, rgba(0, 0, 0, 1));
+  --xr-font-color2: var(--jp-content-font-color2, rgba(0, 0, 0, 0.54));
+  --xr-font-color3: var(--jp-content-font-color3, rgba(0, 0, 0, 0.38));
+  --xr-border-color: var(--jp-border-color2, #e0e0e0);
+  --xr-disabled-color: var(--jp-layout-color3, #bdbdbd);
+  --xr-background-color: var(--jp-layout-color0, white);
+  --xr-background-color-row-even: var(--jp-layout-color1, white);
+  --xr-background-color-row-odd: var(--jp-layout-color2, #eeeeee);
+}
+
+html[theme="dark"],
+html[data-theme="dark"],
+body[data-theme="dark"],
+body.vscode-dark {
+  --xr-font-color0: rgba(255, 255, 255, 1);
+  --xr-font-color2: rgba(255, 255, 255, 0.54);
+  --xr-font-color3: rgba(255, 255, 255, 0.38);
+  --xr-border-color: #1f1f1f;
+  --xr-disabled-color: #515151;
+  --xr-background-color: #111111;
+  --xr-background-color-row-even: #111111;
+  --xr-background-color-row-odd: #313131;
+}
+
+.xr-wrap {
+  display: block !important;
+  min-width: 300px;
+  max-width: 700px;
+}
+
+.xr-text-repr-fallback {
+  /* fallback to plain text repr when CSS is not injected (untrusted notebook) */
+  display: none;
+}
+
+.xr-header {
+  padding-top: 6px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: solid 1px var(--xr-border-color);
+}
+
+.xr-header > div,
+.xr-header > ul {
+  display: inline;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.xr-obj-type,
+.xr-array-name {
+  margin-left: 2px;
+  margin-right: 10px;
+}
+
+.xr-obj-type {
+  color: var(--xr-font-color2);
+}
+
+.xr-sections {
+  padding-left: 0 !important;
+  display: grid;
+  grid-template-columns: 150px auto auto 1fr 0 20px 0 20px;
+}
+
+.xr-section-item {
+  display: contents;
+}
+
+.xr-section-item input {
+  display: inline-block;
+  opacity: 0;
+  height: 0;
+}
+
+.xr-section-item input + label {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-item input:enabled + label {
+  cursor: pointer;
+  color: var(--xr-font-color2);
+}
+
+.xr-section-item input:focus + label {
+  border: 2px solid var(--xr-font-color0);
+}
+
+.xr-section-item input:enabled + label:hover {
+  color: var(--xr-font-color0);
+}
+
+.xr-section-summary {
+  grid-column: 1;
+  color: var(--xr-font-color2);
+  font-weight: 500;
+}
+
+.xr-section-summary > span {
+  display: inline-block;
+  padding-left: 0.5em;
+}
+
+.xr-section-summary-in:disabled + label {
+  color: var(--xr-font-color2);
+}
+
+.xr-section-summary-in + label:before {
+  display: inline-block;
+  content: "►";
+  font-size: 11px;
+  width: 15px;
+  text-align: center;
+}
+
+.xr-section-summary-in:disabled + label:before {
+  color: var(--xr-disabled-color);
+}
+
+.xr-section-summary-in:checked + label:before {
+  content: "▼";
+}
+
+.xr-section-summary-in:checked + label > span {
+  display: none;
+}
+
+.xr-section-summary,
+.xr-section-inline-details {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.xr-section-inline-details {
+  grid-column: 2 / -1;
+}
+
+.xr-section-details {
+  display: none;
+  grid-column: 1 / -1;
+  margin-bottom: 5px;
+}
+
+.xr-section-summary-in:checked ~ .xr-section-details {
+  display: contents;
+}
+
+.xr-array-wrap {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 20px auto;
+}
+
+.xr-array-wrap > label {
+  grid-column: 1;
+  vertical-align: top;
+}
+
+.xr-preview {
+  color: var(--xr-font-color3);
+}
+
+.xr-array-preview,
+.xr-array-data {
+  padding: 0 5px !important;
+  grid-column: 2;
+}
+
+.xr-array-data,
+.xr-array-in:checked ~ .xr-array-preview {
+  display: none;
+}
+
+.xr-array-in:checked ~ .xr-array-data,
+.xr-array-preview {
+  display: inline-block;
+}
+
+.xr-dim-list {
+  display: inline-block !important;
+  list-style: none;
+  padding: 0 !important;
+  margin: 0;
+}
+
+.xr-dim-list li {
+  display: inline-block;
+  padding: 0;
+  margin: 0;
+}
+
+.xr-dim-list:before {
+  content: "(";
+}
+
+.xr-dim-list:after {
+  content: ")";
+}
+
+.xr-dim-list li:not(:last-child):after {
+  content: ",";
+  padding-right: 5px;
+}
+
+.xr-has-index {
+  font-weight: bold;
+}
+
+.xr-var-list,
+.xr-var-item {
+  display: contents;
+}
+
+.xr-var-item > div,
+.xr-var-item label,
+.xr-var-item > .xr-var-name span {
+  background-color: var(--xr-background-color-row-even);
+  margin-bottom: 0;
+}
+
+.xr-var-item > .xr-var-name:hover span {
+  padding-right: 5px;
+}
+
+.xr-var-list > li:nth-child(odd) > div,
+.xr-var-list > li:nth-child(odd) > label,
+.xr-var-list > li:nth-child(odd) > .xr-var-name span {
+  background-color: var(--xr-background-color-row-odd);
+}
+
+.xr-var-name {
+  grid-column: 1;
+}
+
+.xr-var-dims {
+  grid-column: 2;
+}
+
+.xr-var-dtype {
+  grid-column: 3;
+  text-align: right;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-preview {
+  grid-column: 4;
+}
+
+.xr-index-preview {
+  grid-column: 2 / 5;
+  color: var(--xr-font-color2);
+}
+
+.xr-var-name,
+.xr-var-dims,
+.xr-var-dtype,
+.xr-preview,
+.xr-attrs dt {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+
+.xr-var-name:hover,
+.xr-var-dims:hover,
+.xr-var-dtype:hover,
+.xr-attrs dt:hover {
+  overflow: visible;
+  width: auto;
+  z-index: 1;
+}
+
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  display: none;
+  background-color: var(--xr-background-color) !important;
+  padding-bottom: 5px !important;
+}
+
+.xr-var-attrs-in:checked ~ .xr-var-attrs,
+.xr-var-data-in:checked ~ .xr-var-data,
+.xr-index-data-in:checked ~ .xr-index-data {
+  display: block;
+}
+
+.xr-var-data > table {
+  float: right;
+}
+
+.xr-var-name span,
+.xr-var-data,
+.xr-index-name div,
+.xr-index-data,
+.xr-attrs {
+  padding-left: 25px !important;
+}
+
+.xr-attrs,
+.xr-var-attrs,
+.xr-var-data,
+.xr-index-data {
+  grid-column: 1 / -1;
+}
+
+dl.xr-attrs {
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 125px auto;
+}
+
+.xr-attrs dt,
+.xr-attrs dd {
+  padding: 0;
+  margin: 0;
+  float: left;
+  padding-right: 10px;
+  width: auto;
+}
+
+.xr-attrs dt {
+  font-weight: normal;
+  grid-column: 1;
+}
+
+.xr-attrs dt:hover span {
+  display: inline-block;
+  background: var(--xr-background-color);
+  padding-right: 10px;
+}
+
+.xr-attrs dd {
+  grid-column: 2;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.xr-icon-database,
+.xr-icon-file-text2,
+.xr-no-icon {
+  display: inline-block;
+  vertical-align: middle;
+  width: 1em;
+  height: 1.5em !important;
+  stroke-width: 0;
+  stroke: currentColor;
+  fill: currentColor;
+}
+</style><pre class="xr-text-repr-fallback">&lt;xarray.Dataset&gt; Size: 53MB
+Dimensions:     (valid_time: 744, latitude: 49, longitude: 91)
+Coordinates:
+    number      int64 8B ...
+  * valid_time  (valid_time) datetime64[ns] 6kB 2024-03-01 ... 2024-03-31T23:...
+  * latitude    (latitude) float64 392B 30.8 30.7 30.6 30.5 ... 26.2 26.1 26.0
+  * longitude   (longitude) float64 728B 79.6 79.7 79.8 79.9 ... 88.4 88.5 88.6
+    expver      (valid_time) &lt;U4 12kB ...
+Data variables:
+    d2m         (valid_time, latitude, longitude) float32 13MB ...
+    t2m         (valid_time, latitude, longitude) float32 13MB ...
+    tp          (valid_time, latitude, longitude) float32 13MB ...
+    swvl1       (valid_time, latitude, longitude) float32 13MB ...
+Attributes:
+    GRIB_centre:             ecmf
+    GRIB_centreDescription:  European Centre for Medium-Range Weather Forecasts
+    GRIB_subCentre:          0
+    Conventions:             CF-1.7
+    institution:             European Centre for Medium-Range Weather Forecasts
+    history:                 2025-09-16T20:55 GRIB to CDM+CF via cfgrib-0.9.1...</pre><div class="xr-wrap" style="display:none"><div class="xr-header"><div class="xr-obj-type">xarray.Dataset</div></div><ul class="xr-sections"><li class="xr-section-item"><input id="section-f0a8f217-cf50-4cd0-95e7-246993985854" class="xr-section-summary-in" type="checkbox" disabled=""><label for="section-f0a8f217-cf50-4cd0-95e7-246993985854" class="xr-section-summary" title="Expand/collapse section">Dimensions:</label><div class="xr-section-inline-details"><ul class="xr-dim-list"><li><span class="xr-has-index">valid_time</span>: 744</li><li><span class="xr-has-index">latitude</span>: 49</li><li><span class="xr-has-index">longitude</span>: 91</li></ul></div><div class="xr-section-details"></div></li><li class="xr-section-item"><input id="section-86007e0e-b296-4004-9eef-9577aad3cd05" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-86007e0e-b296-4004-9eef-9577aad3cd05" class="xr-section-summary">Coordinates: <span>(5)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>number</span></div><div class="xr-var-dims">()</div><div class="xr-var-dtype">int64</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-f7638c11-e3de-43ef-9e76-65a8b0551df7" class="xr-var-attrs-in" type="checkbox"><label for="attrs-f7638c11-e3de-43ef-9e76-65a8b0551df7" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-103d035d-3ae0-4207-824f-ccb8df52b14d" class="xr-var-data-in" type="checkbox"><label for="data-103d035d-3ae0-4207-824f-ccb8df52b14d" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>long_name :</span></dt><dd>ensemble member numerical id</dd><dt><span>units :</span></dt><dd>1</dd><dt><span>standard_name :</span></dt><dd>realization</dd></dl></div><div class="xr-var-data"><pre>[1 values with dtype=int64]</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">valid_time</span></div><div class="xr-var-dims">(valid_time)</div><div class="xr-var-dtype">datetime64[ns]</div><div class="xr-var-preview xr-preview">2024-03-01 ... 2024-03-31T23:00:00</div><input id="attrs-a09d0529-2658-4787-a55a-cafc8095d5eb" class="xr-var-attrs-in" type="checkbox"><label for="attrs-a09d0529-2658-4787-a55a-cafc8095d5eb" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-3be52565-2707-424a-a425-f94085e2090c" class="xr-var-data-in" type="checkbox"><label for="data-3be52565-2707-424a-a425-f94085e2090c" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>long_name :</span></dt><dd>time</dd><dt><span>standard_name :</span></dt><dd>time</dd></dl></div><div class="xr-var-data"><pre>array(['2024-03-01T00:00:00.000000000', '2024-03-01T01:00:00.000000000',
+       '2024-03-01T02:00:00.000000000', ..., '2024-03-31T21:00:00.000000000',
+       '2024-03-31T22:00:00.000000000', '2024-03-31T23:00:00.000000000'],
+      shape=(744,), dtype='datetime64[ns]')</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">latitude</span></div><div class="xr-var-dims">(latitude)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">30.8 30.7 30.6 ... 26.2 26.1 26.0</div><input id="attrs-ee918a03-56ec-4f2b-84d6-026ef22dc7fa" class="xr-var-attrs-in" type="checkbox"><label for="attrs-ee918a03-56ec-4f2b-84d6-026ef22dc7fa" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-70ce36a3-c246-49fb-8d2c-abff247aa8a1" class="xr-var-data-in" type="checkbox"><label for="data-70ce36a3-c246-49fb-8d2c-abff247aa8a1" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>units :</span></dt><dd>degrees_north</dd><dt><span>standard_name :</span></dt><dd>latitude</dd><dt><span>long_name :</span></dt><dd>latitude</dd><dt><span>stored_direction :</span></dt><dd>decreasing</dd></dl></div><div class="xr-var-data"><pre>array([30.8, 30.7, 30.6, 30.5, 30.4, 30.3, 30.2, 30.1, 30. , 29.9, 29.8, 29.7,
+       29.6, 29.5, 29.4, 29.3, 29.2, 29.1, 29. , 28.9, 28.8, 28.7, 28.6, 28.5,
+       28.4, 28.3, 28.2, 28.1, 28. , 27.9, 27.8, 27.7, 27.6, 27.5, 27.4, 27.3,
+       27.2, 27.1, 27. , 26.9, 26.8, 26.7, 26.6, 26.5, 26.4, 26.3, 26.2, 26.1,
+       26. ])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span class="xr-has-index">longitude</span></div><div class="xr-var-dims">(longitude)</div><div class="xr-var-dtype">float64</div><div class="xr-var-preview xr-preview">79.6 79.7 79.8 ... 88.4 88.5 88.6</div><input id="attrs-fa538d7b-f74a-43e3-8d7c-1fd16d8f73eb" class="xr-var-attrs-in" type="checkbox"><label for="attrs-fa538d7b-f74a-43e3-8d7c-1fd16d8f73eb" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-f64837ac-8ebb-489e-8a2c-2bb8c9d1c5b4" class="xr-var-data-in" type="checkbox"><label for="data-f64837ac-8ebb-489e-8a2c-2bb8c9d1c5b4" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>units :</span></dt><dd>degrees_east</dd><dt><span>standard_name :</span></dt><dd>longitude</dd><dt><span>long_name :</span></dt><dd>longitude</dd></dl></div><div class="xr-var-data"><pre>array([79.6, 79.7, 79.8, 79.9, 80. , 80.1, 80.2, 80.3, 80.4, 80.5, 80.6, 80.7,
+       80.8, 80.9, 81. , 81.1, 81.2, 81.3, 81.4, 81.5, 81.6, 81.7, 81.8, 81.9,
+       82. , 82.1, 82.2, 82.3, 82.4, 82.5, 82.6, 82.7, 82.8, 82.9, 83. , 83.1,
+       83.2, 83.3, 83.4, 83.5, 83.6, 83.7, 83.8, 83.9, 84. , 84.1, 84.2, 84.3,
+       84.4, 84.5, 84.6, 84.7, 84.8, 84.9, 85. , 85.1, 85.2, 85.3, 85.4, 85.5,
+       85.6, 85.7, 85.8, 85.9, 86. , 86.1, 86.2, 86.3, 86.4, 86.5, 86.6, 86.7,
+       86.8, 86.9, 87. , 87.1, 87.2, 87.3, 87.4, 87.5, 87.6, 87.7, 87.8, 87.9,
+       88. , 88.1, 88.2, 88.3, 88.4, 88.5, 88.6])</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span>expver</span></div><div class="xr-var-dims">(valid_time)</div><div class="xr-var-dtype">&lt;U4</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-1a9b267e-6e4a-4eeb-a269-5da5bcb8fcaa" class="xr-var-attrs-in" type="checkbox" disabled=""><label for="attrs-1a9b267e-6e4a-4eeb-a269-5da5bcb8fcaa" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-546be14e-d611-4da4-aca9-3aeb97bb9a1f" class="xr-var-data-in" type="checkbox"><label for="data-546be14e-d611-4da4-aca9-3aeb97bb9a1f" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"></dl></div><div class="xr-var-data"><pre>[744 values with dtype=&lt;U4]</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-33efea2f-5d24-4cf2-af50-aabd4f52c715" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-33efea2f-5d24-4cf2-af50-aabd4f52c715" class="xr-section-summary">Data variables: <span>(4)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-var-name"><span>d2m</span></div><div class="xr-var-dims">(valid_time, latitude, longitude)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-8c760604-30cc-4f3d-8d6c-fdba30d51522" class="xr-var-attrs-in" type="checkbox"><label for="attrs-8c760604-30cc-4f3d-8d6c-fdba30d51522" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-a4b30e9a-f741-4fdb-b5dd-080a4a377966" class="xr-var-data-in" type="checkbox"><label for="data-a4b30e9a-f741-4fdb-b5dd-080a4a377966" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>GRIB_paramId :</span></dt><dd>168</dd><dt><span>GRIB_dataType :</span></dt><dd>fc</dd><dt><span>GRIB_numberOfPoints :</span></dt><dd>4459</dd><dt><span>GRIB_typeOfLevel :</span></dt><dd>surface</dd><dt><span>GRIB_stepUnits :</span></dt><dd>1</dd><dt><span>GRIB_stepType :</span></dt><dd>instant</dd><dt><span>GRIB_gridType :</span></dt><dd>regular_ll</dd><dt><span>GRIB_uvRelativeToGrid :</span></dt><dd>0</dd><dt><span>GRIB_NV :</span></dt><dd>0</dd><dt><span>GRIB_Nx :</span></dt><dd>91</dd><dt><span>GRIB_Ny :</span></dt><dd>49</dd><dt><span>GRIB_cfName :</span></dt><dd>unknown</dd><dt><span>GRIB_cfVarName :</span></dt><dd>d2m</dd><dt><span>GRIB_gridDefinitionDescription :</span></dt><dd>Latitude/Longitude Grid</dd><dt><span>GRIB_iDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_iScansNegatively :</span></dt><dd>0</dd><dt><span>GRIB_jDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_jPointsAreConsecutive :</span></dt><dd>0</dd><dt><span>GRIB_jScansPositively :</span></dt><dd>0</dd><dt><span>GRIB_latitudeOfFirstGridPointInDegrees :</span></dt><dd>30.8</dd><dt><span>GRIB_latitudeOfLastGridPointInDegrees :</span></dt><dd>26.0</dd><dt><span>GRIB_longitudeOfFirstGridPointInDegrees :</span></dt><dd>79.6</dd><dt><span>GRIB_longitudeOfLastGridPointInDegrees :</span></dt><dd>88.6</dd><dt><span>GRIB_missingValue :</span></dt><dd>3.4028234663852886e+38</dd><dt><span>GRIB_name :</span></dt><dd>2 metre dewpoint temperature</dd><dt><span>GRIB_shortName :</span></dt><dd>2d</dd><dt><span>GRIB_totalNumber :</span></dt><dd>0</dd><dt><span>GRIB_units :</span></dt><dd>K</dd><dt><span>long_name :</span></dt><dd>2 metre dewpoint temperature</dd><dt><span>units :</span></dt><dd>K</dd><dt><span>standard_name :</span></dt><dd>unknown</dd><dt><span>GRIB_surface :</span></dt><dd>0.0</dd></dl></div><div class="xr-var-data"><pre>[3317496 values with dtype=float32]</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span>t2m</span></div><div class="xr-var-dims">(valid_time, latitude, longitude)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-8095c07c-b909-4058-92c3-9880834e5e9e" class="xr-var-attrs-in" type="checkbox"><label for="attrs-8095c07c-b909-4058-92c3-9880834e5e9e" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-9791f25d-ae2a-48fc-b833-914fa1ad1874" class="xr-var-data-in" type="checkbox"><label for="data-9791f25d-ae2a-48fc-b833-914fa1ad1874" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>GRIB_paramId :</span></dt><dd>167</dd><dt><span>GRIB_dataType :</span></dt><dd>fc</dd><dt><span>GRIB_numberOfPoints :</span></dt><dd>4459</dd><dt><span>GRIB_typeOfLevel :</span></dt><dd>surface</dd><dt><span>GRIB_stepUnits :</span></dt><dd>1</dd><dt><span>GRIB_stepType :</span></dt><dd>instant</dd><dt><span>GRIB_gridType :</span></dt><dd>regular_ll</dd><dt><span>GRIB_uvRelativeToGrid :</span></dt><dd>0</dd><dt><span>GRIB_NV :</span></dt><dd>0</dd><dt><span>GRIB_Nx :</span></dt><dd>91</dd><dt><span>GRIB_Ny :</span></dt><dd>49</dd><dt><span>GRIB_cfName :</span></dt><dd>unknown</dd><dt><span>GRIB_cfVarName :</span></dt><dd>t2m</dd><dt><span>GRIB_gridDefinitionDescription :</span></dt><dd>Latitude/Longitude Grid</dd><dt><span>GRIB_iDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_iScansNegatively :</span></dt><dd>0</dd><dt><span>GRIB_jDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_jPointsAreConsecutive :</span></dt><dd>0</dd><dt><span>GRIB_jScansPositively :</span></dt><dd>0</dd><dt><span>GRIB_latitudeOfFirstGridPointInDegrees :</span></dt><dd>30.8</dd><dt><span>GRIB_latitudeOfLastGridPointInDegrees :</span></dt><dd>26.0</dd><dt><span>GRIB_longitudeOfFirstGridPointInDegrees :</span></dt><dd>79.6</dd><dt><span>GRIB_longitudeOfLastGridPointInDegrees :</span></dt><dd>88.6</dd><dt><span>GRIB_missingValue :</span></dt><dd>3.4028234663852886e+38</dd><dt><span>GRIB_name :</span></dt><dd>2 metre temperature</dd><dt><span>GRIB_shortName :</span></dt><dd>2t</dd><dt><span>GRIB_totalNumber :</span></dt><dd>0</dd><dt><span>GRIB_units :</span></dt><dd>K</dd><dt><span>long_name :</span></dt><dd>2 metre temperature</dd><dt><span>units :</span></dt><dd>K</dd><dt><span>standard_name :</span></dt><dd>unknown</dd><dt><span>GRIB_surface :</span></dt><dd>0.0</dd></dl></div><div class="xr-var-data"><pre>[3317496 values with dtype=float32]</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span>tp</span></div><div class="xr-var-dims">(valid_time, latitude, longitude)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-0756896b-f069-40ab-a9d9-c12d8228c2bb" class="xr-var-attrs-in" type="checkbox"><label for="attrs-0756896b-f069-40ab-a9d9-c12d8228c2bb" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-72ca5bd8-ef0e-4f8e-83f1-133fcce915a1" class="xr-var-data-in" type="checkbox"><label for="data-72ca5bd8-ef0e-4f8e-83f1-133fcce915a1" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>GRIB_paramId :</span></dt><dd>228</dd><dt><span>GRIB_dataType :</span></dt><dd>fc</dd><dt><span>GRIB_numberOfPoints :</span></dt><dd>4459</dd><dt><span>GRIB_typeOfLevel :</span></dt><dd>surface</dd><dt><span>GRIB_stepUnits :</span></dt><dd>1</dd><dt><span>GRIB_stepType :</span></dt><dd>accum</dd><dt><span>GRIB_gridType :</span></dt><dd>regular_ll</dd><dt><span>GRIB_uvRelativeToGrid :</span></dt><dd>0</dd><dt><span>GRIB_NV :</span></dt><dd>0</dd><dt><span>GRIB_Nx :</span></dt><dd>91</dd><dt><span>GRIB_Ny :</span></dt><dd>49</dd><dt><span>GRIB_cfName :</span></dt><dd>unknown</dd><dt><span>GRIB_cfVarName :</span></dt><dd>tp</dd><dt><span>GRIB_gridDefinitionDescription :</span></dt><dd>Latitude/Longitude Grid</dd><dt><span>GRIB_iDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_iScansNegatively :</span></dt><dd>0</dd><dt><span>GRIB_jDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_jPointsAreConsecutive :</span></dt><dd>0</dd><dt><span>GRIB_jScansPositively :</span></dt><dd>0</dd><dt><span>GRIB_latitudeOfFirstGridPointInDegrees :</span></dt><dd>30.8</dd><dt><span>GRIB_latitudeOfLastGridPointInDegrees :</span></dt><dd>26.0</dd><dt><span>GRIB_longitudeOfFirstGridPointInDegrees :</span></dt><dd>79.6</dd><dt><span>GRIB_longitudeOfLastGridPointInDegrees :</span></dt><dd>88.6</dd><dt><span>GRIB_missingValue :</span></dt><dd>3.4028234663852886e+38</dd><dt><span>GRIB_name :</span></dt><dd>Total precipitation</dd><dt><span>GRIB_shortName :</span></dt><dd>tp</dd><dt><span>GRIB_totalNumber :</span></dt><dd>0</dd><dt><span>GRIB_units :</span></dt><dd>m</dd><dt><span>long_name :</span></dt><dd>Total precipitation</dd><dt><span>units :</span></dt><dd>m</dd><dt><span>standard_name :</span></dt><dd>unknown</dd><dt><span>GRIB_surface :</span></dt><dd>0.0</dd></dl></div><div class="xr-var-data"><pre>[3317496 values with dtype=float32]</pre></div></li><li class="xr-var-item"><div class="xr-var-name"><span>swvl1</span></div><div class="xr-var-dims">(valid_time, latitude, longitude)</div><div class="xr-var-dtype">float32</div><div class="xr-var-preview xr-preview">...</div><input id="attrs-2fa9fa5a-46c8-4913-aca4-a31b1a76fa47" class="xr-var-attrs-in" type="checkbox"><label for="attrs-2fa9fa5a-46c8-4913-aca4-a31b1a76fa47" title="Show/Hide attributes"><svg class="icon xr-icon-file-text2"><use href="#icon-file-text2"></use></svg></label><input id="data-21bc6f52-cb27-4b87-8be8-3171776de207" class="xr-var-data-in" type="checkbox"><label for="data-21bc6f52-cb27-4b87-8be8-3171776de207" title="Show/Hide data repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-var-attrs"><dl class="xr-attrs"><dt><span>GRIB_paramId :</span></dt><dd>39</dd><dt><span>GRIB_dataType :</span></dt><dd>an</dd><dt><span>GRIB_numberOfPoints :</span></dt><dd>4459</dd><dt><span>GRIB_typeOfLevel :</span></dt><dd>depthBelowLandLayer</dd><dt><span>GRIB_stepUnits :</span></dt><dd>1</dd><dt><span>GRIB_stepType :</span></dt><dd>instant</dd><dt><span>GRIB_gridType :</span></dt><dd>regular_ll</dd><dt><span>GRIB_uvRelativeToGrid :</span></dt><dd>0</dd><dt><span>GRIB_NV :</span></dt><dd>0</dd><dt><span>GRIB_Nx :</span></dt><dd>91</dd><dt><span>GRIB_Ny :</span></dt><dd>49</dd><dt><span>GRIB_cfName :</span></dt><dd>unknown</dd><dt><span>GRIB_cfVarName :</span></dt><dd>swvl1</dd><dt><span>GRIB_gridDefinitionDescription :</span></dt><dd>Latitude/Longitude Grid</dd><dt><span>GRIB_iDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_iScansNegatively :</span></dt><dd>0</dd><dt><span>GRIB_jDirectionIncrementInDegrees :</span></dt><dd>0.1</dd><dt><span>GRIB_jPointsAreConsecutive :</span></dt><dd>0</dd><dt><span>GRIB_jScansPositively :</span></dt><dd>0</dd><dt><span>GRIB_latitudeOfFirstGridPointInDegrees :</span></dt><dd>30.8</dd><dt><span>GRIB_latitudeOfLastGridPointInDegrees :</span></dt><dd>26.0</dd><dt><span>GRIB_longitudeOfFirstGridPointInDegrees :</span></dt><dd>79.6</dd><dt><span>GRIB_longitudeOfLastGridPointInDegrees :</span></dt><dd>88.6</dd><dt><span>GRIB_missingValue :</span></dt><dd>3.4028234663852886e+38</dd><dt><span>GRIB_name :</span></dt><dd>Volumetric soil water layer 1</dd><dt><span>GRIB_shortName :</span></dt><dd>swvl1</dd><dt><span>GRIB_totalNumber :</span></dt><dd>0</dd><dt><span>GRIB_units :</span></dt><dd>m**3 m**-3</dd><dt><span>long_name :</span></dt><dd>Volumetric soil water layer 1</dd><dt><span>units :</span></dt><dd>m**3 m**-3</dd><dt><span>standard_name :</span></dt><dd>unknown</dd><dt><span>GRIB_depthBelowLandLayer :</span></dt><dd>0.0</dd></dl></div><div class="xr-var-data"><pre>[3317496 values with dtype=float32]</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-b4b75f8c-bde2-4eae-9f71-7deb8676dc77" class="xr-section-summary-in" type="checkbox"><label for="section-b4b75f8c-bde2-4eae-9f71-7deb8676dc77" class="xr-section-summary">Indexes: <span>(3)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><ul class="xr-var-list"><li class="xr-var-item"><div class="xr-index-name"><div>valid_time</div></div><div class="xr-index-preview">PandasIndex</div><input type="checkbox" disabled=""><label></label><input id="index-398b5fbe-4532-43dd-8798-4146f12399c9" class="xr-index-data-in" type="checkbox"><label for="index-398b5fbe-4532-43dd-8798-4146f12399c9" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(DatetimeIndex(['2024-03-01 00:00:00', '2024-03-01 01:00:00',
+               '2024-03-01 02:00:00', '2024-03-01 03:00:00',
+               '2024-03-01 04:00:00', '2024-03-01 05:00:00',
+               '2024-03-01 06:00:00', '2024-03-01 07:00:00',
+               '2024-03-01 08:00:00', '2024-03-01 09:00:00',
+               ...
+               '2024-03-31 14:00:00', '2024-03-31 15:00:00',
+               '2024-03-31 16:00:00', '2024-03-31 17:00:00',
+               '2024-03-31 18:00:00', '2024-03-31 19:00:00',
+               '2024-03-31 20:00:00', '2024-03-31 21:00:00',
+               '2024-03-31 22:00:00', '2024-03-31 23:00:00'],
+              dtype='datetime64[ns]', name='valid_time', length=744, freq=None))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>latitude</div></div><div class="xr-index-preview">PandasIndex</div><input type="checkbox" disabled=""><label></label><input id="index-36e19bef-b115-4383-a35e-d2eb45864fc9" class="xr-index-data-in" type="checkbox"><label for="index-36e19bef-b115-4383-a35e-d2eb45864fc9" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([              30.8,               30.7, 30.599999999999998,
+       30.499999999999996, 30.399999999999995, 30.299999999999994,
+       30.199999999999992,  30.09999999999999,  29.99999999999999,
+       29.899999999999988, 29.799999999999986, 29.699999999999985,
+       29.599999999999984, 29.499999999999982,  29.39999999999998,
+        29.29999999999998, 29.199999999999978, 29.099999999999977,
+       28.999999999999975, 28.899999999999974, 28.799999999999972,
+        28.69999999999997,  28.59999999999997, 28.499999999999968,
+       28.399999999999967, 28.299999999999965, 28.199999999999964,
+       28.099999999999962,  27.99999999999996,  27.89999999999996,
+       27.799999999999958, 27.699999999999957, 27.599999999999955,
+       27.499999999999954, 27.399999999999952,  27.29999999999995,
+        27.19999999999995, 27.099999999999948, 26.999999999999947,
+       26.899999999999945, 26.799999999999944, 26.699999999999942,
+        26.59999999999994,  26.49999999999994, 26.399999999999938,
+       26.299999999999937, 26.199999999999935, 26.099999999999934,
+                     26.0],
+      dtype='float64', name='latitude'))</pre></div></li><li class="xr-var-item"><div class="xr-index-name"><div>longitude</div></div><div class="xr-index-preview">PandasIndex</div><input type="checkbox" disabled=""><label></label><input id="index-6160b49f-4b3a-44a7-b2bf-c8686ba9702d" class="xr-index-data-in" type="checkbox"><label for="index-6160b49f-4b3a-44a7-b2bf-c8686ba9702d" title="Show/Hide index repr"><svg class="icon xr-icon-database"><use href="#icon-database"></use></svg></label><div class="xr-index-data"><pre>PandasIndex(Index([             79.6, 79.69999999999999, 79.79999999999998,
+       79.89999999999998, 79.99999999999997, 80.09999999999997,
+       80.19999999999996, 80.29999999999995, 80.39999999999995,
+       80.49999999999994, 80.59999999999994, 80.69999999999993,
+       80.79999999999993, 80.89999999999992, 80.99999999999991,
+       81.09999999999991,  81.1999999999999,  81.2999999999999,
+       81.39999999999989, 81.49999999999989, 81.59999999999988,
+       81.69999999999987, 81.79999999999987, 81.89999999999986,
+       81.99999999999986, 82.09999999999985, 82.19999999999985,
+       82.29999999999984, 82.39999999999984, 82.49999999999983,
+       82.59999999999982, 82.69999999999982, 82.79999999999981,
+        82.8999999999998,  82.9999999999998,  83.0999999999998,
+       83.19999999999979, 83.29999999999978, 83.39999999999978,
+       83.49999999999977, 83.59999999999977, 83.69999999999976,
+       83.79999999999976, 83.89999999999975, 83.99999999999974,
+       84.09999999999974, 84.19999999999973, 84.29999999999973,
+       84.39999999999972, 84.49999999999972, 84.59999999999971,
+        84.6999999999997,  84.7999999999997,  84.8999999999997,
+       84.99999999999969, 85.09999999999968, 85.19999999999968,
+       85.29999999999967, 85.39999999999966, 85.49999999999966,
+       85.59999999999965, 85.69999999999965, 85.79999999999964,
+       85.89999999999964, 85.99999999999963, 86.09999999999962,
+       86.19999999999962, 86.29999999999961, 86.39999999999961,
+        86.4999999999996,  86.5999999999996, 86.69999999999959,
+       86.79999999999959, 86.89999999999958, 86.99999999999957,
+       87.09999999999957, 87.19999999999956, 87.29999999999956,
+       87.39999999999955, 87.49999999999955, 87.59999999999954,
+       87.69999999999953, 87.79999999999953, 87.89999999999952,
+       87.99999999999952, 88.09999999999951,  88.1999999999995,
+        88.2999999999995,  88.3999999999995, 88.49999999999949,
+                    88.6],
+      dtype='float64', name='longitude'))</pre></div></li></ul></div></li><li class="xr-section-item"><input id="section-2f3d4d94-36d8-45cc-9b0d-487b7bd354a1" class="xr-section-summary-in" type="checkbox" checked=""><label for="section-2f3d4d94-36d8-45cc-9b0d-487b7bd354a1" class="xr-section-summary">Attributes: <span>(6)</span></label><div class="xr-section-inline-details"></div><div class="xr-section-details"><dl class="xr-attrs"><dt><span>GRIB_centre :</span></dt><dd>ecmf</dd><dt><span>GRIB_centreDescription :</span></dt><dd>European Centre for Medium-Range Weather Forecasts</dd><dt><span>GRIB_subCentre :</span></dt><dd>0</dd><dt><span>Conventions :</span></dt><dd>CF-1.7</dd><dt><span>institution :</span></dt><dd>European Centre for Medium-Range Weather Forecasts</dd><dt><span>history :</span></dt><dd>2025-09-16T20:55 GRIB to CDM+CF via cfgrib-0.9.15.0/ecCodes-2.42.0 with {"source": "data.grib", "filter_by_keys": {}, "encode_cf": ["parameter", "time", "geography", "vertical"]}</dd></dl></div></li></ul></div></div>
+</div>
+</div>
+<p>And plot it with cartopy, eg.:</p>
+<div id="cell-6" class="cell" data-exec_doc="null">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cartopy.crs <span class="im">as</span> ccrs</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> cartopy.feature <span class="im">as</span> cfeature</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>temperature <span class="op">=</span> ds[<span class="st">"t2m"</span>]</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Select a specific time step</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>temperature_at_time <span class="op">=</span> temperature.isel(valid_time<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the data on a map</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">12</span>, <span class="dv">8</span>))</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>ax <span class="op">=</span> plt.axes(projection<span class="op">=</span>ccrs.PlateCarree())</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>temperature_at_time.plot(ax<span class="op">=</span>ax, cmap<span class="op">=</span><span class="st">"coolwarm"</span>, transform<span class="op">=</span>ccrs.PlateCarree(), cbar_kwargs<span class="op">=</span>{<span class="st">"label"</span>: <span class="st">"Temperature (K)"</span>})</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>ax.coastlines()</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>ax.add_feature(cfeature.BORDERS, linestyle<span class="op">=</span><span class="st">":"</span>)</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>ax.set_title(<span class="st">"Temperature at Time Step 0"</span>)</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>plt.show()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="index_files/figure-html/cell-4-output-1.png" width="897" height="640" class="figure-img"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>You can also load the aggregated data:</p>
+<div id="cell-8" class="cell" data-exec_doc="null">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> geopandas <span class="im">as</span> gpd</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> era5_sandbox.config <span class="im">import</span> data_catalog</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>ex_agg_path <span class="op">=</span> data_catalog[<span class="st">'aggregate'</span>][<span class="st">'outputs'</span>][<span class="st">'2019_08_madagascar_night_d2m_max.parquet'</span>].load()</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>gpd.read_parquet(ex_agg_path).describe()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-display">
+<div>
+
+
+<table class="dataframe caption-top table table-sm table-striped small" data-quarto-postprocess="true" data-border="1">
+<thead>
+<tr class="header">
+<th data-quarto-table-cell-role="th"></th>
+<th data-quarto-table-cell-role="th">day_01</th>
+<th data-quarto-table-cell-role="th">day_02</th>
+<th data-quarto-table-cell-role="th">day_03</th>
+<th data-quarto-table-cell-role="th">day_04</th>
+<th data-quarto-table-cell-role="th">day_05</th>
+<th data-quarto-table-cell-role="th">day_06</th>
+<th data-quarto-table-cell-role="th">day_07</th>
+<th data-quarto-table-cell-role="th">day_08</th>
+<th data-quarto-table-cell-role="th">day_09</th>
+<th data-quarto-table-cell-role="th">day_10</th>
+<th data-quarto-table-cell-role="th">day_11</th>
+<th data-quarto-table-cell-role="th">day_12</th>
+<th data-quarto-table-cell-role="th">day_13</th>
+<th data-quarto-table-cell-role="th">day_14</th>
+<th data-quarto-table-cell-role="th">day_15</th>
+<th data-quarto-table-cell-role="th">day_16</th>
+<th data-quarto-table-cell-role="th">day_17</th>
+<th data-quarto-table-cell-role="th">day_18</th>
+<th data-quarto-table-cell-role="th">day_19</th>
+<th data-quarto-table-cell-role="th">day_20</th>
+<th data-quarto-table-cell-role="th">day_21</th>
+<th data-quarto-table-cell-role="th">day_22</th>
+<th data-quarto-table-cell-role="th">day_23</th>
+<th data-quarto-table-cell-role="th">day_24</th>
+<th data-quarto-table-cell-role="th">day_25</th>
+<th data-quarto-table-cell-role="th">day_26</th>
+<th data-quarto-table-cell-role="th">day_27</th>
+<th data-quarto-table-cell-role="th">day_28</th>
+<th data-quarto-table-cell-role="th">day_29</th>
+<th data-quarto-table-cell-role="th">day_30</th>
+<th data-quarto-table-cell-role="th">day_31</th>
+<th data-quarto-table-cell-role="th">day_32</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">count</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+<td>2701.000000</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">mean</td>
+<td>290.493048</td>
+<td>290.145274</td>
+<td>288.953153</td>
+<td>288.503714</td>
+<td>288.439820</td>
+<td>288.304426</td>
+<td>286.940995</td>
+<td>287.186512</td>
+<td>287.453656</td>
+<td>287.843029</td>
+<td>288.301938</td>
+<td>288.778014</td>
+<td>288.813762</td>
+<td>288.667253</td>
+<td>288.796892</td>
+<td>288.547945</td>
+<td>288.197632</td>
+<td>287.882440</td>
+<td>287.659818</td>
+<td>289.291587</td>
+<td>289.911503</td>
+<td>288.760939</td>
+<td>288.257644</td>
+<td>288.271450</td>
+<td>287.746390</td>
+<td>288.379399</td>
+<td>288.504720</td>
+<td>287.665699</td>
+<td>288.149861</td>
+<td>288.266861</td>
+<td>288.644028</td>
+<td>288.224829</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">std</td>
+<td>2.616922</td>
+<td>2.832083</td>
+<td>3.215642</td>
+<td>3.566019</td>
+<td>4.401416</td>
+<td>4.198817</td>
+<td>5.235795</td>
+<td>4.444031</td>
+<td>4.346305</td>
+<td>3.435444</td>
+<td>2.735781</td>
+<td>2.864494</td>
+<td>2.841268</td>
+<td>3.080593</td>
+<td>3.306217</td>
+<td>2.938165</td>
+<td>3.018303</td>
+<td>2.849850</td>
+<td>2.817690</td>
+<td>2.600946</td>
+<td>2.584079</td>
+<td>3.161855</td>
+<td>3.171827</td>
+<td>2.983778</td>
+<td>3.223380</td>
+<td>2.918867</td>
+<td>2.844314</td>
+<td>3.052635</td>
+<td>3.077292</td>
+<td>3.093706</td>
+<td>3.335983</td>
+<td>3.296264</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">min</td>
+<td>284.295898</td>
+<td>281.673340</td>
+<td>280.566406</td>
+<td>280.509521</td>
+<td>277.348145</td>
+<td>279.243164</td>
+<td>274.955078</td>
+<td>274.682129</td>
+<td>275.397461</td>
+<td>279.498291</td>
+<td>282.339111</td>
+<td>282.188721</td>
+<td>282.470703</td>
+<td>281.371582</td>
+<td>280.724609</td>
+<td>280.093506</td>
+<td>280.849121</td>
+<td>281.123535</td>
+<td>281.952148</td>
+<td>282.186768</td>
+<td>284.168945</td>
+<td>282.519287</td>
+<td>282.015381</td>
+<td>280.578857</td>
+<td>281.183838</td>
+<td>281.146973</td>
+<td>281.977539</td>
+<td>281.014648</td>
+<td>280.787842</td>
+<td>281.631348</td>
+<td>281.349854</td>
+<td>280.615967</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">25%</td>
+<td>288.031494</td>
+<td>287.739014</td>
+<td>286.978271</td>
+<td>285.750488</td>
+<td>284.326904</td>
+<td>284.071289</td>
+<td>281.695068</td>
+<td>283.710449</td>
+<td>284.153076</td>
+<td>285.459717</td>
+<td>286.141846</td>
+<td>286.444092</td>
+<td>286.505859</td>
+<td>286.104004</td>
+<td>286.114014</td>
+<td>286.730225</td>
+<td>286.005371</td>
+<td>285.420166</td>
+<td>285.230713</td>
+<td>287.408203</td>
+<td>287.744873</td>
+<td>286.101318</td>
+<td>285.243652</td>
+<td>285.488281</td>
+<td>285.170166</td>
+<td>285.876465</td>
+<td>286.145508</td>
+<td>285.243164</td>
+<td>285.579346</td>
+<td>285.322754</td>
+<td>285.930908</td>
+<td>285.565186</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">50%</td>
+<td>290.674316</td>
+<td>290.331543</td>
+<td>288.916260</td>
+<td>288.472168</td>
+<td>289.635742</td>
+<td>289.390381</td>
+<td>288.382568</td>
+<td>287.926758</td>
+<td>288.173096</td>
+<td>287.859375</td>
+<td>287.797852</td>
+<td>288.716064</td>
+<td>288.806641</td>
+<td>288.789307</td>
+<td>289.210938</td>
+<td>288.769287</td>
+<td>288.085205</td>
+<td>287.698975</td>
+<td>287.252930</td>
+<td>289.310547</td>
+<td>289.878418</td>
+<td>288.511719</td>
+<td>288.420166</td>
+<td>288.263916</td>
+<td>287.717041</td>
+<td>288.661621</td>
+<td>288.999023</td>
+<td>287.485107</td>
+<td>288.326416</td>
+<td>288.429199</td>
+<td>288.576416</td>
+<td>288.093018</td>
+</tr>
+<tr class="odd">
+<td data-quarto-table-cell-role="th">75%</td>
+<td>292.828369</td>
+<td>292.707764</td>
+<td>291.609375</td>
+<td>291.655762</td>
+<td>291.987305</td>
+<td>291.845459</td>
+<td>291.671631</td>
+<td>291.051758</td>
+<td>291.288574</td>
+<td>291.000244</td>
+<td>290.813721</td>
+<td>291.365967</td>
+<td>291.540039</td>
+<td>291.393799</td>
+<td>291.756592</td>
+<td>291.094727</td>
+<td>290.893311</td>
+<td>290.266602</td>
+<td>290.166748</td>
+<td>291.649902</td>
+<td>291.970459</td>
+<td>291.342285</td>
+<td>290.443848</td>
+<td>290.660400</td>
+<td>290.400146</td>
+<td>290.360840</td>
+<td>290.854004</td>
+<td>290.328125</td>
+<td>290.827881</td>
+<td>290.999268</td>
+<td>291.598877</td>
+<td>291.072754</td>
+</tr>
+<tr class="even">
+<td data-quarto-table-cell-role="th">max</td>
+<td>296.467285</td>
+<td>295.717529</td>
+<td>295.837158</td>
+<td>295.693604</td>
+<td>295.723389</td>
+<td>296.195557</td>
+<td>295.589600</td>
+<td>295.345703</td>
+<td>294.754639</td>
+<td>294.483154</td>
+<td>294.952148</td>
+<td>294.815430</td>
+<td>294.623779</td>
+<td>295.088135</td>
+<td>295.036621</td>
+<td>294.847900</td>
+<td>294.224609</td>
+<td>294.522949</td>
+<td>294.728760</td>
+<td>295.268066</td>
+<td>295.507324</td>
+<td>295.797363</td>
+<td>296.297119</td>
+<td>296.222900</td>
+<td>295.492432</td>
+<td>295.406006</td>
+<td>294.629883</td>
+<td>295.211670</td>
+<td>295.363037</td>
+<td>295.263184</td>
+<td>295.446533</td>
+<td>295.408691</td>
+</tr>
+</tbody>
+</table>
+
+</div>
 </div>
 </div>
 
 
+</section>
 </section>
 
 </main> <!-- /main -->

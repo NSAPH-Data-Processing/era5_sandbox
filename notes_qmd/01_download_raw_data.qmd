@@ -1,7 +1,5 @@
 ---
 title: "Download Module: Downloading Raw Data from CDSAPI"
-execute:
-    freeze: auto
 engine: jupyter
 ---
 
